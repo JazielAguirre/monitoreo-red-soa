@@ -44,7 +44,7 @@ servicios/
 ├── comun/       config.php, db.php, respuesta.php, http.php, auth.php (.htaccess: Require all denied)
 ├── dispositivos/  index.php + .htaccess   → dueño de la tabla dispositivos
 ├── alertas/       index.php + .htaccess   → dueño de la tabla alertas
-├── monitoreo/     index.php + .htaccess   → dueño de la tabla monitoreos
+├── monitoreo/     index.php + .htaccess + ping.php → dueño de la tabla monitoreos
 └── auth/          index.php               → dueño de la tabla usuarios
 web/
 ├── css/         tokens.css (variables de diseño), app.css (componentes)
@@ -78,13 +78,15 @@ Las excepciones se capturan en el punto de entrada de cada servicio y se respond
 Validar todas las entradas: campos requeridos, longitudes, valores permitidos e IP con filter_var($ip, FILTER_VALIDATE_IP).
 Variables, funciones y tablas con nombres en español. Funciones cortas, cada una con una sola responsabilidad.
 Ping (Servicio de Monitoreo)
+Implementación: servicios/monitoreo/ping.php (hacerPing() devuelve responde, tiempo_respuesta_ms y salida).
 Seguridad: la IP se valida con FILTER_VALIDATE_IP y pasa por escapeshellarg() antes de exec(). Nunca ejecutes un comando con texto que no haya sido validado.
+Solo IPv4 (FILTER_VALIDATE_IP con FILTER_FLAG_IPV4): así no hay que manejar las diferencias de ping con IPv6 entre sistemas operativos.
 El sistema operativo se detecta con PHP_OS_FAMILY:
 Windows: ping -n 1 -w 1000 {ip}
 Linux: ping -c 1 -W 1 {ip}
 macOS (Darwin): ping -c 1 -t 1 {ip}
 En Windows no confíes en el código de salida: con "Host de destino inaccesible" puede devolver 0. El dispositivo está activo solo si la salida contiene TTL= (sin distinguir mayúsculas).
-El tiempo de respuesta se extrae aceptando salida en inglés y en español: time=2ms, time<1ms, tiempo=2ms, tiempo<1m, time=0.032 ms. Si la salida indica <1, guarda 0 y la interfaz lo muestra como < 1 ms.
+El tiempo de respuesta se extrae aceptando salida en inglés y en español: time=2ms, time<1ms, tiempo=2ms, tiempo<1m, time=0.032 ms. Se redondea a 2 decimales. Si la salida indica <1, guarda 0 y la interfaz lo muestra como < 1 ms.
 Espera máxima: 1 segundo por dispositivo.
 Solo se crea una alerta si el dispositivo no tiene ya una alerta pendiente, para evitar alertas repetidas en cada ping fallido.
 IPs de prueba: 127.0.0.1 siempre responde. 192.0.2.1 (rango reservado para documentación) nunca responde.

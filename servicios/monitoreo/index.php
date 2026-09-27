@@ -3,12 +3,14 @@
  * Servicio de Monitoreo: ejecuta ping a los dispositivos y guarda el historial.
  * Dueño de la tabla monitoreos.
  * Punto de entrada: todas las rutas del servicio llegan aquí por .htaccess.
- * Fase 0: solo responde con el servicio, el método y los segmentos de la ruta.
+ * Fase 0: responde con el servicio, el método y los segmentos de la ruta, y
+ * expone la ruta temporal GET /prueba?ip=... para probar ping.php.
  */
 
 declare(strict_types=1);
 
 require_once __DIR__ . '/../comun/respuesta.php';
+require_once __DIR__ . '/ping.php';
 
 const NOMBRE_SERVICIO = 'monitoreo';
 
@@ -30,11 +32,51 @@ function obtenerSegmentosRuta(): array
     return array_values(array_map('rawurldecode', $segmentos));
 }
 
+/**
+ * TEMPORAL (Fase 0): GET /servicios/monitoreo/prueba?ip=...
+ * Hace ping a la IP y responde el resultado. Se elimina en la Fase 4.
+ */
+function atenderPruebaPing(string $metodo): never
+{
+    if ($metodo !== 'GET') {
+        responderError('Método no permitido', 405);
+    }
+
+    $ip = $_GET['ip'] ?? '';
+
+    if (!is_string($ip) || trim($ip) === '') {
+        responderError('Falta el parámetro ip', 400);
+    }
+
+    $ip = trim($ip);
+
+    if (!esIpv4Valida($ip)) {
+        responderError('La IP no es una dirección IPv4 válida', 400);
+    }
+
+    $resultado = hacerPing($ip);
+
+    responder([
+        'ip' => $ip,
+        'estado' => $resultado['responde'] ? 'activo' : 'inactivo',
+        'tiempo_respuesta_ms' => $resultado['tiempo_respuesta_ms'],
+        'salida' => $resultado['salida'],
+    ]);
+}
+
 try {
+    $metodo = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    $ruta = obtenerSegmentosRuta();
+
+    // TEMPORAL (Fase 0): se elimina en la Fase 4 junto con atenderPruebaPing().
+    if ($ruta === ['prueba']) {
+        atenderPruebaPing($metodo);
+    }
+
     responder([
         'servicio' => NOMBRE_SERVICIO,
-        'metodo' => $_SERVER['REQUEST_METHOD'] ?? 'GET',
-        'ruta' => obtenerSegmentosRuta(),
+        'metodo' => $metodo,
+        'ruta' => $ruta,
     ]);
 } catch (Throwable $e) {
     error_log('[' . NOMBRE_SERVICIO . '] ' . $e);

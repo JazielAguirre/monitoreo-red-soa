@@ -27,8 +27,10 @@ function responderError(string $mensaje, int $codigo): never
  */
 function enviarJson(array $cuerpo, int $codigo): never
 {
+    // XAMPP trae serialize_precision=100: sin esto 0.18 sale como 0.17999999999999999333...
+    ini_set('serialize_precision', '-1');
     http_response_code($codigo);
     header('Content-Type: application/json; charset=utf-8');
-    echo json_encode($cuerpo, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    echo json_encode($cuerpo, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
 }
