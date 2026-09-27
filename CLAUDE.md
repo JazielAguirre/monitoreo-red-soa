@@ -14,6 +14,7 @@ Interfaz: http://localhost/monitoreo-red-soa/web/
 Servicios: http://localhost/monitoreo-red-soa/servicios/{servicio}/
 Base de datos: monitoreo_red_soa, usuario root sin contraseña (solo desarrollo local).
 Apache y MySQL deben estar encendidos (ver Comandos).
+MySQL en Linux con pam_tmpdir: al encenderlo con sudo, MariaDB hereda /tmp/user/0 como carpeta temporal y el usuario mysql no puede escribir ahí, así que no arranca. Solución: agregar tmpdir = /tmp debajo de [mysqld] en /opt/lampp/etc/my.cnf.
 Sin Composer, sin npm, sin frameworks de PHP ni de JavaScript.
 Las librerías del frontend se guardan en web/vendor/, no se cargan desde CDN (la demo puede hacerse sin internet).
 Otros integrantes en Windows: el proyecto va en C:\xampp\htdocs\monitoreo-red-soa, los binarios son C:/xampp/php/php.exe y C:/xampp/mysql/bin/mysql.exe, Apache y MySQL se encienden desde el panel de XAMPP, y en PowerShell se usa curl.exe (ahí "curl" es otro comando).
@@ -143,9 +144,11 @@ Estado actual
 
 Actualiza esta sección al cerrar cada fase.
 
-Fase actual: 0 — Preparación y prueba de ping
-Completado: estructura inicial del proyecto (carpetas, comun/config.php y comun/respuesta.php, puntos de entrada de dispositivos, alertas y monitoreo con reescritura de URLs, esqueletos HTML, librerías en web/vendor/, repositorio git).
+Fase actual: 1 (ver docs/PLAN.md)
+Completado:
+- Fase 0 — Preparación y prueba de ping: estructura del proyecto, comun/config.php y comun/respuesta.php, puntos de entrada de dispositivos, alertas y monitoreo con reescritura de URLs, esqueletos HTML, librerías en web/vendor/, repositorio git, .htaccess que solo expone web/ y los servicios, y servicios/monitoreo/ping.php probado a través de Apache (127.0.0.1 y la puerta de enlace activos, 192.0.2.1 inactivo en ~1 s, entradas inválidas → 400 sin ejecutar comandos).
 Pendientes o decisiones abiertas:
-- Prueba de ping a través de Apache (resto de la Fase 0).
-- docs/PLAN.md y docs/API.md están vacíos (solo "pendiente").
-- Los .htaccess usan RewriteOptions AllowNoSlash junto con DirectorySlash Off; sin él, las URLs sin barra final dan 403/404.
+- docs/PLAN.md y docs/API.md están vacíos (solo "pendiente"); API.md documenta por ahora el endpoint temporal.
+- GET /servicios/monitoreo/prueba es temporal: eliminarlo en la Fase 4 junto con atenderPruebaPing().
+- tiempo_respuesta_ms tiene hasta 2 decimales (Linux da valores como 0.032 ms): en la Fase 1 la columna debería ser DECIMAL, no INT.
+- Los .htaccess de los servicios usan RewriteOptions AllowNoSlash junto con DirectorySlash Off; sin él, las URLs sin barra final dan 403/404.
