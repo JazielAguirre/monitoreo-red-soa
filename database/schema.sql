@@ -1,0 +1,4 @@
+-- Sistema de Monitoreo de Red SOA
+-- schema.sql: recrea desde cero la base de datos monitoreo_red_soa
+-- (tablas dispositivos, monitoreos, alertas y usuarios).
+-- Se llena en la Fase 1.

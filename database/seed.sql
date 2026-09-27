@@ -1,0 +1,4 @@
+-- Sistema de Monitoreo de Red SOA
+-- seed.sql: datos de prueba (incluye 127.0.0.1, que siempre responde,
+-- y 192.0.2.1, que nunca responde).
+-- Se llena en la Fase 1.
