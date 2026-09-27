@@ -37,10 +37,11 @@ curl -s -X POST -H "Content-Type: application/json" \
   http://localhost/monitoreo-red-soa/servicios/dispositivos
 Arquitectura
 Interfaz web (web/)  →  HTTP + JSON  →  Servicios (servicios/)  →  MySQL
+.htaccess        solo expone por HTTP web/ y los servicios; el resto responde 404, / redirige a web/
 database/        schema.sql (recrea la BD completa), seed.sql (datos de prueba)
 docs/            PLAN.md (fases del proyecto), API.md (contrato de endpoints)
 servicios/
-├── comun/       config.php, db.php, respuesta.php, http.php, auth.php
+├── comun/       config.php, db.php, respuesta.php, http.php, auth.php (.htaccess: Require all denied)
 ├── dispositivos/  index.php + .htaccess   → dueño de la tabla dispositivos
 ├── alertas/       index.php + .htaccess   → dueño de la tabla alertas
 ├── monitoreo/     index.php + .htaccess   → dueño de la tabla monitoreos
@@ -145,5 +146,4 @@ Completado: estructura inicial del proyecto (carpetas, comun/config.php y comun/
 Pendientes o decisiones abiertas:
 - Prueba de ping a través de Apache (resto de la Fase 0).
 - docs/PLAN.md y docs/API.md están vacíos (solo "pendiente").
-- servicios/comun/ se puede listar desde el navegador (no tiene .htaccess). Decidir si se bloquea con Require all denied.
 - Los .htaccess usan RewriteOptions AllowNoSlash junto con DirectorySlash Off; sin él, las URLs sin barra final dan 403/404.

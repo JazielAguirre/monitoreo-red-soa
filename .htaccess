@@ -1,0 +1,19 @@
+# Limita lo que Apache sirve de este repositorio: solo web/ y los puntos de
+# entrada de los servicios. Los require entre archivos PHP no se ven afectados.
+
+# Ninguna carpeta muestra listado de archivos (lo heredan las subcarpetas).
+Options -Indexes
+
+RewriteEngine On
+
+# /monitoreo-red-soa/ → /monitoreo-red-soa/web/ (sin fijar el nombre de la carpeta).
+RewriteRule ^$ %{REQUEST_URI}web/ [R=302,L]
+
+# Accesible: la interfaz y el Servicio de Autenticación.
+# dispositivos, alertas y monitoreo tienen su propio .htaccess, que reemplaza
+# estas reglas y envía todo a su index.php.
+RewriteRule ^web(/|$) - [L]
+RewriteRule ^servicios/auth(/|$) - [L]
+
+# Todo lo demás (archivos de la raíz, database/, docs/, servicios/comun/, .git/): 404.
+RewriteRule ^ - [R=404,L]

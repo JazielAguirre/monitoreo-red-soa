@@ -1,0 +1,2 @@
+# comun/ solo se usa con require desde los servicios: nunca se sirve por HTTP.
+Require all denied
