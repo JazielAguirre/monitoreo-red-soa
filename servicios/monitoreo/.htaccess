@@ -8,5 +8,8 @@ DirectorySlash Off
 RewriteEngine On
 # Necesario con DirectorySlash Off: sin esto mod_rewrite ignora la URL sin barra final.
 RewriteOptions AllowNoSlash
+# Todo va a index.php, también los archivos que existen (ping.php, etc.):
+# ningún otro archivo del servicio se ejecuta directamente por HTTP.
+# No agregar RewriteCond %{REQUEST_FILENAME} !-f.
 RewriteRule ^index\.php$ - [L]
 RewriteRule ^ index.php [QSA,L]
