@@ -65,16 +65,19 @@ La fuente de verdad es @docs/API.md. Si una tarea requiere cambiar un endpoint, 
 
 Respuesta exitosa: { "ok": true, "data": ... }
 Error: { "ok": false, "error": "Mensaje claro para el usuario" }
-Códigos HTTP: 200 OK, 201 creado, 400 datos inválidos, 401 sin sesión, 404 no existe, 405 método no permitido, 409 conflicto (por ejemplo, IP duplicada), 500 error interno.
+Errores de validación (400 y 409): pueden llevar el campo opcional "campos", con un mensaje por campo: { "ok": false, "error": "Revisa los datos del formulario", "campos": { "ip": "Dirección IP no válida" } }
+Códigos HTTP: 200 OK, 201 creado, 400 datos inválidos, 401 sin sesión, 403 endpoint interno sin clave de servicio (desde la Fase 7), 404 no existe, 405 método no permitido, 409 conflicto (por ejemplo, IP duplicada), 500 error interno, 502 otro servicio no respondió o respondió algo inesperado.
 Siempre Content-Type: application/json; charset=utf-8, también en los errores.
-Campos en snake_case y en español, iguales a las columnas: id, nombre, ip, tipo, ubicacion, estado, fecha_registro, tiempo_respuesta_ms, atendida, etc.
-Fechas en formato YYYY-MM-DD HH:MM:SS (hora local).
+Campos en snake_case, en español y sin acentos ni ñ (ubicacion, contrasena), iguales a las columnas: id, nombre, ip, tipo, ubicacion, estado, fecha_registro, tiempo_respuesta_ms, atendida, etc.
+Tipos en JSON: números como números y booleanos como booleanos. PDO devuelve DECIMAL y TINYINT como texto: se convierten antes de responder ("0.32" → 0.32, "1" → true).
+Fechas en formato YYYY-MM-DD HH:MM:SS, hora local de America/Mazatlan. La zona se fija en comun/config.php con date_default_timezone_set() (el php.ini de XAMPP trae Europe/Berlin). Todas las fechas las genera PHP, nunca NOW() de MySQL, que usa la zona del sistema.
+Tiempos de respuesta en ms con hasta 2 decimales (DECIMAL(7,2)); null si el dispositivo no respondió.
 Valores de estado: activo, inactivo, desconocido (dispositivo recién registrado que aún no se monitorea).
 La interfaz y los servicios comparten origen (mismo Apache): no agregues cabeceras CORS.
 Convenciones de PHP
 declare(strict_types=1); al inicio de cada archivo.
 PDO con consultas preparadas siempre. Nunca concatenar valores en SQL. Conexión con utf8mb4, ERRMODE_EXCEPTION y FETCH_ASSOC.
-Toda salida pasa por los helpers de comun/respuesta.php (responder(), responderError()). Ningún echo, print_r o var_dump suelto que rompa el JSON.
+Toda salida pasa por los helpers de comun/respuesta.php (responder(), responderError($mensaje, $codigo, $campos = null)). Ningún echo, print_r o var_dump suelto que rompa el JSON.
 Las excepciones se capturan en el punto de entrada de cada servicio y se responde 500 con un mensaje genérico. El detalle va a error_log(), nunca al cliente.
 Validar todas las entradas: campos requeridos, longitudes, valores permitidos e IP con filter_var($ip, FILTER_VALIDATE_IP).
 Variables, funciones y tablas con nombres en español. Funciones cortas, cada una con una sola responsabilidad.
@@ -148,7 +151,6 @@ Fase actual: 1 (ver docs/PLAN.md)
 Completado:
 - Fase 0 — Preparación y prueba de ping: estructura del proyecto, comun/config.php y comun/respuesta.php, puntos de entrada de dispositivos, alertas y monitoreo con reescritura de URLs, esqueletos HTML, librerías en web/vendor/, repositorio git, .htaccess que solo expone web/ y los servicios, y servicios/monitoreo/ping.php probado a través de Apache (127.0.0.1 y la puerta de enlace activos, 192.0.2.1 inactivo en ~1 s, entradas inválidas → 400 sin ejecutar comandos).
 Pendientes o decisiones abiertas:
-- docs/PLAN.md y docs/API.md están vacíos (solo "pendiente"); API.md documenta por ahora el endpoint temporal.
+- docs/PLAN.md está vacío (solo "pendiente").
 - GET /servicios/monitoreo/prueba es temporal: eliminarlo en la Fase 4 junto con atenderPruebaPing().
-- tiempo_respuesta_ms tiene hasta 2 decimales (Linux da valores como 0.032 ms): en la Fase 1 la columna debería ser DECIMAL, no INT.
 - Los .htaccess de los servicios usan RewriteOptions AllowNoSlash junto con DirectorySlash Off; sin él, las URLs sin barra final dan 403/404.

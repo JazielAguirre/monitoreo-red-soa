@@ -16,10 +16,18 @@ function responder(mixed $datos, int $codigo = 200): never
 
 /**
  * Envía una respuesta de error: { "ok": false, "error": "..." } y termina.
+ * En errores de validación, $campos agrega un mensaje por campo:
+ * { "ok": false, "error": "...", "campos": { "ip": "Dirección IP no válida" } }
  */
-function responderError(string $mensaje, int $codigo): never
+function responderError(string $mensaje, int $codigo, ?array $campos = null): never
 {
-    enviarJson(['ok' => false, 'error' => $mensaje], $codigo);
+    $cuerpo = ['ok' => false, 'error' => $mensaje];
+
+    if ($campos !== null) {
+        $cuerpo['campos'] = $campos;
+    }
+
+    enviarJson($cuerpo, $codigo);
 }
 
 /**

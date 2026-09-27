@@ -7,6 +7,10 @@
 
 declare(strict_types=1);
 
+// Zona horaria de todas las fechas. Las genera PHP, nunca NOW() de MySQL.
+// El php.ini de XAMPP puede traer otra zona (Europe/Berlin).
+date_default_timezone_set('America/Mazatlan');
+
 // URL base de la interfaz web.
 const URL_INTERFAZ = 'http://localhost/monitoreo-red-soa/web';
 
