@@ -23,7 +23,7 @@ Después de la Fase 1, el backend y el frontend pueden avanzar en paralelo. La F
 | 0 | Preparación y prueba de ping | Todo el equipo | ✅ Completa |
 | 1 | Base de datos y contrato | Integrante 1 | ✅ Completa |
 | 2 | Servicio de Dispositivos | Integrante 2 | ✅ Completa |
-| 3 | Servicio de Alertas | Integrante 4 | Pendiente |
+| 3 | Servicio de Alertas | Integrante 4 | ✅ Completa |
 | 4 | Servicio de Monitoreo | Integrante 3 | Pendiente |
 | 5 | Sistema de diseño | Integrante 4 | Pendiente |
 | 6 | Pantallas | Integrante 4 | Pendiente |
@@ -84,7 +84,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] Con MySQL apagado, cualquier endpoint responde 500 en JSON sin mostrar detalles internos. Esta prueba es manual.
 - [x] `pruebas/dispositivos.php` cubre todos los puntos anteriores, excepto el de MySQL apagado, y pasa completo.
 
-## Fase 3 · Servicio de Alertas
+## Fase 3 · Servicio de Alertas ✅
 
 **Objetivo:** gestionar alertas con la regla contra duplicados dentro del propio servicio.
 
@@ -96,13 +96,13 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 **Listo cuando:**
 
-- [ ] `GET /alertas` filtra por `atendida`, `dispositivo` y `limite`, del más reciente al más antiguo.
-- [ ] `GET /alertas/conteo` coincide con los datos del seed (`1` pendiente, `3` atendidas).
-- [ ] `POST /alertas` para un dispositivo sin alerta pendiente → 201 con `creada: true`. Una segunda vez → 200 con `creada: false` y la misma alerta.
-- [ ] Después de atender esa alerta, un nuevo `POST` vuelve a crear una (201).
-- [ ] `PATCH /atender` guarda `fecha_atendida` y es idempotente: una segunda llamada responde 200 sin cambios.
-- [ ] Dispositivo inexistente → 404; datos faltantes o tipo inválido → 400.
-- [ ] `pruebas/alertas.php` pasa completo.
+- [x] `GET /alertas` filtra por `atendida`, `dispositivo` y `limite`, del más reciente al más antiguo.
+- [x] `GET /alertas/conteo` coincide con los datos del seed (`1` pendiente, `3` atendidas).
+- [x] `POST /alertas` para un dispositivo sin alerta pendiente → 201 con `creada: true`. Una segunda vez → 200 con `creada: false` y la misma alerta.
+- [x] Después de atender esa alerta, un nuevo `POST` vuelve a crear una (201).
+- [x] `PATCH /atender` guarda `fecha_atendida` y es idempotente: una segunda llamada responde 200 sin cambios.
+- [x] Dispositivo inexistente → 404; datos faltantes o tipo inválido → 400.
+- [x] `pruebas/alertas.php` pasa completo.
 
 ## Fase 4 · Servicio de Monitoreo
 
