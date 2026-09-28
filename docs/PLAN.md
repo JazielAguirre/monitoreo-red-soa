@@ -149,11 +149,11 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 **Listo cuando:**
 
-- [ ] `componentes.html` muestra cada componente y estado del sistema de diseño, y se ve igual que la referencia cuando se comparan lado a lado.
-- [ ] Ningún archivo fuera de `tokens.css` tiene colores hexadecimales (se revisa con `grep`).
-- [ ] Las fuentes cargan desde `web/vendor/`, sin peticiones a internet (se revisa en la pestaña Red del navegador).
-- [ ] El punto pulsa al monitorear y queda fijo con `prefers-reduced-motion`.
-- [ ] Se ve bien a 1440 px y a 390 px.
+- [x] `componentes.html` muestra cada componente y estado del sistema de diseño, y se ve igual que la referencia cuando se comparan lado a lado.
+- [x] Ningún archivo fuera de `tokens.css` tiene colores hexadecimales (se revisa con `grep`).
+- [x] Las fuentes cargan desde `web/vendor/`, sin peticiones a internet (se revisa en la pestaña Red del navegador).
+- [x] El punto pulsa al monitorear y queda fijo con `prefers-reduced-motion`.
+- [x] Se ve bien a 1440 px y a 390 px.
 - [ ] El equipo aprueba el resultado.
 
 ## Fase 6 · Pantallas

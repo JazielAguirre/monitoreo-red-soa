@@ -53,8 +53,8 @@ servicios/
 ├── monitoreo/     index.php + .htaccess, endpoints.php, validacion.php, datos.php, clientes.php (llamadas HTTP a Dispositivos y Alertas), ping.php → dueño de la tabla monitoreos
 └── auth/          index.php               → dueño de la tabla usuarios
 web/
-├── css/         tokens.css (variables de diseño), app.css (componentes)
-├── js/          api.js (único punto de acceso a la API) + un archivo por página
+├── css/         tokens.css (variables de diseño, único archivo con colores), app.css (componentes y Bootstrap), componentes.css (solo la página de muestra)
+├── js/          api.js (único punto de acceso a la API) + un archivo por página (componentes.js: demostraciones de la página de muestra)
 ├── vendor/      bootstrap, bootstrap-icons, chart.js, fuentes Inter y JetBrains Mono
 └── *.html       login, index (dashboard), dispositivos, monitoreos, alertas, componentes
 pruebas/         ayudas.php + un script por servicio (dispositivos.php, ...). Solo línea de comandos; no accesible por HTTP
@@ -113,32 +113,54 @@ Se implementa en la Fase 7. Antes de eso, los servicios funcionan sin login.
 Diseño de la interfaz
 Tokens: colores, tipografía, espaciados, radios y sombras son variables CSS en web/css/tokens.css. Ningún otro archivo usa valores hexadecimales sueltos.
 Referencia visual: docs/diseno/. "Monitoreo de Red SOA.dc.html" es el sistema de diseño (valores finales), "Monitoreo de Red SOA · Pantallas.dc.html" y el PDF muestran las pantallas. Es solo referencia: no copies su código (usa React internamente y carga recursos desde internet).
-Paleta (valores finales del :root del sistema de diseño):
-Base: --color-base #0B1D2E, --color-base-2 #16324F, --color-base-texto #B6C4D3 (texto sobre la base azul marino).
-Fondo y superficies: --color-fondo #F3F6F9, --color-superficie #FFFFFF, --color-borde #E2E8F0.
-Texto: --color-texto #1E293B, --color-texto-2 #5B6B80 (secundario; reemplaza a #64748B, que no llegaba a AA sobre el fondo).
-Acciones: --color-acento #2F6FB0, --color-peligro #DC2626 (acciones destructivas).
+Tokens: web/css/tokens.css es el único archivo con colores (hexadecimales o rgb/rgba), agrupados por categoría: paleta base, estados, superficies y bordes, barra lateral, acento, gráficas, transparencias, tipografía y medidas. Además de la paleta del :root del diseño, tokeniza los colores que el diseño escribía directamente (bordes suaves, hover de fila, esqueleto, variantes del acento, colores de la barra lateral, series de la gráfica, fondos de modal y anillos de foco).
+Paleta base (valores finales del sistema de diseño):
+Base: --color-base #0B1D2E, --color-base-2 #16324F. Texto: --color-texto #1E293B, --color-texto-2 #5B6B80 (reemplaza a #64748B, que no llegaba a AA sobre el fondo), --color-marcador #66778C (placeholder).
+Fondo y superficies: --color-fondo #F3F6F9, --color-superficie #FFFFFF, --color-borde #E2E8F0, --color-borde-suave #EEF2F6, --color-borde-control #CBD5E1, --color-superficie-hover #F8FAFC.
+Acciones: --color-acento #2F6FB0 (foco, enlaces, gráfica, pulso), --color-peligro #DC2626.
 Estados (color / -texto / -fondo):
   activo       #22C55E / #15803D / #F0FDF4
   inactivo     #EF4444 / #B91C1C / #FEF2F2
   alerta       #F59E0B / #B45309 / #FFFBEB
   desconocido  #94A3B8 / #475569 / #F1F5F9
-El color de estado es para el punto; el texto de estado usa la variante -texto (AA sobre -fondo o blanco). El verde #22C55E sobre blanco da 2.3:1: nunca como texto.
-Radios: --radio-sm 6px, --radio 8px, --radio-lg 12px.
-Sombras:
-  --sombra-1: 0 1px 2px rgb(11 29 46 / .05)
-  --sombra-2: 0 4px 12px -2px rgb(11 29 46 / .10)
-  --sombra-3: 0 20px 40px -8px rgb(11 29 46 / .28)
-Bootstrap: --bs-primary: var(--color-base-2); --bs-body-bg: var(--color-fondo); --bs-body-font-family: Inter; --bs-border-radius: var(--radio).
+El color de estado es para el punto; el texto de estado usa la variante -texto. El verde #22C55E sobre blanco da 2.3:1: nunca como texto.
+Gráficas: --color-grafica-1 #16324F, -2 #2F6FB0, -3 #14958A, -4 #5A92C9 (el diseño traía #6FA3D6, 2.66:1; se oscureció para llegar a 3:1).
+Radios: --radio-sm 6px, --radio 8px, --radio-icono 10px, --radio-lg 12px, --radio-pastilla 999px.
+Sombras: --sombra-1 (tarjetas), --sombra-2 (hover, menú), --sombra-3 (modal), --sombra-notificacion.
+Medidas: controles 38 px (sm 32), fila de tabla 56, encabezado de tabla 40, notificación 340 px de ancho (arriba 24, derecha 32), modal 420 px.
+Tiempos: pulso 1.2 s (ease-out), esqueleto 1.4 s (opacidad 1 → .55), spinner 0.7 s, notificación 4.5 s (--duracion-notificacion; JavaScript lo lee del token).
 Tipografía:
 Inter para la interfaz (web/vendor/inter/), con respaldo system-ui, sans-serif.
-JetBrains Mono para IPs, horas y tiempos (web/vendor/jetbrains-mono/, pesos 400, 500 y 600), con respaldo ui-monospace, monospace y font-variant-numeric: slashed-zero (cero con barra).
+JetBrains Mono para IPs, horas y tiempos (web/vendor/jetbrains-mono/, pesos 400, 500 y 600), con respaldo ui-monospace, monospace y font-variant-numeric: slashed-zero (clase .mono o .texto-mono).
 Escala (tamaño / interlineado en px · peso):
-  Display (login)     28 / 36 · 600 · letter-spacing -1%
-  Título de página    22 / 30 · 600
-  Título de tarjeta   16 / 24 · 600
-  Cuerpo              14 / 20 · 400
-  Monoespaciada       13 / 20 · 500 · JetBrains Mono
+  Display (login)       28 / 36 · 600 · letter-spacing -1%
+  Título de página      22 / 30 · 600
+  Título de tarjeta     16 / 24 · 600
+  Indicador             32 / 36 · 600 · tabular
+  Cuerpo                14 / 20 · 400
+  Secundario            13 / 18 · 400
+  Encabezado de tabla   11 / 16 · 600 · +6% · mayúsculas
+  Monoespaciada         13 / 20 · 500 · JetBrains Mono · cero con barra
+Bootstrap: las variables globales (--bs-primary, --bs-primary-rgb, --bs-body-*, --bs-border-*, --bs-link-*, --bs-focus-ring-*) están en tokens.css; las de cada componente (--bs-btn-*, --bs-modal-*, --bs-toast-*, --bs-table-*, --bs-nav-underline-*, --bs-card-*) en app.css. .btn-secondary es el "Secundario" del diseño (blanco con borde), no el gris de Bootstrap. El chevron del select y el ícono de error del campo son íconos de Bootstrap Icons dentro de .campo-icono, no las imágenes SVG de Bootstrap (traen colores escritos).
+Foco: botones, acciones de tabla, pestañas y navegación usan :focus-visible (el anillo aparece con el teclado, no con el mouse). Los campos de formulario muestran el foco siempre. El campo con error muestra su anillo rojo también sin foco.
+Movimiento reducido: con prefers-reduced-motion el pulso y el esqueleto quedan fijos, y el spinner gira más lento (1.5 s) en lugar de detenerse.
+Contrastes (WCAG AA: texto ≥ 4.5:1; íconos y gráficas ≥ 3:1; los elementos deshabilitados están exentos):
+  --color-base-etiqueta #7D93A8 sobre base #0B1D2E ........ 5.38 (el diseño traía #6B8299: 4.29)
+  --color-base-texto-2 #8FA3B8 sobre base / base-2 ........ 6.59 / 5.05
+  --color-base-texto-claro #D5E1EC sobre base / base-2 .... 12.86 / 9.86
+  --color-base-icono #8CBCEB (ícono) sobre base / base-2 .. 8.55 / 6.55
+  --color-base-texto #B6C4D3 sobre base / hover #1A2B3B ... 9.62 / 8.14
+  blanco sobre ítem activo #16324F / hover #1A2B3B ........ 13.10 / 14.46
+  --color-acento-texto #1E4F80 sobre acento-fondo / tenue . 7.76 / 8.14
+  --color-alerta-texto #B45309 sobre alerta-suave #FEF3C7 . 4.51
+  --color-base sobre contador ámbar #F59E0B ............... 7.95
+  --color-base-2 sobre icono-fondo / botón-texto-hover .... 11.73 / 11.93
+  --color-texto-2 sobre superficie-hover / fila / fondo ... 5.20 / 5.29 / 5.02
+  --color-desconocido-texto sobre desconocido-fondo ....... 6.92
+  --color-marcador #66778C (placeholder) sobre blanco ..... 4.58 (el diseño usaba #94A3B8: 2.56)
+  cerrar notificación y "—" sin dato → --color-texto-2 .... 5.44 (el diseño usaba #94A3B8: 2.56)
+  --color-inactivo #EF4444 (ícono de error) sobre blanco .. 3.76
+  --color-grafica-1 / -2 / -3 / -4 sobre blanco ........... 13.10 / 5.22 / 3.69 / 3.29
 Motivo visual: el punto de estado de color. Aparece en tablas, tarjetas y dashboard, y pulsa mientras se ejecuta un ping.
 Bootstrap se personaliza con sus variables CSS. El resultado no debe verse como Bootstrap por defecto.
 Iconos y gráficas: Bootstrap Icons para los iconos y Chart.js para las gráficas, usando los colores de los tokens.
@@ -152,7 +174,7 @@ Contraste de texto AA.
 Todos los campos de formulario tienen etiqueta.
 Responsive: desde 360 px de ancho.
 Acciones destructivas: eliminar siempre pide confirmación en un modal.
-Página de muestra: cada componente nuevo se agrega también a web/componentes.html, la página de muestra del sistema de diseño.
+Página de muestra: cada componente nuevo se agrega también a web/componentes.html, la página de muestra del sistema de diseño. Sus estados hover y foco se muestran quietos con las clases .estado-hover y .estado-foco de web/css/componentes.css; por eso los componentes propios definen sus colores de hover con variables (--accion-*, --nav-*).
 Flujo de trabajo
 El proyecto avanza por las fases de docs/PLAN.md. Trabaja solo en la fase o tarea indicada y no adelantes funciones de otras fases.
 Antes de un cambio grande, propón un plan y espera aprobación.
@@ -170,7 +192,7 @@ Estado actual
 
 Actualiza esta sección al cerrar cada fase.
 
-Fase actual: 5 — Sistema de diseño (ver docs/PLAN.md)
+Fase actual: 5 — Sistema de diseño, en la rama interfaz-sistema-diseno, esperando la aprobación del equipo (no se fusiona a main hasta entonces).
 Completado:
 - Fase 0 — Preparación y prueba de ping: estructura del proyecto, comun/config.php y comun/respuesta.php, puntos de entrada de dispositivos, alertas y monitoreo con reescritura de URLs, esqueletos HTML, librerías en web/vendor/, repositorio git, .htaccess que solo expone web/ y los servicios, y servicios/monitoreo/ping.php probado a través de Apache (127.0.0.1 y la puerta de enlace activos, 192.0.2.1 inactivo en ~1 s, entradas inválidas → 400 sin ejecutar comandos).
 - Fase 1 — Base de datos: database/schema.sql con las 4 tablas de docs/API.md (FK con ON DELETE CASCADE, índices, utf8mb4_unicode_ci), database/seed.sql (6 dispositivos, 56 monitoreos, 1 alerta pendiente y 3 atendidas, usuario admin) y comun/db.php (PDO con EMULATE_PREPARES en false y colación utf8mb4_unicode_ci). Verificado: carga desde cero repetible, coherencia de ultimo_* con el último monitoreo, UNIQUE, FK y cascada (con ROLLBACK).
@@ -178,6 +200,7 @@ Completado:
 - Fase 3 — Servicio de Alertas: los 4 endpoints de docs/API.md con el patrón de la Fase 2; columna generada alertas.dispositivo_pendiente con índice único (una sola pendiente por dispositivo, también con POST simultáneos: 20 de 20 rondas de 10 POST resolvieron la carrera con el 1062, sin 500 ni deadlocks); pruebas/alertas.php (141 comprobaciones; la de concurrencia se omite con aviso si PHP no tiene curl).
 - Fase 4 — Servicio de Monitoreo: POST /monitoreo/{id} con el flujo de 5 pasos solo por HTTP (comun/http.php), GET /monitoreo con filtros, paginación y resumen en SQL, GET /monitoreo/recientes con ROW_NUMBER(); endpoint temporal /monitoreo/prueba eliminado; pruebas/monitoreo.php (188 comprobaciones, incluidos los 502 con el archivo de fallo simulado y la regla SOA). Las tres suites pasan.
 Pendientes o decisiones abiertas:
+- Fase 5: falta la casilla "El equipo aprueba el resultado" (la marca el equipo después de revisar web/componentes.html).
 - Con EMULATE_PREPARES en false, PDO ya devuelve INT como int, pero DECIMAL sigue como texto y TINYINT como int (1): cada servicio convierte a número y booleano antes de responder (Dispositivos lo hace en formatearDispositivo()).
 - El 1452 de POST /monitoreo (dispositivo borrado entre el paso 1 y el 3) se prueba en datos.php, no de punta a punta: provocar esa carrera por HTTP no es confiable.
 - La columna generada VIRTUAL con índice único y FK en cascada está probada en MariaDB 10.4 (la del XAMPP); no se ha probado en MySQL 8.

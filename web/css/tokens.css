@@ -1,5 +1,229 @@
 /*
- * Tokens de diseño: colores, tipografía (@font-face de Inter), espaciados,
- * radios y sombras como variables CSS. Único archivo con valores hexadecimales.
- * Se implementa en la fase de diseño de la interfaz.
+ * Tokens de diseño del Sistema de Monitoreo de Red SOA.
+ * Fuente: docs/diseno/Monitoreo de Red SOA.dc.html (secciones 01–14) y la sección
+ * "Diseño de la interfaz" de CLAUDE.md.
+ *
+ * Es el ÚNICO archivo con valores de color (hexadecimales o rgb/rgba). El resto
+ * de los estilos usa var(--…). Los contrastes están documentados en CLAUDE.md.
  */
+
+/* ------------------------------------------------------------ Fuentes locales */
+
+@font-face {
+    font-family: 'Inter';
+    src: url('../vendor/inter/Inter-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Inter';
+    src: url('../vendor/inter/Inter-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Inter';
+    src: url('../vendor/inter/Inter-SemiBold.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Inter';
+    src: url('../vendor/inter/Inter-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../vendor/jetbrains-mono/JetBrainsMono-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../vendor/jetbrains-mono/JetBrainsMono-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../vendor/jetbrains-mono/JetBrainsMono-SemiBold.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    /* -------------------------------------------------------- Paleta base */
+    --color-base: #0B1D2E;              /* Barra lateral, login */
+    --color-base-2: #16324F;            /* Botón primario, ítem activo */
+    --color-texto: #1E293B;             /* Texto principal */
+    --color-texto-2: #5B6B80;           /* Texto secundario (AA sobre blanco y fondo) */
+    --color-marcador: #66778C;          /* Texto de ejemplo (placeholder) de los campos, 4.58:1 */
+    --color-peligro: #DC2626;           /* Botón Eliminar (texto blanco AA) */
+
+    /* -------------------------------------------------------- Estados */
+    /* El color puro es para el punto; el texto usa -texto (AA sobre -fondo o blanco). */
+    --color-activo: #22C55E;
+    --color-activo-texto: #15803D;
+    --color-activo-fondo: #F0FDF4;
+    --color-activo-borde: #DCFCE7;
+    --color-activo-halo: #F7FEF9;       /* Halo del ícono en el estado vacío */
+
+    --color-inactivo: #EF4444;
+    --color-inactivo-texto: #B91C1C;
+    --color-inactivo-fondo: #FEF2F2;
+    --color-inactivo-borde: #FECACA;
+
+    --color-alerta: #F59E0B;
+    --color-alerta-texto: #B45309;
+    --color-alerta-fondo: #FFFBEB;
+    --color-alerta-suave: #FEF3C7;      /* Contador de pestaña y borde */
+
+    --color-desconocido: #94A3B8;       /* Punto "Sin monitorear"; texto deshabilitado */
+    --color-desconocido-texto: #475569;
+    --color-desconocido-fondo: #F1F5F9;
+    --color-desconocido-halo: #F6F9FB;
+
+    /* -------------------------------------------------------- Superficies y bordes */
+    --color-fondo: #F3F6F9;             /* Área de contenido */
+    --color-superficie: #FFFFFF;        /* Tarjetas, modales */
+    --color-superficie-hover: #F8FAFC;  /* Hover de fila, encabezado de tabla, campo deshabilitado */
+    --color-borde: #E2E8F0;             /* Bordes y divisores */
+    --color-borde-suave: #EEF2F6;       /* Divisores internos y filas */
+    --color-borde-control: #CBD5E1;     /* Borde de botones secundarios y campos */
+    --color-icono-fondo: #EEF3F8;       /* Fondo del ícono de tarjetas y avatar */
+    --color-esqueleto: #E7ECF1;         /* Bloques del esqueleto de carga */
+    --color-boton-texto-hover: #EFF5FB; /* Hover del botón de texto */
+
+    /* -------------------------------------------------------- Barra lateral */
+    --color-base-texto: #B6C4D3;        /* Texto de los ítems */
+    --color-base-texto-2: #8FA3B8;      /* Subtítulos y usuario */
+    --color-base-texto-claro: #D5E1EC;  /* Iniciales del avatar, código sobre fondo oscuro */
+    --color-base-icono: #8CBCEB;        /* Íconos del ítem activo y del logo */
+    --color-base-etiqueta: #7D93A8;     /* Etiqueta "MENÚ" (5.38:1 sobre la base) */
+
+    /* -------------------------------------------------------- Acento */
+    /* Foco, enlaces, gráfica y el pulso del ping. */
+    --color-acento: #2F6FB0;
+    --color-acento-texto: #1E4F80;
+    --color-acento-fondo: #EFF6FF;
+    --color-acento-borde: #BFDBFE;
+    --color-acento-borde-fuerte: #93C5FD;
+    --color-acento-tenue: #F8FBFF;      /* Tarjeta del dispositivo que se está monitoreando */
+    --color-acento-fila: #FAFCFF;       /* Fila de tabla que se está monitoreando */
+
+    /* -------------------------------------------------------- Gráficas */
+    /* Una serie por dispositivo; todas llegan a 3:1 sobre blanco. */
+    --color-grafica-1: #16324F;
+    --color-grafica-2: #2F6FB0;
+    --color-grafica-3: #14958A;
+    --color-grafica-4: #5A92C9;
+
+    /* -------------------------------------------------------- Transparencias */
+    --color-fondo-modal: rgba(11, 29, 46, 0.5);         /* Fondo del modal, sin desenfoque */
+    --opacidad-fondo-modal: 0.5;
+    --color-foco-anillo: rgba(47, 111, 176, 0.25);      /* Anillo de foco de botones y acciones */
+    --color-foco-campo: rgba(47, 111, 176, 0.18);       /* Anillo de foco de campos */
+    --color-error-anillo: rgba(239, 68, 68, 0.12);      /* Anillo del campo con error */
+    --color-hover-barra: rgba(255, 255, 255, 0.06);     /* Hover de la barra lateral */
+    --color-giro-pista-claro: rgba(255, 255, 255, 0.35); /* Pista del spinner sobre fondo oscuro */
+    --sombra-1: 0 1px 2px rgba(11, 29, 46, 0.05);       /* Tarjetas */
+    --sombra-2: 0 4px 12px -2px rgba(11, 29, 46, 0.10); /* Hover, menú desplegable */
+    --sombra-3: 0 20px 40px -8px rgba(11, 29, 46, 0.28); /* Modal */
+    --sombra-notificacion: 0 12px 28px -8px rgba(11, 29, 46, 0.18);
+
+    /* -------------------------------------------------------- Tipografía */
+    --fuente-interfaz: 'Inter', system-ui, sans-serif;
+    --fuente-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+    /* Escala: tamaño / interlineado · peso · espaciado entre letras */
+    --texto-display-tamano: 28px;       /* Display · login: 28 / 36 · 600 · -1% */
+    --texto-display-alto: 36px;
+    --texto-display-espaciado: -0.01em;
+    --texto-titulo-pagina-tamano: 22px; /* Título de página: 22 / 30 · 600 */
+    --texto-titulo-pagina-alto: 30px;
+    --texto-titulo-tarjeta-tamano: 16px; /* Título de tarjeta: 16 / 24 · 600 */
+    --texto-titulo-tarjeta-alto: 24px;
+    --texto-indicador-tamano: 32px;     /* Indicador: 32 / 36 · 600 · tabular */
+    --texto-indicador-alto: 36px;
+    --texto-cuerpo-tamano: 14px;        /* Cuerpo: 14 / 20 · 400 */
+    --texto-cuerpo-alto: 20px;
+    --texto-secundario-tamano: 13px;    /* Secundario: 13 / 18 · 400 */
+    --texto-secundario-alto: 18px;
+    --texto-encabezado-tamano: 11px;    /* Encabezado de tabla: 11 / 16 · 600 · +6% */
+    --texto-encabezado-alto: 16px;
+    --texto-encabezado-espaciado: 0.06em;
+    --texto-mono-tamano: 13px;          /* Monoespaciada: 13 / 20 · 500 · cero con barra */
+    --texto-mono-alto: 20px;
+    --texto-pequeno-tamano: 12px;       /* Insignias, ayudas de campo */
+    --texto-seccion-tamano: 20px;       /* Encabezado de sección de la página de muestra */
+    --texto-seccion-alto: 28px;
+
+    /* -------------------------------------------------------- Medidas */
+    --radio-sm: 6px;                    /* Botón sm, ícono */
+    --radio: 8px;                       /* Botón, campo */
+    --radio-icono: 10px;                /* Ícono de tarjeta */
+    --radio-lg: 12px;                   /* Tarjeta, modal */
+    --radio-pastilla: 999px;            /* Badge, contador */
+
+    --alto-control: 38px;               /* Botón y campo */
+    --alto-control-sm: 32px;            /* Botón sm y acción de tabla */
+    --alto-fila: 56px;
+    --alto-encabezado-tabla: 40px;
+    --alto-item-navegacion: 40px;
+    --ancho-notificacion: 340px;
+    --ancho-modal: 420px;
+    --tamano-punto: 8px;
+    --tamano-punto-sm: 6px;
+
+    --duracion-pulso: 1.2s;             /* Anillo del punto mientras se hace el ping */
+    --duracion-esqueleto: 1.4s;         /* Opacidad 1 → .55 */
+    --duracion-giro: 0.7s;              /* Spinner */
+    --duracion-notificacion: 4.5s;      /* Tiempo visible de un toast (lo lee JavaScript) */
+
+    /* -------------------------------------------------------- Bootstrap (variables globales) */
+    /* Las variables de cada componente (--bs-btn-*, --bs-modal-*...) están en app.css. */
+    --bs-primary: var(--color-base-2);
+    --bs-primary-rgb: 22, 50, 79;
+    --bs-danger: var(--color-peligro);
+    --bs-danger-rgb: 220, 38, 38;
+    --bs-success: var(--color-activo);
+    --bs-success-rgb: 34, 197, 94;
+    --bs-warning: var(--color-alerta);
+    --bs-warning-rgb: 245, 158, 11;
+    --bs-body-font-family: var(--fuente-interfaz);
+    --bs-font-monospace: var(--fuente-mono);
+    --bs-body-font-size: var(--texto-cuerpo-tamano);
+    --bs-body-line-height: 1.4286;      /* 20 / 14 */
+    --bs-body-color: var(--color-texto);
+    --bs-body-color-rgb: 30, 41, 59;
+    --bs-body-bg: var(--color-fondo);
+    --bs-body-bg-rgb: 243, 246, 249;
+    --bs-emphasis-color: var(--color-texto);
+    --bs-secondary-color: var(--color-texto-2);
+    --bs-secondary-bg: var(--color-desconocido-fondo);
+    --bs-tertiary-bg: var(--color-superficie-hover);
+    --bs-border-color: var(--color-borde);
+    --bs-border-radius: var(--radio);
+    --bs-border-radius-sm: var(--radio-sm);
+    --bs-border-radius-lg: var(--radio-lg);
+    --bs-border-radius-pill: var(--radio-pastilla);
+    --bs-link-color: var(--color-acento);
+    --bs-link-color-rgb: 47, 111, 176;
+    --bs-link-hover-color: var(--color-base-2);
+    --bs-link-hover-color-rgb: 22, 50, 79;
+    --bs-focus-ring-color: var(--color-foco-anillo);
+    --bs-focus-ring-width: 3px;
+    --bs-form-invalid-color: var(--color-inactivo-texto);
+    --bs-form-invalid-border-color: var(--color-inactivo);
+    --bs-box-shadow-sm: var(--sombra-1);
+    --bs-box-shadow: var(--sombra-2);
+    --bs-box-shadow-lg: var(--sombra-3);
+}

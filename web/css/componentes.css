@@ -1,0 +1,656 @@
+/*
+ * Estilos exclusivos de web/componentes.html (la página de muestra del sistema de
+ * diseño): acomodo de las secciones y clases que fuerzan un estado (hover, foco)
+ * para mostrarlo quieto, como en docs/diseno/. Las pantallas reales no lo cargan.
+ * Solo usa var(--…) de tokens.css.
+ */
+
+/* ============================================================ Página */
+
+.muestra {
+    display: flex;
+    flex-direction: column;
+    gap: 64px;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 56px;
+}
+
+.muestra-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.muestra-logo {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+    color: var(--color-base-icono);
+    background-color: var(--color-base);
+    border-radius: var(--radio-lg);
+}
+
+.muestra-logo::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 9px;
+    height: 9px;
+    background-color: var(--color-activo);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--color-base);
+}
+
+.muestra-cabecera h1 {
+    margin: 0;
+}
+
+.muestra-cabecera p {
+    margin: 2px 0 0;
+    color: var(--color-texto-2);
+}
+
+.seccion {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+.seccion__titulo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    margin: 0;
+}
+
+.seccion__numero {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: var(--texto-pequeno-tamano);
+    font-weight: 400;
+    color: var(--color-texto-2);
+}
+
+.seccion__nombre {
+    font-size: var(--texto-seccion-tamano);
+    line-height: var(--texto-seccion-alto);
+    font-weight: 600;
+}
+
+.seccion__nota {
+    font-size: var(--texto-secundario-tamano);
+    font-weight: 400;
+    color: var(--color-texto-2);
+}
+
+.caja {
+    min-width: 0;
+    padding: 24px;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+}
+
+.etiqueta-muestra {
+    font-size: var(--texto-pequeno-tamano);
+    color: var(--color-texto-2);
+}
+
+.pie-muestra {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    font-size: var(--texto-pequeno-tamano);
+    color: var(--color-texto-2);
+}
+
+.rejilla {
+    display: grid;
+    gap: 16px;
+}
+
+.rejilla--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rejilla--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.rejilla--6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.rejilla--2.rejilla-tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* ============================================================ 01 Colores */
+
+.muestra-color {
+    overflow: hidden;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+}
+
+.muestra-color__franja {
+    height: 88px;
+    background-color: var(--muestra);
+}
+
+.muestra-color__franja--clara {
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.muestra-color__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 14px;
+    font-size: var(--texto-pequeno-tamano);
+}
+
+.muestra-color__nombre {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-weight: 500;
+}
+
+.muestra-color__valor {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    color: var(--color-texto-2);
+}
+
+.muestra-color__uso {
+    margin-top: 6px;
+    color: var(--color-texto-2);
+}
+
+.muestra-color__franja--estado {
+    height: 72px;
+}
+
+.muestra-color__cabecera {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.muestra-color__variantes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.variante {
+    flex: 1;
+    padding: 4px 8px;
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: 11px;
+    border-radius: var(--radio-sm);
+    white-space: nowrap;
+}
+
+.variante--texto {
+    color: var(--color-superficie);
+    background-color: var(--muestra-texto);
+}
+
+.variante--fondo {
+    color: var(--muestra-texto);
+    background-color: var(--muestra-fondo);
+    border: 1px solid var(--muestra-borde);
+}
+
+.muestra-complementaria {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    font-size: var(--texto-pequeno-tamano);
+    color: var(--color-texto-2);
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+}
+
+.muestra-complementaria__color {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    font-weight: 600;
+    color: var(--muestra-letra, transparent);
+    background-color: var(--muestra);
+    border-radius: var(--radio);
+}
+
+.muestra-complementaria strong {
+    display: block;
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-weight: 500;
+    color: var(--color-texto);
+}
+
+.codigo-tokens {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 24px;
+    margin: 0;
+    padding: 24px;
+    overflow-x: auto;
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: var(--texto-pequeno-tamano);
+    line-height: 20px;
+    color: var(--color-base-texto-claro);
+    background-color: var(--color-base);
+    border-radius: var(--radio-lg);
+}
+
+.codigo-tokens pre {
+    margin: 0;
+    font: inherit;
+    white-space: pre;
+}
+
+.codigo-tokens__comentario {
+    color: var(--color-base-texto-2);
+}
+
+/* ============================================================ 02 Tipografía */
+
+.fila-tipo {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr) 200px;
+    gap: 24px;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--color-borde-suave);
+}
+
+.fila-tipo:last-child {
+    border-bottom: 0;
+}
+
+.fila-tipo__nombre {
+    font-size: var(--texto-secundario-tamano);
+    color: var(--color-texto-2);
+}
+
+.fila-tipo__medidas {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: var(--texto-pequeno-tamano);
+    color: var(--color-texto-2);
+}
+
+/* ============================================================ 03 Espaciado, radios y sombras */
+
+.escala-espacio {
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    gap: 10px 12px;
+    align-items: center;
+    font-size: var(--texto-pequeno-tamano);
+}
+
+.escala-espacio__barra {
+    height: 10px;
+    background-color: var(--color-acento);
+    border-radius: 2px;
+}
+
+.escala-espacio__clase {
+    font-family: var(--fuente-mono);
+    color: var(--color-texto-2);
+}
+
+.radios {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 16px;
+}
+
+.radio-muestra {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: var(--texto-pequeno-tamano);
+    color: var(--color-texto-2);
+}
+
+.radio-muestra__caja {
+    flex: none;
+    width: 56px;
+    height: 56px;
+    border: 2px solid var(--color-base);
+}
+
+.radio-muestra strong {
+    display: block;
+    font-family: var(--fuente-mono);
+    font-weight: 500;
+    color: var(--color-texto);
+}
+
+.sombras {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px;
+    background-color: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+}
+
+.sombra-muestra {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    font-size: var(--texto-pequeno-tamano);
+    color: var(--color-texto-2);
+    background-color: var(--color-superficie);
+    border-radius: var(--radio);
+}
+
+.sombra-muestra strong {
+    font-family: var(--fuente-mono);
+    font-weight: 500;
+    color: var(--color-texto);
+}
+
+/* ============================================================ 04 Iconos */
+
+.iconos {
+    display: grid;
+    grid-template-columns: repeat(14, minmax(0, 1fr));
+    gap: 8px;
+    padding: 20px 24px;
+}
+
+.icono-muestra {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    text-align: center;
+    color: var(--color-texto-2);
+}
+
+.icono-muestra > .bi {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    color: var(--color-base-2);
+    background-color: var(--color-fondo);
+    border-radius: var(--radio-icono);
+}
+
+/* ============================================================ 05 Botones */
+
+.matriz-botones {
+    display: grid;
+    grid-template-columns: 120px repeat(5, minmax(0, 1fr));
+    gap: 18px 16px;
+    align-items: center;
+    min-width: 880px;
+}
+
+.matriz-botones__estado {
+    font-size: var(--texto-encabezado-tamano);
+    font-weight: 600;
+    letter-spacing: var(--texto-encabezado-espaciado);
+    color: var(--color-texto-2);
+}
+
+.matriz-botones__tipo {
+    font-size: var(--texto-secundario-tamano);
+    color: var(--color-texto-2);
+}
+
+.desplazable {
+    overflow-x: auto;
+}
+
+/* ============================================================ Estados forzados (solo muestra) */
+
+.btn.estado-hover {
+    color: var(--bs-btn-hover-color);
+    background-color: var(--bs-btn-hover-bg);
+    border-color: var(--bs-btn-hover-border-color);
+}
+
+.btn.estado-foco {
+    color: var(--bs-btn-color);
+    background-color: var(--bs-btn-bg);
+    border-color: var(--btn-foco-borde);
+    box-shadow: var(--bs-btn-focus-box-shadow);
+}
+
+.btn-accion.estado-hover {
+    color: var(--accion-hover-color);
+    background-color: var(--accion-hover-fondo);
+    border-color: var(--accion-hover-borde);
+}
+
+.btn-accion.estado-foco {
+    color: var(--color-texto);
+    border-color: var(--color-acento);
+    box-shadow: 0 0 0 3px var(--color-foco-anillo);
+}
+
+.nav-lateral__enlace.estado-hover {
+    --nav-color: var(--color-superficie);
+    --nav-fondo: var(--color-hover-barra);
+}
+
+.form-control.estado-foco {
+    border-color: var(--color-acento);
+    box-shadow: 0 0 0 3px var(--color-foco-campo);
+}
+
+.table > tbody > tr.estado-hover > * {
+    --bs-table-bg-state: var(--bs-table-hover-bg);
+}
+
+.table > tbody > tr.estado-hover .btn-accion--principal {
+    color: var(--color-texto);
+    border-color: var(--color-borde-control);
+}
+
+/* ============================================================ 06–07 Estado y navegación */
+
+.grupo-estados {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fila-estados {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.fila-estados--compacta {
+    gap: 20px;
+}
+
+.nota-muestra {
+    padding-top: 14px;
+    font-size: var(--texto-pequeno-tamano);
+    line-height: 18px;
+    color: var(--color-texto-2);
+    border-top: 1px solid var(--color-borde-suave);
+    text-wrap: pretty;
+}
+
+.navegacion-muestra {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    gap: 16px;
+}
+
+.navegacion-muestra .nav-lateral {
+    border-radius: var(--radio-lg);
+}
+
+.nav-lateral__leyenda {
+    display: flex;
+    justify-content: space-between;
+    margin-top: auto;
+    padding: 10px 12px 0;
+    font-size: var(--texto-encabezado-tamano);
+    color: var(--color-base-texto-2);
+}
+
+.pestanas-muestra {
+    padding: 8px 20px 14px;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+}
+
+/* ============================================================ 10 Formularios */
+
+.rejilla-campos {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 28px 20px;
+}
+
+.rejilla-campos__doble {
+    grid-column: span 2;
+}
+
+/* ============================================================ 11 Modal */
+
+.marco-modal {
+    /* La vista estática no está dentro de .modal, donde Bootstrap define estas variables. */
+    --bs-modal-bg: var(--color-superficie);
+    --bs-modal-color: var(--color-texto);
+    --bs-modal-border-width: 0;
+    --bs-modal-border-radius: var(--radio-lg);
+    --bs-modal-box-shadow: var(--sombra-3);
+    --bs-modal-footer-gap: 8px;
+    --bs-modal-footer-border-width: 0;
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 340px;
+    padding: 24px 16px;
+    overflow: hidden;
+    background-color: var(--color-fondo-modal);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+}
+
+.marco-modal .modal-content {
+    width: min(var(--ancho-modal), 100%);
+    border-radius: var(--radio-lg);
+}
+
+/* ============================================================ 12 Notificaciones */
+
+.pila-notificaciones {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pila-notificaciones .toast {
+    width: 100%;
+    --bs-toast-max-width: none;
+}
+
+.acciones-demo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* ============================================================ 14 Esqueleto */
+
+.esqueleto-tarjeta {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+}
+
+.esqueleto-tarjeta__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.esqueleto-tabla__encabezado {
+    height: var(--alto-encabezado-tabla);
+    background-color: var(--color-superficie-hover);
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.esqueleto-tabla__fila {
+    display: grid;
+    grid-template-columns: 90px 1fr 110px 70px;
+    gap: 16px;
+    align-items: center;
+    height: 52px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--color-borde-suave);
+}
+
+.esqueleto-tabla__fila:last-child {
+    border-bottom: 0;
+}
+
+/* ============================================================ Pantallas medianas y celular */
+
+@media (max-width: 1199.98px) {
+    .rejilla--6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .iconos { grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 20px; }
+    .codigo-tokens { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 991.98px) {
+    .rejilla--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .rejilla--2.rejilla-tres { grid-template-columns: 1fr; }
+    .rejilla-campos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .navegacion-muestra { grid-template-columns: 1fr; }
+    .muestra-dos-columnas { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 575.98px) {
+    .muestra {
+        gap: 48px;
+        padding: 24px 16px;
+    }
+
+    .rejilla--2,
+    .rejilla--4,
+    .rejilla-campos { grid-template-columns: 1fr; }
+    .rejilla--6 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .rejilla-campos__doble { grid-column: auto; }
+    .iconos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .fila-tipo {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .caja {
+        padding: 16px;
+    }
+}

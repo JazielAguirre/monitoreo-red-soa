@@ -1,5 +1,1295 @@
 /*
- * Estilos de los componentes de la interfaz y personalización de Bootstrap,
- * usando solo las variables de tokens.css.
- * Se implementa en la fase de diseño de la interfaz.
+ * Componentes de la interfaz y personalización de Bootstrap 5.3 (sin Sass).
+ * Fuente: docs/diseno/Monitoreo de Red SOA.dc.html, secciones 01–14.
+ *
+ * Solo usa var(--…) de tokens.css: aquí no hay colores escritos.
+ * Los estados hover y foco de los componentes propios se definen con variables
+ * (--accion-*, --nav-*...) para que web/css/componentes.css pueda mostrarlos quietos.
+ *
+ * Foco: botones, acciones de tabla y navegación usan :focus-visible (el anillo
+ * aparece con el teclado, no al hacer clic). Los campos muestran el foco siempre.
  */
+
+/* ============================================================ Base */
+
+body {
+    font-family: var(--fuente-interfaz);
+    font-size: var(--texto-cuerpo-tamano);
+    line-height: var(--texto-cuerpo-alto);
+    color: var(--color-texto);
+    background-color: var(--color-fondo);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+    color: var(--color-acento);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--color-base-2);
+    text-decoration: underline;
+}
+
+a:focus-visible {
+    outline: 0;
+    border-radius: var(--radio-sm);
+    box-shadow: 0 0 0 3px var(--color-foco-anillo);
+}
+
+/* ============================================================ Tipografía */
+
+.texto-display {
+    font-size: var(--texto-display-tamano);
+    line-height: var(--texto-display-alto);
+    font-weight: 600;
+    letter-spacing: var(--texto-display-espaciado);
+}
+
+.texto-titulo-pagina {
+    font-size: var(--texto-titulo-pagina-tamano);
+    line-height: var(--texto-titulo-pagina-alto);
+    font-weight: 600;
+}
+
+.texto-titulo-tarjeta {
+    font-size: var(--texto-titulo-tarjeta-tamano);
+    line-height: var(--texto-titulo-tarjeta-alto);
+    font-weight: 600;
+}
+
+.texto-indicador {
+    font-size: var(--texto-indicador-tamano);
+    line-height: var(--texto-indicador-alto);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.texto-cuerpo {
+    font-size: var(--texto-cuerpo-tamano);
+    line-height: var(--texto-cuerpo-alto);
+}
+
+.texto-secundario {
+    font-size: var(--texto-secundario-tamano);
+    line-height: var(--texto-secundario-alto);
+    color: var(--color-texto-2);
+}
+
+.texto-encabezado-tabla {
+    font-size: var(--texto-encabezado-tamano);
+    line-height: var(--texto-encabezado-alto);
+    font-weight: 600;
+    letter-spacing: var(--texto-encabezado-espaciado);
+    text-transform: uppercase;
+    color: var(--color-texto-2);
+}
+
+/* IPs, horas y tiempos: JetBrains Mono con cero con barra. */
+.mono {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+}
+
+.texto-mono {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: var(--texto-mono-tamano);
+    line-height: var(--texto-mono-alto);
+    font-weight: 500;
+}
+
+/* ============================================================ Tarjeta (Bootstrap .card) */
+
+.card {
+    --bs-card-bg: var(--color-superficie);
+    --bs-card-color: var(--color-texto);
+    --bs-card-border-color: var(--color-borde);
+    --bs-card-border-radius: var(--radio-lg);
+    --bs-card-inner-border-radius: calc(var(--radio-lg) - 1px);
+    --bs-card-spacer-y: 24px;
+    --bs-card-spacer-x: 24px;
+    --bs-card-cap-bg: var(--color-superficie-hover);
+    box-shadow: var(--sombra-1);
+}
+
+/* ============================================================ Botones (Bootstrap .btn) */
+
+.btn {
+    --bs-btn-padding-x: 16px;
+    --bs-btn-padding-y: 0;
+    --bs-btn-font-size: var(--texto-cuerpo-tamano);
+    --bs-btn-font-weight: 500;
+    --bs-btn-line-height: var(--texto-cuerpo-alto);
+    --bs-btn-border-radius: var(--radio);
+    --bs-btn-disabled-opacity: 0.4;
+    --bs-btn-focus-box-shadow: 0 0 0 2px var(--color-superficie), 0 0 0 4px var(--color-acento);
+    --btn-foco-borde: var(--bs-btn-border-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: var(--alto-control);
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Bootstrap aplica los colores de hover al foco; el diseño conserva los de reposo y agrega el anillo. */
+.btn:focus-visible {
+    color: var(--bs-btn-color);
+    background-color: var(--bs-btn-bg);
+    border-color: var(--btn-foco-borde);
+    box-shadow: var(--bs-btn-focus-box-shadow);
+}
+
+.btn[aria-busy="true"] {
+    cursor: progress;
+}
+
+.btn-sm {
+    --bs-btn-padding-x: 12px;
+    --bs-btn-font-size: var(--texto-secundario-tamano);
+    --bs-btn-border-radius: var(--radio-sm);
+    gap: 6px;
+    height: var(--alto-control-sm);
+}
+
+/* Primario: azul marino. */
+.btn-primary {
+    --bs-btn-color: var(--color-superficie);
+    --bs-btn-bg: var(--color-base-2);
+    --bs-btn-border-color: var(--color-base-2);
+    --bs-btn-hover-color: var(--color-superficie);
+    --bs-btn-hover-bg: var(--color-base);
+    --bs-btn-hover-border-color: var(--color-base);
+    --bs-btn-active-color: var(--color-superficie);
+    --bs-btn-active-bg: var(--color-base);
+    --bs-btn-active-border-color: var(--color-base);
+    --bs-btn-disabled-color: var(--color-superficie);
+    --bs-btn-disabled-bg: var(--color-base-2);
+    --bs-btn-disabled-border-color: var(--color-base-2);
+}
+
+/* Secundario: blanco con borde (reemplaza al gris de Bootstrap). */
+.btn-secondary {
+    --bs-btn-color: var(--color-texto);
+    --bs-btn-bg: var(--color-superficie);
+    --bs-btn-border-color: var(--color-borde-control);
+    --bs-btn-hover-color: var(--color-texto);
+    --bs-btn-hover-bg: var(--color-fondo);
+    --bs-btn-hover-border-color: var(--color-desconocido);
+    --bs-btn-active-color: var(--color-texto);
+    --bs-btn-active-bg: var(--color-fondo);
+    --bs-btn-active-border-color: var(--color-desconocido);
+    --bs-btn-disabled-color: var(--color-desconocido);
+    --bs-btn-disabled-bg: var(--color-superficie-hover);
+    --bs-btn-disabled-border-color: var(--color-borde);
+    --bs-btn-disabled-opacity: 1;
+    --bs-btn-focus-box-shadow: 0 0 0 3px var(--color-foco-anillo);
+    --btn-foco-borde: var(--color-acento);
+}
+
+/* Peligro: Eliminar. */
+.btn-danger {
+    --bs-btn-color: var(--color-superficie);
+    --bs-btn-bg: var(--color-peligro);
+    --bs-btn-border-color: var(--color-peligro);
+    --bs-btn-hover-color: var(--color-superficie);
+    --bs-btn-hover-bg: var(--color-inactivo-texto);
+    --bs-btn-hover-border-color: var(--color-inactivo-texto);
+    --bs-btn-active-color: var(--color-superficie);
+    --bs-btn-active-bg: var(--color-inactivo-texto);
+    --bs-btn-active-border-color: var(--color-inactivo-texto);
+    --bs-btn-disabled-color: var(--color-superficie);
+    --bs-btn-disabled-bg: var(--color-peligro);
+    --bs-btn-disabled-border-color: var(--color-peligro);
+    --bs-btn-focus-box-shadow: 0 0 0 2px var(--color-superficie), 0 0 0 4px var(--color-peligro);
+}
+
+/* Texto: "Ver todas →". */
+.btn-link {
+    --bs-btn-padding-x: 12px;
+    --bs-btn-color: var(--color-acento);
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: var(--color-base-2);
+    --bs-btn-hover-bg: var(--color-boton-texto-hover);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: var(--color-base-2);
+    --bs-btn-active-bg: var(--color-boton-texto-hover);
+    --bs-btn-active-border-color: transparent;
+    --bs-btn-disabled-color: var(--color-desconocido);
+    --bs-btn-disabled-opacity: 1;
+    --bs-btn-focus-box-shadow: 0 0 0 3px var(--color-foco-anillo);
+    gap: 6px;
+    text-decoration: none;
+}
+
+.btn-link:hover,
+.btn-link:focus-visible {
+    text-decoration: none;
+}
+
+/* Filtro segmentado (btn-group con radios .btn-check). */
+.filtro-segmentado {
+    display: flex;
+    width: 100%;
+    height: var(--alto-control);
+    border: 1px solid var(--color-borde-control);
+    border-radius: var(--radio);
+    overflow: hidden;
+}
+
+.filtro-segmentado > .btn {
+    --bs-btn-padding-x: 12px;
+    --bs-btn-font-size: var(--texto-secundario-tamano);
+    --bs-btn-color: var(--color-desconocido-texto);
+    --bs-btn-bg: var(--color-superficie);
+    --bs-btn-border-color: transparent;
+    --bs-btn-border-radius: 0;
+    --bs-btn-hover-color: var(--color-texto);
+    --bs-btn-hover-bg: var(--color-superficie-hover);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: var(--color-superficie);
+    --bs-btn-active-bg: var(--color-base-2);
+    --bs-btn-active-border-color: transparent;
+    --bs-btn-focus-box-shadow: inset 0 0 0 2px var(--color-acento);
+    flex: 1;
+    height: 100%;
+    border: 0;
+    border-left: 1px solid var(--color-borde-control);
+}
+
+.filtro-segmentado > .btn:first-of-type {
+    border-left: 0;
+}
+
+.filtro-segmentado > .btn-check:checked + .btn {
+    color: var(--bs-btn-active-color);
+    background-color: var(--bs-btn-active-bg);
+}
+
+.filtro-segmentado > .btn-check:focus-visible + .btn {
+    box-shadow: var(--bs-btn-focus-box-shadow);
+}
+
+.filtro-segmentado > .btn--ancho {
+    flex: 1.4;
+}
+
+/* ============================================================ Spinner (girador) */
+
+.girador {
+    --girador-color: var(--color-superficie);
+    --girador-pista: var(--color-giro-pista-claro);
+    display: inline-block;
+    flex: none;
+    width: 14px;
+    height: 14px;
+    box-sizing: border-box;
+    border: 2px solid var(--girador-pista);
+    border-top-color: var(--girador-color);
+    border-radius: 50%;
+    animation: girar var(--duracion-giro) linear infinite;
+}
+
+.girador--oscuro {
+    --girador-color: var(--color-texto);
+    --girador-pista: var(--color-borde-control);
+}
+
+.girador--acento {
+    --girador-color: var(--color-acento);
+    --girador-pista: var(--color-acento-borde);
+}
+
+@keyframes girar {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================================ Acción de tabla */
+
+.btn-accion {
+    --accion-borde: var(--color-borde);
+    --accion-fondo: var(--color-superficie);
+    --accion-color: var(--color-desconocido-texto);
+    --accion-hover-borde: var(--color-borde-control);
+    --accion-hover-fondo: var(--color-fondo);
+    --accion-hover-color: var(--color-texto);
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: var(--alto-control-sm);
+    height: var(--alto-control-sm);
+    padding: 0;
+    font-size: 14px;
+    color: var(--accion-color);
+    background-color: var(--accion-fondo);
+    border: 1px solid var(--accion-borde);
+    border-radius: var(--radio);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-accion:hover {
+    color: var(--accion-hover-color);
+    background-color: var(--accion-hover-fondo);
+    border-color: var(--accion-hover-borde);
+}
+
+.btn-accion--peligro {
+    --accion-hover-borde: var(--color-inactivo-borde);
+    --accion-hover-fondo: var(--color-inactivo-fondo);
+    --accion-hover-color: var(--color-peligro);
+}
+
+.btn-accion:focus-visible {
+    outline: 0;
+    color: var(--color-texto);
+    border-color: var(--color-acento);
+    box-shadow: 0 0 0 3px var(--color-foco-anillo);
+}
+
+.btn-accion:disabled,
+.btn-accion[aria-disabled="true"] {
+    color: var(--color-borde-control);
+    background-color: var(--color-superficie);
+    border-color: var(--color-borde-suave);
+    cursor: not-allowed;
+}
+
+.btn-accion--cargando,
+.btn-accion--cargando:disabled {
+    background-color: var(--color-acento-fondo);
+    border-color: var(--color-acento-borde);
+    cursor: progress;
+}
+
+/* En la fila con el cursor encima, la acción principal (Monitorear) se resalta. */
+.table-hover > tbody > tr:hover .btn-accion--principal:not(:disabled) {
+    color: var(--color-texto);
+    border-color: var(--color-borde-control);
+}
+
+/* ============================================================ Estado: punto, insignia y contador */
+
+.punto-estado {
+    --punto-color: var(--color-desconocido);
+    position: relative;
+    display: inline-block;
+    flex: none;
+    width: var(--tamano-punto);
+    height: var(--tamano-punto);
+    border-radius: 50%;
+    background-color: var(--punto-color);
+}
+
+.punto-estado--sm {
+    width: var(--tamano-punto-sm);
+    height: var(--tamano-punto-sm);
+}
+
+.punto-estado--activo { --punto-color: var(--color-activo); }
+.punto-estado--inactivo { --punto-color: var(--color-inactivo); }
+.punto-estado--alerta { --punto-color: var(--color-alerta); }
+.punto-estado--desconocido { --punto-color: var(--color-desconocido); }
+.punto-estado--monitoreando { --punto-color: var(--color-acento); }
+
+/* Mientras se hace el ping, el punto emite un anillo que se expande. */
+.punto-estado--pulso::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background-color: var(--punto-color);
+    animation: pulso-estado var(--duracion-pulso) ease-out infinite;
+}
+
+@keyframes pulso-estado {
+    0% {
+        transform: scale(1);
+        opacity: 0.55;
+    }
+    100% {
+        transform: scale(2.8);
+        opacity: 0;
+    }
+}
+
+/* Badge: punto + texto, siempre. */
+.insignia-estado {
+    --insignia-fondo: var(--color-desconocido-fondo);
+    --insignia-texto: var(--color-desconocido-texto);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px 3px 8px;
+    font-size: var(--texto-pequeno-tamano);
+    line-height: 18px;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--insignia-texto);
+    background-color: var(--insignia-fondo);
+    border-radius: var(--radio-pastilla);
+}
+
+.insignia-estado--activo {
+    --insignia-fondo: var(--color-activo-fondo);
+    --insignia-texto: var(--color-activo-texto);
+}
+
+.insignia-estado--inactivo {
+    --insignia-fondo: var(--color-inactivo-fondo);
+    --insignia-texto: var(--color-inactivo-texto);
+}
+
+.insignia-estado--monitoreando {
+    --insignia-fondo: var(--color-acento-fondo);
+    --insignia-texto: var(--color-acento-texto);
+}
+
+.insignia-estado--pendiente {
+    --insignia-fondo: var(--color-alerta-fondo);
+    --insignia-texto: var(--color-alerta-texto);
+}
+
+.insignia-estado--atendida {
+    gap: 5px;
+}
+
+.insignia-estado--sin-respuesta {
+    --insignia-fondo: transparent;
+    --insignia-texto: var(--color-inactivo-texto);
+    padding: 2px 8px;
+    border: 1px solid var(--color-inactivo-borde);
+    border-radius: var(--radio-sm);
+}
+
+/* Punto compacto (tablas, listas). */
+.estado-compacto {
+    --estado-color: var(--color-desconocido-texto);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--texto-secundario-tamano);
+    font-weight: 500;
+    color: var(--estado-color);
+}
+
+.estado-compacto--activo { --estado-color: var(--color-activo-texto); }
+.estado-compacto--inactivo { --estado-color: var(--color-inactivo-texto); }
+
+/* Contador (alertas pendientes). */
+.contador {
+    display: inline-grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: var(--texto-encabezado-tamano);
+    line-height: 1;
+    font-weight: 700;
+    color: var(--color-base);
+    background-color: var(--color-alerta);
+    border-radius: var(--radio-pastilla);
+}
+
+.contador--suave {
+    color: var(--color-alerta-texto);
+    background-color: var(--color-alerta-suave);
+}
+
+.contador--neutro {
+    color: var(--color-desconocido-texto);
+    background-color: var(--color-desconocido-fondo);
+}
+
+/* ============================================================ Navegación lateral */
+
+.nav-lateral {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 12px;
+    background-color: var(--color-base);
+}
+
+.nav-lateral__titulo {
+    padding: 0 12px 8px;
+    font-size: var(--texto-encabezado-tamano);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--color-base-etiqueta);
+}
+
+.nav-lateral__enlace {
+    --nav-color: var(--color-base-texto);
+    --nav-fondo: transparent;
+    --nav-icono: currentColor;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: var(--alto-item-navegacion);
+    padding: 0 12px;
+    font-size: var(--texto-cuerpo-tamano);
+    font-weight: 500;
+    color: var(--nav-color);
+    background-color: var(--nav-fondo);
+    border-radius: var(--radio);
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-lateral__enlace > .bi {
+    font-size: 16px;
+    color: var(--nav-icono);
+}
+
+.nav-lateral__enlace > .contador {
+    margin-left: auto;
+}
+
+.nav-lateral__enlace:hover {
+    --nav-color: var(--color-superficie);
+    --nav-fondo: var(--color-hover-barra);
+    color: var(--nav-color);
+    text-decoration: none;
+}
+
+.nav-lateral__enlace.active,
+.nav-lateral__enlace[aria-current="page"] {
+    --nav-color: var(--color-superficie);
+    --nav-fondo: var(--color-base-2);
+    --nav-icono: var(--color-base-icono);
+}
+
+.nav-lateral__enlace:focus-visible {
+    outline: 0;
+    box-shadow: inset 0 0 0 2px var(--color-base-icono);
+}
+
+/* ============================================================ Pestañas (Bootstrap .nav-underline) */
+
+.nav-underline {
+    --bs-nav-underline-gap: 24px;
+    --bs-nav-underline-border-width: 2px;
+    --bs-nav-underline-link-active-color: var(--color-texto);
+    --bs-nav-link-padding-x: 2px;
+    --bs-nav-link-padding-y: 12px;
+    --bs-nav-link-font-size: var(--texto-cuerpo-tamano);
+    --bs-nav-link-font-weight: 500;
+    --bs-nav-link-color: var(--color-texto-2);
+    --bs-nav-link-hover-color: var(--color-texto);
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.nav-underline .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: -1px;
+    line-height: var(--texto-cuerpo-alto);
+}
+
+.nav-underline .nav-link:hover,
+.nav-underline .nav-link:focus {
+    border-bottom-color: transparent;
+}
+
+.nav-underline .nav-link.active,
+.nav-underline .show > .nav-link {
+    font-weight: 600;
+    border-bottom-color: var(--color-base-2);
+}
+
+.nav-underline .nav-link:focus-visible {
+    outline: 0;
+    border-radius: var(--radio-sm);
+    box-shadow: 0 0 0 3px var(--color-foco-anillo);
+}
+
+/* ============================================================ Progreso de "Monitorear todos" */
+
+.progreso-monitoreo {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 20px;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+}
+
+.progreso-monitoreo__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.progreso-monitoreo__actual {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: var(--texto-secundario-tamano);
+    font-weight: 500;
+}
+
+.progreso-monitoreo__detalle {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: var(--texto-pequeno-tamano);
+    font-weight: 400;
+    color: var(--color-texto-2);
+    white-space: nowrap;
+}
+
+.progreso-monitoreo__barra {
+    height: 6px;
+    overflow: hidden;
+    background-color: var(--color-borde);
+    border-radius: var(--radio-pastilla);
+}
+
+.progreso-monitoreo__relleno {
+    width: var(--progreso, 0%);
+    height: 100%;
+    background-color: var(--color-acento);
+    border-radius: var(--radio-pastilla);
+    transition: width 0.3s ease;
+}
+
+.progreso-monitoreo__fichas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ficha {
+    --ficha-fondo: var(--color-fondo);
+    --ficha-texto: var(--color-texto-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    font-size: var(--texto-pequeno-tamano);
+    line-height: 18px;
+    color: var(--ficha-texto);
+    background-color: var(--ficha-fondo);
+    border-radius: var(--radio-sm);
+}
+
+.ficha--hecha {
+    --ficha-fondo: var(--color-activo-fondo);
+    --ficha-texto: var(--color-activo-texto);
+}
+
+.ficha--fallida {
+    --ficha-fondo: var(--color-inactivo-fondo);
+    --ficha-texto: var(--color-inactivo-texto);
+}
+
+.ficha--actual {
+    --ficha-fondo: var(--color-acento-fondo);
+    --ficha-texto: var(--color-acento-texto);
+    gap: 6px;
+}
+
+/* ============================================================ Tarjeta de indicador */
+
+.tarjeta-indicador {
+    --indicador-icono-fondo: var(--color-icono-fondo);
+    --indicador-icono-color: var(--color-base-2);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    padding: 20px;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-1);
+}
+
+.tarjeta-indicador__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.tarjeta-indicador__titulo {
+    font-size: var(--texto-secundario-tamano);
+    font-weight: 500;
+    color: var(--color-texto-2);
+}
+
+.tarjeta-indicador__icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    font-size: 17px;
+    color: var(--indicador-icono-color);
+    background-color: var(--indicador-icono-fondo);
+    border-radius: var(--radio-icono);
+}
+
+.tarjeta-indicador__valor {
+    font-size: var(--texto-indicador-tamano);
+    line-height: var(--texto-indicador-alto);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.tarjeta-indicador__detalle {
+    font-size: 12.5px;
+    color: var(--color-texto-2);
+}
+
+.tarjeta-indicador--activo {
+    --indicador-icono-fondo: var(--color-activo-fondo);
+    --indicador-icono-color: var(--color-activo-texto);
+}
+
+.tarjeta-indicador--inactivo {
+    --indicador-icono-fondo: var(--color-inactivo-fondo);
+    --indicador-icono-color: var(--color-inactivo-texto);
+}
+
+.tarjeta-indicador--alerta {
+    --indicador-icono-fondo: var(--color-alerta-fondo);
+    --indicador-icono-color: var(--color-alerta-texto);
+}
+
+/* ============================================================ Tabla (Bootstrap .table) */
+
+.tabla-tarjeta {
+    overflow: hidden;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-1);
+}
+
+.tabla-tarjeta > .table-responsive {
+    margin: 0;
+}
+
+.table {
+    --bs-table-color: var(--color-texto);
+    --bs-table-bg: var(--color-superficie);
+    --bs-table-border-color: var(--color-borde-suave);
+    --bs-table-hover-color: var(--color-texto);
+    --bs-table-hover-bg: var(--color-superficie-hover);
+    --bs-table-active-color: var(--color-texto);
+    --bs-table-active-bg: var(--color-acento-fila);
+    margin-bottom: 0;
+    font-size: var(--texto-cuerpo-tamano);
+    vertical-align: middle;
+}
+
+.table > :not(caption) > * > * {
+    padding: 0 8px;
+}
+
+.table > :not(caption) > * > :first-child {
+    padding-left: 20px;
+}
+
+.table > :not(caption) > * > :last-child {
+    padding-right: 20px;
+}
+
+.table > thead > tr > th {
+    height: var(--alto-encabezado-tabla);
+    font-size: var(--texto-encabezado-tamano);
+    line-height: var(--texto-encabezado-alto);
+    font-weight: 600;
+    letter-spacing: var(--texto-encabezado-espaciado);
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--color-texto-2);
+    background-color: var(--color-superficie-hover);
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.table > tbody > tr > td {
+    height: var(--alto-fila);
+    white-space: nowrap; /* En pantallas angostas la tabla se desplaza dentro de su tarjeta. */
+}
+
+.table > tbody > tr:last-child > td {
+    border-bottom: 0;
+}
+
+/* Fila que se está monitoreando. */
+.table > tbody > tr.fila-monitoreando > * {
+    --bs-table-bg-state: var(--color-acento-fila);
+}
+
+.tabla-nombre {
+    font-weight: 500;
+}
+
+.tabla-tipo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-desconocido-texto);
+    white-space: nowrap;
+}
+
+/* Bootstrap colorea las celdas con --bs-table-color: se redefine en la celda. */
+.tabla-tenue {
+    --bs-table-color: var(--color-texto-2);
+    font-size: var(--texto-secundario-tamano);
+    white-space: nowrap;
+}
+
+.tabla-error {
+    --bs-table-color: var(--color-inactivo-texto);
+}
+
+.tabla-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+/* ============================================================ Campos de formulario */
+
+.form-label {
+    margin-bottom: 6px;
+    font-size: var(--texto-secundario-tamano);
+    font-weight: 500;
+    color: var(--color-texto);
+}
+
+.form-text {
+    margin-top: 6px;
+    font-size: var(--texto-pequeno-tamano);
+    color: var(--color-texto-2);
+}
+
+.form-control,
+.form-select {
+    height: var(--alto-control);
+    padding: 0 12px;
+    font-size: var(--texto-cuerpo-tamano);
+    line-height: var(--texto-cuerpo-alto);
+    color: var(--color-texto);
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde-control);
+    border-radius: var(--radio);
+}
+
+.form-control::placeholder {
+    color: var(--color-marcador);
+    opacity: 1;
+}
+
+/* En los campos, el foco se muestra siempre (no solo con el teclado). */
+.form-control:focus,
+.form-select:focus {
+    color: var(--color-texto);
+    background-color: var(--color-superficie);
+    border-color: var(--color-acento);
+    box-shadow: 0 0 0 3px var(--color-foco-campo);
+}
+
+.form-control.mono {
+    font-size: 13.5px;
+}
+
+.form-control:disabled,
+.form-select:disabled {
+    color: var(--color-desconocido);
+    background-color: var(--color-fondo);
+    border-color: var(--color-borde);
+}
+
+.form-label:has(+ .form-control:disabled),
+.form-label:has(+ .campo-icono > .form-control:disabled) {
+    color: var(--color-desconocido);
+}
+
+/* El campo con error muestra su anillo rojo también sin foco. */
+.form-control.is-invalid,
+.form-control.is-invalid:focus,
+.was-validated .form-control:invalid {
+    padding-right: 36px;
+    background-image: none;
+    border-color: var(--color-inactivo);
+    box-shadow: 0 0 0 3px var(--color-error-anillo);
+}
+
+.invalid-feedback {
+    margin-top: 6px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--color-inactivo-texto);
+}
+
+/* El select usa su propio chevron (ícono) en lugar de la imagen de Bootstrap. */
+.form-select {
+    padding-right: 36px;
+    background-image: none;
+    appearance: none;
+}
+
+/* Campo con íconos: al inicio (buscador, tipo) y al final (chevron, error). */
+.campo-icono {
+    position: relative;
+}
+
+.campo-icono > .bi {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.campo-icono__inicio {
+    left: 12px;
+    font-size: 14px;
+    color: var(--color-texto-2);
+}
+
+.campo-icono__fin {
+    right: 12px;
+    font-size: 12px;
+    color: var(--color-texto-2);
+}
+
+.campo-icono__error {
+    right: 12px;
+    font-size: 15px;
+    color: var(--color-inactivo);
+}
+
+.campo-icono:has(> .campo-icono__inicio) > .form-control,
+.campo-icono:has(> .campo-icono__inicio) > .form-select {
+    padding-left: 36px;
+}
+
+/* ============================================================ Modal (Bootstrap .modal) */
+
+.modal {
+    --bs-modal-width: var(--ancho-modal);
+    --bs-modal-padding: 24px;
+    --bs-modal-bg: var(--color-superficie);
+    --bs-modal-color: var(--color-texto);
+    --bs-modal-border-width: 0;
+    --bs-modal-border-radius: var(--radio-lg);
+    --bs-modal-inner-border-radius: var(--radio-lg);
+    --bs-modal-box-shadow: var(--sombra-3);
+    --bs-modal-footer-gap: 8px;
+    --bs-modal-footer-border-width: 0;
+    --bs-modal-header-border-width: 0;
+}
+
+.modal-content {
+    box-shadow: var(--bs-modal-box-shadow);
+}
+
+/* Fondo sin desenfoque. */
+.modal-backdrop {
+    --bs-backdrop-bg: var(--color-base);
+    --bs-backdrop-opacity: var(--opacidad-fondo-modal);
+}
+
+.modal-confirmar {
+    display: flex;
+    gap: 16px;
+    padding: 24px 24px 0;
+}
+
+.modal-confirmar__icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+    color: var(--color-peligro);
+    background-color: var(--color-inactivo-fondo);
+    border-radius: 50%;
+}
+
+.modal-confirmar__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.modal-confirmar .modal-title {
+    font-size: var(--texto-titulo-tarjeta-tamano);
+    line-height: var(--texto-titulo-tarjeta-alto);
+    font-weight: 600;
+}
+
+.modal-confirmar__texto {
+    margin: 0;
+    font-size: var(--texto-cuerpo-tamano);
+    line-height: var(--texto-cuerpo-alto);
+    color: var(--color-desconocido-texto);
+    text-wrap: pretty;
+}
+
+.modal-confirmar__texto strong {
+    font-weight: 600;
+    color: var(--color-texto);
+}
+
+.modal-footer {
+    gap: var(--bs-modal-footer-gap);
+    padding: 20px 24px;
+}
+
+.modal-footer > * {
+    margin: 0;
+}
+
+/* ============================================================ Notificaciones (Bootstrap .toast) */
+
+.toast-container.notificaciones {
+    top: 24px;
+    right: 32px;
+    padding: 0;
+    --bs-toast-spacing: 12px;
+}
+
+.toast {
+    --bs-toast-max-width: var(--ancho-notificacion);
+    --bs-toast-padding-x: 16px;
+    --bs-toast-padding-y: 14px;
+    --bs-toast-font-size: var(--texto-secundario-tamano);
+    --bs-toast-color: var(--color-texto-2);
+    --bs-toast-bg: var(--color-superficie);
+    --bs-toast-border-width: 1px;
+    --bs-toast-border-color: var(--color-borde);
+    --bs-toast-border-radius: var(--radio-lg);
+    --bs-toast-box-shadow: var(--sombra-notificacion);
+    width: var(--ancho-notificacion);
+    max-width: 100%;
+}
+
+.notificacion {
+    --notificacion-icono-fondo: var(--color-icono-fondo);
+    --notificacion-icono-color: var(--color-base-2);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: var(--bs-toast-padding-y) var(--bs-toast-padding-x);
+}
+
+.notificacion__icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    color: var(--notificacion-icono-color);
+    background-color: var(--notificacion-icono-fondo);
+    border-radius: 50%;
+}
+
+.notificacion__cuerpo {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.notificacion__titulo {
+    font-size: var(--texto-cuerpo-tamano);
+    font-weight: 600;
+    color: var(--color-texto);
+}
+
+.notificacion__cerrar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 24px;
+    height: 24px;
+    margin: -2px -4px 0 0;
+    padding: 0;
+    font-size: 13px;
+    color: var(--color-texto-2);
+    background: none;
+    border: 0;
+    border-radius: var(--radio-sm);
+    cursor: pointer;
+}
+
+.notificacion__cerrar:hover {
+    color: var(--color-texto);
+    background-color: var(--color-fondo);
+}
+
+.notificacion__cerrar:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--color-foco-anillo);
+}
+
+.notificacion--exito {
+    --notificacion-icono-fondo: var(--color-activo-fondo);
+    --notificacion-icono-color: var(--color-activo-texto);
+}
+
+.notificacion--error {
+    --notificacion-icono-fondo: var(--color-inactivo-fondo);
+    --notificacion-icono-color: var(--color-inactivo-texto);
+}
+
+/* ============================================================ Estado vacío */
+
+.estado-vacio {
+    --vacio-icono-fondo: var(--color-activo-fondo);
+    --vacio-icono-color: var(--color-activo-texto);
+    --vacio-halo: var(--color-activo-halo);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 36px 24px;
+    text-align: center;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+}
+
+.estado-vacio__icono {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    font-size: 26px;
+    color: var(--vacio-icono-color);
+    background-color: var(--vacio-icono-fondo);
+    border-radius: 50%;
+    box-shadow: 0 0 0 8px var(--vacio-halo);
+}
+
+.estado-vacio__titulo {
+    margin: 8px 0 0;
+    font-size: var(--texto-titulo-tarjeta-tamano);
+    line-height: var(--texto-titulo-tarjeta-alto);
+    font-weight: 600;
+}
+
+.estado-vacio__texto {
+    max-width: 320px;
+    margin: 0;
+    font-size: var(--texto-secundario-tamano);
+    line-height: 19px;
+    color: var(--color-texto-2);
+    text-wrap: pretty;
+}
+
+.estado-vacio > .btn {
+    margin-top: 6px;
+}
+
+.estado-vacio--neutro {
+    --vacio-icono-fondo: var(--color-icono-fondo);
+    --vacio-icono-color: var(--color-base-2);
+    --vacio-halo: var(--color-desconocido-halo);
+}
+
+.estado-vacio--neutro .estado-vacio__icono {
+    font-size: 24px;
+}
+
+/* ============================================================ Esqueleto de carga */
+
+.esqueleto {
+    display: block;
+    height: 10px;
+    background-color: var(--color-esqueleto);
+    border-radius: 5px;
+    animation: esqueleto var(--duracion-esqueleto) ease-in-out infinite alternate;
+}
+
+.esqueleto--suave {
+    background-color: var(--color-borde-suave);
+}
+
+.esqueleto--texto {
+    height: 9px;
+}
+
+.esqueleto--numero {
+    width: 44px;
+    height: 26px;
+    border-radius: var(--radio-sm);
+}
+
+.esqueleto--icono {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radio-icono);
+}
+
+.esqueleto--pastilla {
+    height: 20px;
+    border-radius: var(--radio-pastilla);
+}
+
+@keyframes esqueleto {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0.55;
+    }
+}
+
+/* ============================================================ Movimiento reducido */
+
+/* El pulso y el esqueleto quedan fijos; el spinner gira más lento, porque es lo
+   único que indica que algo está cargando. */
+@media (prefers-reduced-motion: reduce) {
+    .punto-estado--pulso::after {
+        animation: none;
+        opacity: 0;
+    }
+
+    .esqueleto {
+        animation: none;
+    }
+
+    .girador {
+        animation-duration: 1.5s;
+    }
+
+    .btn,
+    .btn-accion,
+    .nav-lateral__enlace,
+    .progreso-monitoreo__relleno {
+        transition: none;
+    }
+}
+
+/* ============================================================ Celular */
+
+@media (max-width: 575.98px) {
+    .toast-container.notificaciones {
+        top: 16px;
+        right: 16px;
+        left: 16px;
+    }
+
+    .toast {
+        width: 100%;
+    }
+}
