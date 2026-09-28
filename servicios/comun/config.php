@@ -28,6 +28,7 @@ const DB_NOMBRE = 'monitoreo_red_soa';
 const DB_USUARIO = 'root';
 const DB_CLAVE = '';
 const DB_CHARSET = 'utf8mb4';
+const DB_COLACION = 'utf8mb4_unicode_ci';
 
 // Valor de la cabecera X-Servicio-Clave para peticiones entre servicios.
 const CLAVE_SERVICIO = 'clave-desarrollo-cambiar';

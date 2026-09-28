@@ -142,16 +142,20 @@ Reporta qué probaste y qué resultado dio.
 No instales librerías, frameworks ni herramientas nuevas sin preguntar.
 Si cambias la estructura de la base de datos, actualiza database/schema.sql (y seed.sql si hace falta) en el mismo cambio.
 Git:
-Una rama por servicio o pantalla, por ejemplo servicio-dispositivos o interfaz-dashboard.
+Las Fases 0 y 1 van en main, porque son la base que todos necesitan.
+Desde la Fase 2: una rama por servicio o pantalla (por ejemplo servicio-dispositivos o interfaz-dashboard), que se fusiona a main cuando cumple el "Listo cuando" de su fase en docs/PLAN.md.
 Commits pequeños con mensajes en español que digan qué cambió, por ejemplo: Agrega endpoint para marcar alertas como atendidas.
 Estado actual
 
 Actualiza esta sección al cerrar cada fase.
 
-Fase actual: 1 (ver docs/PLAN.md)
+Fase actual: 2 (ver docs/PLAN.md)
 Completado:
 - Fase 0 — Preparación y prueba de ping: estructura del proyecto, comun/config.php y comun/respuesta.php, puntos de entrada de dispositivos, alertas y monitoreo con reescritura de URLs, esqueletos HTML, librerías en web/vendor/, repositorio git, .htaccess que solo expone web/ y los servicios, y servicios/monitoreo/ping.php probado a través de Apache (127.0.0.1 y la puerta de enlace activos, 192.0.2.1 inactivo en ~1 s, entradas inválidas → 400 sin ejecutar comandos).
+- Fase 1 — Base de datos: database/schema.sql con las 4 tablas de docs/API.md (FK con ON DELETE CASCADE, índices, utf8mb4_unicode_ci), database/seed.sql (6 dispositivos, 56 monitoreos, 1 alerta pendiente y 3 atendidas, usuario admin) y comun/db.php (PDO con EMULATE_PREPARES en false y colación utf8mb4_unicode_ci). Verificado: carga desde cero repetible, coherencia de ultimo_* con el último monitoreo, UNIQUE, FK y cascada (con ROLLBACK).
 Pendientes o decisiones abiertas:
-- docs/PLAN.md está vacío (solo "pendiente").
+- docs/PLAN.md está vacío (solo "pendiente"); de ahí salen los "Listo cuando" de cada fase.
 - GET /servicios/monitoreo/prueba es temporal: eliminarlo en la Fase 4 junto con atenderPruebaPing().
+- Con EMULATE_PREPARES en false, PDO ya devuelve INT como int, pero DECIMAL sigue como texto y TINYINT como int (1): cada servicio convierte a número y booleano antes de responder.
+- Las fechas del seed son fijas (última ronda: 2026-09-27 09:45); en la demo se refrescan con "Monitorear todos".
 - Los .htaccess de los servicios usan RewriteOptions AllowNoSlash junto con DirectorySlash Off; sin él, las URLs sin barra final dan 403/404.
