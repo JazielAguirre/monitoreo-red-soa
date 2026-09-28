@@ -31,6 +31,7 @@ sudo /opt/lampp/lampp startmysql
 # Pruebas automáticas de un servicio (recargan la base de datos al empezar)
 /opt/lampp/bin/php pruebas/dispositivos.php
 /opt/lampp/bin/php pruebas/alertas.php
+/opt/lampp/bin/php pruebas/monitoreo.php
 
 # Revisar la sintaxis de un archivo PHP (con el PHP de XAMPP, el mismo que usa Apache)
 /opt/lampp/bin/php -l servicios/dispositivos/index.php
@@ -46,10 +47,10 @@ Interfaz web (web/)  →  HTTP + JSON  →  Servicios (servicios/)  →  MySQL
 database/        schema.sql (recrea la BD completa), seed.sql (datos de prueba)
 docs/            PLAN.md (fases del proyecto), API.md (contrato de endpoints), diseno/ (referencia visual)
 servicios/
-├── comun/       config.php, db.php, respuesta.php, peticion.php, enrutador.php, http.php, auth.php (.htaccess: Require all denied)
+├── comun/       config.php, db.php, respuesta.php, peticion.php, enrutador.php, http.php (cliente entre servicios), auth.php (.htaccess: Require all denied)
 ├── dispositivos/  index.php + .htaccess, endpoints.php, validacion.php, datos.php → dueño de la tabla dispositivos
 ├── alertas/       index.php + .htaccess, endpoints.php, validacion.php, datos.php → dueño de la tabla alertas
-├── monitoreo/     index.php + .htaccess + ping.php → dueño de la tabla monitoreos
+├── monitoreo/     index.php + .htaccess, endpoints.php, validacion.php, datos.php, clientes.php (llamadas HTTP a Dispositivos y Alertas), ping.php → dueño de la tabla monitoreos
 └── auth/          index.php               → dueño de la tabla usuarios
 web/
 ├── css/         tokens.css (variables de diseño), app.css (componentes)
@@ -61,6 +62,8 @@ Reglas SOA (no negociables)
 Cada servicio solo lee y escribe sus propias tablas.
 Si un servicio necesita datos o acciones de otro, los pide por HTTP usando servicios/comun/http.php. Nunca hace require del código de otro servicio ni consultas SQL a tablas ajenas.
 Ejemplo: Monitoreo obtiene la IP con GET /dispositivos/{id}, actualiza el estado con PATCH /dispositivos/{id}/estado y crea alertas con POST /alertas.
+comun/http.php: llamarServicio() usa streams de PHP (no curl), espera TIEMPO_ESPERA_SERVICIOS (config.php) y envía X-Servicio-Clave. Si el otro servicio no responde o no devuelve el JSON del formato común, lanza ErrorDeComunicacion, que el index.php responde como 502 "No se pudo comunicar con el Servicio de {nombre}".
+Archivo de fallo simulado (pruebas/.fallo-simulado.json, leído por comun/http.php): solo lo usan las pruebas para simular que Dispositivos o Alertas no responde. Caduca solo (máximo 60 s), solo admite modos fijos hacia 127.0.0.1 o web/index.html, y no puede activarse por HTTP (ningún endpoint escribe archivos y pruebas/ responde 404). Detalle en docs/PLAN.md, "Pruebas automáticas".
 La interfaz nunca accede a la base de datos: todo pasa por web/js/api.js.
 comun/ contiene solo infraestructura (conexión, respuestas, cliente HTTP, autenticación). Nunca lógica de negocio.
 Las URLs base y la clave interna viven en comun/config.php. Nada hardcodeado en los servicios.
@@ -100,7 +103,7 @@ En Windows no confíes en el código de salida: con "Host de destino inaccesible
 El tiempo de respuesta se extrae aceptando salida en inglés y en español: time=2ms, time<1ms, tiempo=2ms, tiempo<1m, time=0.032 ms. Se redondea a 2 decimales. Si la salida indica <1, guarda 0 y la interfaz lo muestra como < 1 ms.
 Espera máxima: 1 segundo por dispositivo.
 Solo se crea una alerta si el dispositivo no tiene ya una alerta pendiente, para evitar alertas repetidas en cada ping fallido. La regla vive en el Servicio de Alertas (POST /alertas) y la garantiza la base de datos con el índice único de alertas.dispositivo_pendiente, también con peticiones simultáneas.
-IPs de prueba: 127.0.0.1 siempre responde. 192.0.2.1 (rango reservado para documentación) nunca responde.
+IPs de prueba: 127.0.0.1 siempre responde. 192.0.2.1 (rango reservado para documentación) nunca responde. Las pruebas automáticas usan solo 127.0.0.1 y 192.0.2.x, nunca IPs de la red local, para pasar en cualquier red o sin red.
 Prueba el ping a través de Apache (con curl al endpoint), no solo con php en la terminal: Apache corre como daemon y puede tener permisos distintos a tu usuario para ejecutar ping.
 Autenticación
 Login con password_hash() / password_verify() y sesiones de PHP.
@@ -167,16 +170,17 @@ Estado actual
 
 Actualiza esta sección al cerrar cada fase.
 
-Fase actual: 4 — Servicio de Monitoreo (ver docs/PLAN.md)
+Fase actual: 5 — Sistema de diseño (ver docs/PLAN.md)
 Completado:
 - Fase 0 — Preparación y prueba de ping: estructura del proyecto, comun/config.php y comun/respuesta.php, puntos de entrada de dispositivos, alertas y monitoreo con reescritura de URLs, esqueletos HTML, librerías en web/vendor/, repositorio git, .htaccess que solo expone web/ y los servicios, y servicios/monitoreo/ping.php probado a través de Apache (127.0.0.1 y la puerta de enlace activos, 192.0.2.1 inactivo en ~1 s, entradas inválidas → 400 sin ejecutar comandos).
 - Fase 1 — Base de datos: database/schema.sql con las 4 tablas de docs/API.md (FK con ON DELETE CASCADE, índices, utf8mb4_unicode_ci), database/seed.sql (6 dispositivos, 56 monitoreos, 1 alerta pendiente y 3 atendidas, usuario admin) y comun/db.php (PDO con EMULATE_PREPARES en false y colación utf8mb4_unicode_ci). Verificado: carga desde cero repetible, coherencia de ultimo_* con el último monitoreo, UNIQUE, FK y cascada (con ROLLBACK).
 - Fase 2 — Servicio de Dispositivos: los 6 endpoints de docs/API.md; infraestructura en comun/ (peticion.php, enrutador.php con 404/405 y cabecera Allow, configurarErrores()); pruebas/ayudas.php y pruebas/dispositivos.php (186 comprobaciones). Con MySQL apagado, los 6 endpoints responden 500 en JSON sin detalles (prueba manual).
 - Fase 3 — Servicio de Alertas: los 4 endpoints de docs/API.md con el patrón de la Fase 2; columna generada alertas.dispositivo_pendiente con índice único (una sola pendiente por dispositivo, también con POST simultáneos: 20 de 20 rondas de 10 POST resolvieron la carrera con el 1062, sin 500 ni deadlocks); pruebas/alertas.php (141 comprobaciones; la de concurrencia se omite con aviso si PHP no tiene curl).
+- Fase 4 — Servicio de Monitoreo: POST /monitoreo/{id} con el flujo de 5 pasos solo por HTTP (comun/http.php), GET /monitoreo con filtros, paginación y resumen en SQL, GET /monitoreo/recientes con ROW_NUMBER(); endpoint temporal /monitoreo/prueba eliminado; pruebas/monitoreo.php (188 comprobaciones, incluidos los 502 con el archivo de fallo simulado y la regla SOA). Las tres suites pasan.
 Pendientes o decisiones abiertas:
-- GET /servicios/monitoreo/prueba es temporal: eliminarlo en la Fase 4 junto con atenderPruebaPing().
 - Con EMULATE_PREPARES en false, PDO ya devuelve INT como int, pero DECIMAL sigue como texto y TINYINT como int (1): cada servicio convierte a número y booleano antes de responder (Dispositivos lo hace en formatearDispositivo()).
-- monitoreo/index.php todavía tiene su propia obtenerSegmentosRuta() de la Fase 0: en la Fase 4, pasar a comun/peticion.php y comun/enrutador.php como Dispositivos y Alertas.
+- filtroOpcional() está repetida en validacion.php de dispositivos, alertas y monitoreo (lee un parámetro de la URL): candidata a moverse a comun/peticion.php.
+- El 1452 de POST /monitoreo (dispositivo borrado entre el paso 1 y el 3) se prueba en datos.php, no de punta a punta: provocar esa carrera por HTTP no es confiable.
 - La columna generada VIRTUAL con índice único y FK en cascada está probada en MariaDB 10.4 (la del XAMPP); no se ha probado en MySQL 8.
 - Las fechas del seed son fijas (última ronda: 2026-09-27 09:45); en la demo se refrescan con "Monitorear todos".
 - Los .htaccess de los servicios usan RewriteOptions AllowNoSlash junto con DirectorySlash Off; sin él, las URLs sin barra final dan 403/404.

@@ -78,6 +78,17 @@ function valorBd(string $sql, array $parametros = []): mixed
     return $consulta->fetchColumn();
 }
 
+/**
+ * Ejecuta una consulta de verificación y devuelve todas sus filas.
+ */
+function filasBd(string $sql, array $parametros = []): array
+{
+    $consulta = obtenerConexion()->prepare($sql);
+    $consulta->execute($parametros);
+
+    return $consulta->fetchAll();
+}
+
 // ---------------------------------------------------------------- Peticiones
 
 /**

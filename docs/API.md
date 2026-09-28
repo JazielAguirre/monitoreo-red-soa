@@ -302,9 +302,11 @@ Flujo:
 
 1. `GET /dispositivos/{id}` para obtener la IP y el nombre. Si responde 404, se devuelve 404.
 2. Ping con la función de `ping.php`.
-3. Se genera la fecha **una sola vez** y se guarda el monitoreo en `monitoreos`.
-4. `PATCH /dispositivos/{id}/estado` con el mismo estado, tiempo y fecha.
-5. Si no respondió: `POST /alertas` con el mensaje "El dispositivo {nombre} no respondió al monitoreo.".
+3. Se genera la fecha **una sola vez** y se guarda el monitoreo en `monitoreos`. Si el INSERT falla por la llave foránea (el dispositivo se eliminó entre el paso 1 y este), se devuelve 404.
+4. `PATCH /dispositivos/{id}/estado` con el mismo estado, tiempo y fecha del paso 3. Así el monitoreo y el dispositivo tienen exactamente la misma fecha.
+5. Si no respondió: `POST /alertas` con el mensaje "El dispositivo {nombre} no respondió al monitoreo.". La alerta lleva la fecha que genera el Servicio de Alertas (cada servicio es dueño de sus datos, y `POST /alertas` no acepta fechas de quien llama): coincide con la del monitoreo salvo por fracciones de segundo.
+
+Si el paso 4 falla, no se intenta el 5. Con estado `activo` no se llama a Alertas y `alerta_creada` es `false`.
 
 **201:**
 
@@ -312,7 +314,9 @@ Flujo:
 { "ok": true, "data": { "monitoreo": { }, "alerta_creada": false } }
 ```
 
-**404:** "El dispositivo no existe". **502:** "No se pudo comunicar con el Servicio de {nombre}". Si el fallo ocurre en el paso 4 o 5, el monitoreo ya quedó guardado.
+**404:** "El dispositivo no existe" (también si Dispositivos o Alertas responden 404 en los pasos 4 o 5).
+
+**502:** "No se pudo comunicar con el Servicio de Dispositivos" o "…de Alertas", cuando ese servicio no responde en `TIEMPO_ESPERA_SERVICIOS` segundos (3, en `comun/config.php`), responde algo que no es el JSON del formato común, o responde un código inesperado (por ejemplo 500). Si el fallo ocurre en el paso 4 o 5, el monitoreo ya quedó guardado.
 
 ### `GET /monitoreo` [Interfaz]
 
@@ -327,7 +331,18 @@ Historial paginado, del más reciente al más antiguo.
 | `pagina` | ≥ 1 | 1 |
 | `por_pagina` | 1–100 | 10 |
 
-`desde` posterior a `hasta` → 400.
+`hasta` es inclusivo: llega hasta las 23:59:59 de ese día. Un parámetro vacío equivale a no enviarlo. Una `pagina` mayor que `total_paginas` responde 200 con `items: []`. Si no hay monitoreos, `total` y `total_paginas` son `0`.
+
+Un parámetro inválido responde **400** con `error` "Filtros no válidos" y el mensaje en `campos`:
+
+| Parámetro | Mensaje en `campos` |
+|---|---|
+| `dispositivo` | "Id de dispositivo no válido" |
+| `estado` | "Estado no válido" |
+| `desde`, `hasta` | "Fecha no válida, usa el formato YYYY-MM-DD" (también si la fecha no existe, como `2026-02-30`) |
+| `hasta` anterior a `desde` | `campos.hasta`: "La fecha final debe ser igual o posterior a la inicial" |
+| `pagina` | "La página debe ser un número entero mayor o igual a 1" |
+| `por_pagina` | "Debe ser un número entre 1 y 100" |
 
 **200:**
 
@@ -349,6 +364,7 @@ Reglas del `resumen`:
 
 - Se calcula en SQL con los filtros `dispositivo`, `desde` y `hasta`, **ignorando** `estado` y la paginación. Si no, la disponibilidad con el filtro "Activos" siempre sería 100 %.
 - `promedio_ms` y `maximo_ms` usan solo los monitoreos activos; son `null` si no hay ninguno.
+- `promedio_ms` se redondea a 2 decimales.
 - `disponibilidad` = activos ÷ total × 100, con 1 decimal; `null` si no hay monitoreos.
 
 La gráfica de la pantalla Monitoreos pide `por_pagina=24` con el mismo dispositivo y rango, y la interfaz invierte el orden para dibujarla de izquierda a derecha.
@@ -357,7 +373,7 @@ La gráfica de la pantalla Monitoreos pide `por_pagina=24` con el mismo disposit
 
 Últimas comprobaciones de cada dispositivo, para la gráfica del dashboard.
 
-Parámetro: `limite` (1–50, 10 por defecto).
+Parámetro: `limite` (1–50, 10 por defecto). Un valor inválido responde **400** con `error` "Filtros no válidos" y `campos.limite` "El límite debe ser un número entre 1 y 50".
 
 **200:**
 
@@ -370,7 +386,7 @@ Parámetro: `limite` (1–50, 10 por defecto).
 }
 ```
 
-Solo incluye dispositivos con al menos un monitoreo. Cada lista va en orden cronológico ascendente, lista para graficar.
+Solo incluye dispositivos con al menos un monitoreo, ordenados por `dispositivo_id`. Cada lista va en orden cronológico ascendente, lista para graficar.
 
 ---
 
@@ -406,33 +422,3 @@ Solo incluye dispositivos con al menos un monitoreo. Cada lista va en orden cron
 | Monitoreos | `GET /dispositivos` (filtro y nombres), `GET /monitoreo` |
 | Alertas | `GET /alertas?atendida=0` o `=1`, `GET /alertas/conteo`, `PATCH /alertas/{id}/atender`, `GET /dispositivos` (nombre e IP) |
 | Inicio de sesión | `POST /auth/login` |
-
----
-
-## Endpoint temporal (se elimina en la Fase 4)
-
-### `GET /monitoreo/prueba?ip=...`
-
-Ejecuta la función de `ping.php` con la IP indicada y devuelve su resultado con el formato normal. Existe solo para comprobar el ping a través de Apache.
-
-**200:**
-
-```json
-{
-  "ok": true,
-  "data": {
-    "ip": "127.0.0.1",
-    "estado": "activo",
-    "tiempo_respuesta_ms": 0.12,
-    "salida": "PING 127.0.0.1 ... time=0.118 ms ..."
-  }
-}
-```
-
-- `estado`: `activo` o `inactivo`.
-- `tiempo_respuesta_ms`: hasta 2 decimales; `0` si fue menor a 1 ms; `null` si no respondió.
-- `salida`: el texto que imprimió el comando ping.
-
-**400:** "Falta el parámetro ip" o "La IP no es una dirección IPv4 válida". En ambos casos no se ejecuta ningún comando.
-
-**405:** "Método no permitido", con cualquier método que no sea GET.

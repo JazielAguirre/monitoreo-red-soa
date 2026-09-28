@@ -24,7 +24,7 @@ Después de la Fase 1, el backend y el frontend pueden avanzar en paralelo. La F
 | 1 | Base de datos y contrato | Integrante 1 | ✅ Completa |
 | 2 | Servicio de Dispositivos | Integrante 2 | ✅ Completa |
 | 3 | Servicio de Alertas | Integrante 4 | ✅ Completa |
-| 4 | Servicio de Monitoreo | Integrante 3 | Pendiente |
+| 4 | Servicio de Monitoreo | Integrante 3 | ✅ Completa |
 | 5 | Sistema de diseño | Integrante 4 | Pendiente |
 | 6 | Pantallas | Integrante 4 | Pendiente |
 | 7 | Inicio de sesión | Todo el equipo | Pendiente |
@@ -39,6 +39,13 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - Cada script recarga la base de datos al empezar, para que los resultados no dependan de pruebas anteriores. **Borra los datos que hayas agregado a mano.**
 - Se ejecutan con `/opt/lampp/bin/php pruebas/<servicio>.php` (en Windows, `C:/xampp/php/php.exe`) y terminan con código de salida distinto de 0 si algo falla.
 - `pruebas/` no debe ser accesible por HTTP.
+
+**Archivo de fallo simulado (`pruebas/.fallo-simulado.json`).** Sirve para probar el 502 de Monitoreo cuando Dispositivos o Alertas no responde, sin apagar nada:
+
+- **Qué es:** si existe y está vigente, `comun/http.php` desvía las llamadas al servicio indicado (y, opcionalmente, a un solo método, por ejemplo el `PATCH` de Dispositivos) hacia un destino que no responde (`sin_respuesta`, un puerto de `127.0.0.1`) o que no devuelve JSON (`respuesta_invalida`, `web/index.html`). Solo admite esos dos modos, nunca una URL libre, y el puerto debe ser 1024 o mayor.
+- **Solo lo usan las pruebas:** lo crea y lo borra `pruebas/monitoreo.php` (al empezar, al terminar y ante un error fatal). Está en `.gitignore`.
+- **Caduca solo:** lleva un campo `expira`; `http.php` lo ignora si ya pasó o si está a más de 60 segundos en el futuro. Si la prueba se interrumpe (Ctrl+C, `kill -9`), el sistema vuelve a funcionar en cuanto caduca (las pruebas usan 30 s), y la siguiente corrida lo borra.
+- **No puede activarse por HTTP:** ningún endpoint escribe archivos y `pruebas/` responde 404.
 
 ---
 
@@ -104,7 +111,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] Dispositivo inexistente → 404; datos faltantes o tipo inválido → 400.
 - [x] `pruebas/alertas.php` pasa completo.
 
-## Fase 4 · Servicio de Monitoreo
+## Fase 4 · Servicio de Monitoreo ✅
 
 **Objetivo:** el flujo completo de SOA. Monitoreo coordina a Dispositivos y Alertas **solo por HTTP**.
 
@@ -119,16 +126,16 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 **Listo cuando:**
 
-- [ ] Monitorear Mi PC (`127.0.0.1`) → 201, `activo` con tiempo. El dispositivo queda actualizado con el mismo tiempo y fecha que el monitoreo.
-- [ ] Monitorear la Impresora (`192.0.2.20`) → `inactivo`, `alerta_creada: true`. Una segunda vez → `alerta_creada: false`.
-- [ ] Dispositivo inexistente → 404.
-- [ ] Si Alertas o Dispositivos no responde (se simula con una URL incorrecta en la configuración de la prueba) → 502, y el monitoreo queda guardado.
-- [ ] `GET /monitoreo` respeta cada filtro; `desde` posterior a `hasta` → 400; la paginación da `total` y `total_paginas` correctos.
-- [ ] El `resumen` ignora el filtro de estado y la paginación, y coincide con un cálculo manual en SQL.
-- [ ] `GET /monitoreo/recientes` devuelve cada lista en orden cronológico ascendente y respeta `limite`.
-- [ ] **Regla SOA:** el código de `servicios/monitoreo/` no contiene SQL sobre las tablas `dispositivos` ni `alertas` (se revisa con `grep`).
-- [ ] `/monitoreo/prueba` ya no existe (404).
-- [ ] `pruebas/monitoreo.php` pasa completo, y las pruebas de las Fases 2 y 3 siguen pasando.
+- [x] Monitorear Mi PC (`127.0.0.1`) → 201, `activo` con tiempo. El dispositivo queda actualizado con el mismo tiempo y fecha que el monitoreo.
+- [x] Monitorear la Impresora (`192.0.2.20`) → `inactivo`, `alerta_creada: true`. Una segunda vez → `alerta_creada: false`.
+- [x] Dispositivo inexistente → 404.
+- [x] Si Alertas o Dispositivos no responde (se simula con una URL incorrecta en la configuración de la prueba) → 502, y el monitoreo queda guardado.
+- [x] `GET /monitoreo` respeta cada filtro; `desde` posterior a `hasta` → 400; la paginación da `total` y `total_paginas` correctos.
+- [x] El `resumen` ignora el filtro de estado y la paginación, y coincide con un cálculo manual en SQL.
+- [x] `GET /monitoreo/recientes` devuelve cada lista en orden cronológico ascendente y respeta `limite`.
+- [x] **Regla SOA:** el código de `servicios/monitoreo/` no contiene SQL sobre las tablas `dispositivos` ni `alertas` (se revisa con `grep`).
+- [x] `/monitoreo/prueba` ya no existe (404).
+- [x] `pruebas/monitoreo.php` pasa completo, y las pruebas de las Fases 2 y 3 siguen pasando.
 
 ## Fase 5 · Sistema de diseño
 
