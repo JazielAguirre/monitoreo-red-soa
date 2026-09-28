@@ -40,7 +40,7 @@ Arquitectura
 Interfaz web (web/)  →  HTTP + JSON  →  Servicios (servicios/)  →  MySQL
 .htaccess        solo expone por HTTP web/ y los servicios; el resto responde 404, / redirige a web/
 database/        schema.sql (recrea la BD completa), seed.sql (datos de prueba)
-docs/            PLAN.md (fases del proyecto), API.md (contrato de endpoints)
+docs/            PLAN.md (fases del proyecto), API.md (contrato de endpoints), diseno/ (referencia visual)
 servicios/
 ├── comun/       config.php, db.php, respuesta.php, http.php, auth.php (.htaccess: Require all denied)
 ├── dispositivos/  index.php + .htaccess   → dueño de la tabla dispositivos
@@ -50,7 +50,7 @@ servicios/
 web/
 ├── css/         tokens.css (variables de diseño), app.css (componentes)
 ├── js/          api.js (único punto de acceso a la API) + un archivo por página
-├── vendor/      bootstrap, bootstrap-icons, chart.js, fuente Inter
+├── vendor/      bootstrap, bootstrap-icons, chart.js, fuentes Inter y JetBrains Mono
 └── *.html       login, index (dashboard), dispositivos, monitoreos, alertas, componentes
 Reglas SOA (no negociables)
 Cada servicio solo lee y escribe sus propias tablas.
@@ -103,21 +103,33 @@ Peticiones entre servicios: no llevan sesión. Se autentican con la cabecera X-S
 Se implementa en la Fase 7. Antes de eso, los servicios funcionan sin login.
 Diseño de la interfaz
 Tokens: colores, tipografía, espaciados, radios y sombras son variables CSS en web/css/tokens.css. Ningún otro archivo usa valores hexadecimales sueltos.
-Paleta:
-Base azul marino 
-#0B1D2E y 
-#16324F.
-Fondo claro 
-#F3F6F9.
-Texto 
-#1E293B y texto secundario 
-#64748B.
-Estados: activo 
-#22C55E, inactivo 
-#EF4444, alerta 
-#F59E0B, desconocido 
-#94A3B8.
-Tipografía: Inter (archivos locales en web/vendor/), con respaldo system-ui, sans-serif.
+Referencia visual: docs/diseno/. "Monitoreo de Red SOA.dc.html" es el sistema de diseño (valores finales), "Monitoreo de Red SOA · Pantallas.dc.html" y el PDF muestran las pantallas. Es solo referencia: no copies su código (usa React internamente y carga recursos desde internet).
+Paleta (valores finales del :root del sistema de diseño):
+Base: --color-base #0B1D2E, --color-base-2 #16324F, --color-base-texto #B6C4D3 (texto sobre la base azul marino).
+Fondo y superficies: --color-fondo #F3F6F9, --color-superficie #FFFFFF, --color-borde #E2E8F0.
+Texto: --color-texto #1E293B, --color-texto-2 #5B6B80 (secundario; reemplaza a #64748B, que no llegaba a AA sobre el fondo).
+Acciones: --color-acento #2F6FB0, --color-peligro #DC2626 (acciones destructivas).
+Estados (color / -texto / -fondo):
+  activo       #22C55E / #15803D / #F0FDF4
+  inactivo     #EF4444 / #B91C1C / #FEF2F2
+  alerta       #F59E0B / #B45309 / #FFFBEB
+  desconocido  #94A3B8 / #475569 / #F1F5F9
+El color de estado es para el punto; el texto de estado usa la variante -texto (AA sobre -fondo o blanco). El verde #22C55E sobre blanco da 2.3:1: nunca como texto.
+Radios: --radio-sm 6px, --radio 8px, --radio-lg 12px.
+Sombras:
+  --sombra-1: 0 1px 2px rgb(11 29 46 / .05)
+  --sombra-2: 0 4px 12px -2px rgb(11 29 46 / .10)
+  --sombra-3: 0 20px 40px -8px rgb(11 29 46 / .28)
+Bootstrap: --bs-primary: var(--color-base-2); --bs-body-bg: var(--color-fondo); --bs-body-font-family: Inter; --bs-border-radius: var(--radio).
+Tipografía:
+Inter para la interfaz (web/vendor/inter/), con respaldo system-ui, sans-serif.
+JetBrains Mono para IPs, horas y tiempos (web/vendor/jetbrains-mono/, pesos 400, 500 y 600), con respaldo ui-monospace, monospace y font-variant-numeric: slashed-zero (cero con barra).
+Escala (tamaño / interlineado en px · peso):
+  Display (login)     28 / 36 · 600 · letter-spacing -1%
+  Título de página    22 / 30 · 600
+  Título de tarjeta   16 / 24 · 600
+  Cuerpo              14 / 20 · 400
+  Monoespaciada       13 / 20 · 500 · JetBrains Mono
 Motivo visual: el punto de estado de color. Aparece en tablas, tarjetas y dashboard, y pulsa mientras se ejecuta un ping.
 Bootstrap se personaliza con sus variables CSS. El resultado no debe verse como Bootstrap por defecto.
 Iconos y gráficas: Bootstrap Icons para los iconos y Chart.js para las gráficas, usando los colores de los tokens.
@@ -155,6 +167,7 @@ Completado:
 - Fase 1 — Base de datos: database/schema.sql con las 4 tablas de docs/API.md (FK con ON DELETE CASCADE, índices, utf8mb4_unicode_ci), database/seed.sql (6 dispositivos, 56 monitoreos, 1 alerta pendiente y 3 atendidas, usuario admin) y comun/db.php (PDO con EMULATE_PREPARES en false y colación utf8mb4_unicode_ci). Verificado: carga desde cero repetible, coherencia de ultimo_* con el último monitoreo, UNIQUE, FK y cascada (con ROLLBACK).
 Pendientes o decisiones abiertas:
 - docs/PLAN.md está vacío (solo "pendiente"); de ahí salen los "Listo cuando" de cada fase.
+- docs/diseno/Monitoreo de Red SOA-print.dc.html (venía en el ZIP) es la versión vieja del sistema de diseño (usa #64748B): no está en el repositorio. Decidir si se borra o se reemplaza por la versión nueva.
 - GET /servicios/monitoreo/prueba es temporal: eliminarlo en la Fase 4 junto con atenderPruebaPing().
 - Con EMULATE_PREPARES en false, PDO ya devuelve INT como int, pero DECIMAL sigue como texto y TINYINT como int (1): cada servicio convierte a número y booleano antes de responder.
 - Las fechas del seed son fijas (última ronda: 2026-09-27 09:45); en la demo se refrescan con "Monitorear todos".

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<style>
+body{margin:0;background:#DCE2E8;font-family:Inter,system-ui,sans-serif;color:#1E293B;-webkit-font-smoothing:antialiased}
+a{color:#2F6FB0;text-decoration:none}a:hover{color:#16324F;text-decoration:underline}
+button{font-family:inherit}
+@font-face{font-family:'JetBrains Mono';src:url(https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@master/fonts/webfonts/JetBrainsMono-Regular.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'JetBrains Mono';src:url(https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@master/fonts/webfonts/JetBrainsMono-Medium.woff2) format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'JetBrains Mono';src:url(https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@master/fonts/webfonts/JetBrainsMono-SemiBold.woff2) format('woff2');font-weight:600;font-display:swap}
+@keyframes somPulse{0%{transform:scale(1);opacity:.55}100%{transform:scale(2.8);opacity:0}}
+@keyframes somSpin{to{transform:rotate(360deg)}}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}.dv-tname{font:600 13px/1.2 Inter,system-ui,sans-serif;color:#1a1a1a}.dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 12px/1.3 Inter,system-ui,sans-serif;color:rgba(0,0,0,.6)}.dv-card{max-width:100%;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}.dv-next{margin:28px 0 0;font:12px/1.5 Inter,system-ui,sans-serif;color:rgba(0,0,0,.55)}
+</style>
+</helmet>
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Entrega 1 · Sistema de diseño y dashboard — pendiente de revisión</span></div>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,300px));gap:16px;margin:0 0 32px">
+<div style="background:#fff;border-radius:10px;padding:16px 18px;font-size:13px;line-height:19px;color:#334155;text-wrap:pretty"><b style="color:#1E293B">Acento añadido.</b> <span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px">--color-acento #2F6FB0</span> para foco, enlaces, gráfica y el pulso del ping: el azul marino no se distingue sobre la barra lateral.</div>
+<div style="background:#fff;border-radius:10px;padding:16px 18px;font-size:13px;line-height:19px;color:#334155;text-wrap:pretty"><b style="color:#1E293B">Contraste AA.</b> El punto usa el color de estado puro; el texto del badge usa una variante oscura (<span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px">-texto</span>), porque #22C55E sobre blanco no llega a 4.5:1.</div>
+<div style="background:#fff;border-radius:10px;padding:16px 18px;font-size:13px;line-height:19px;color:#334155;text-wrap:pretty"><b style="color:#1E293B">Bootstrap primero.</b> Espaciados = spacers de Bootstrap, alturas de botón/campo = 38 px, rejilla de 12 columnas. Las gráficas son referencia visual para Chart.js.</div>
+<div style="background:#fff;border-radius:10px;padding:16px 18px;font-size:13px;line-height:19px;color:#334155;text-wrap:pretty"><b style="color:#1E293B">Prueba el dashboard.</b> «Monitorear todos» recorre los dispositivos uno por uno; pasa el cursor por la gráfica para ver el tooltip; el menú celular se abre con ☰.</div>
+</div>
+
+<div class="dv-opts">
+<div class="dv-opt" id="1a"><div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Sistema de diseño · tokens y componentes</div>
+<div class="dv-card" style="width:1280px">
+<div style="background:#F3F6F9;padding:56px;display:flex;flex-direction:column;gap:64px;font-family:Inter,system-ui,sans-serif;color:#1E293B">
+
+<div style="display:flex;align-items:center;gap:16px">
+<div style="position:relative;width:48px;height:48px;border-radius:12px;background:#0B1D2E;display:grid;place-items:center;color:#8CBCEB;font-size:22px"><i class="bi bi-diagram-3-fill"></i><span style="position:absolute;top:8px;right:8px;width:9px;height:9px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 2px #0B1D2E"></span></div>
+<div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:28px;line-height:36px;font-weight:600;letter-spacing:-.01em">Sistema de diseño</div><div style="font-size:14px;color:#5B6B80">Monitoreo de Red SOA · v1.0 · Bootstrap 5, Bootstrap Icons, Chart.js</div></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">01</span><span style="font-size:20px;line-height:28px;font-weight:600">Colores</span><span style="font-size:13px;color:#5B6B80">Variables CSS de la paleta base</span></div>
+<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px">
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden"><div style="height:88px;background:#0B1D2E"></div><div style="padding:12px 14px;display:flex;flex-direction:column;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">--color-base</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">#0B1D2E</span><span style="font-size:12px;color:#5B6B80;margin-top:6px">Barra lateral, login</span></div></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden"><div style="height:88px;background:#16324F"></div><div style="padding:12px 14px;display:flex;flex-direction:column;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">--color-base-2</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">#16324F</span><span style="font-size:12px;color:#5B6B80;margin-top:6px">Botón primario, ítem activo</span></div></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden"><div style="height:88px;background:#F3F6F9;border-bottom:1px solid #E2E8F0"></div><div style="padding:12px 14px;display:flex;flex-direction:column;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">--color-fondo</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">#F3F6F9</span><span style="font-size:12px;color:#5B6B80;margin-top:6px">Área de contenido</span></div></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden"><div style="height:88px;background:#FFFFFF;border-bottom:1px solid #E2E8F0"></div><div style="padding:12px 14px;display:flex;flex-direction:column;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">--color-superficie</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">#FFFFFF</span><span style="font-size:12px;color:#5B6B80;margin-top:6px">Tarjetas, modales</span></div></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden"><div style="height:88px;background:#1E293B"></div><div style="padding:12px 14px;display:flex;flex-direction:column;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">--color-texto</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">#1E293B</span><span style="font-size:12px;color:#5B6B80;margin-top:6px">Texto principal</span></div></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden"><div style="height:88px;background:#5B6B80"></div><div style="padding:12px 14px;display:flex;flex-direction:column;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">--color-texto-2</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">#5B6B80</span><span style="font-size:12px;color:#5B6B80;margin-top:6px">Texto secundario</span></div></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden"><div style="height:72px;background:#22C55E"></div><div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">--color-activo</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">#22C55E</span></div><div style="display:flex;gap:6px"><span style="flex:1;padding:6px 8px;border-radius:6px;background:#15803D;color:#fff;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:11px">-texto #15803D</span><span style="flex:1;padding:6px 8px;border-radius:6px;background:#F0FDF4;color:#15803D;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:11px;border:1px solid #DCFCE7">-fondo #F0FDF4</span></div></div></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden"><div style="height:72px;background:#EF4444"></div><div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">--color-inactivo</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">#EF4444</span></div><div style="display:flex;gap:6px"><span style="flex:1;padding:6px 8px;border-radius:6px;background:#B91C1C;color:#fff;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:11px">-texto #B91C1C</span><span style="flex:1;padding:6px 8px;border-radius:6px;background:#FEF2F2;color:#B91C1C;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:11px;border:1px solid #FEE2E2">-fondo #FEF2F2</span></div></div></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden"><div style="height:72px;background:#F59E0B"></div><div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">--color-alerta</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">#F59E0B</span></div><div style="display:flex;gap:6px"><span style="flex:1;padding:6px 8px;border-radius:6px;background:#B45309;color:#fff;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:11px">-texto #B45309</span><span style="flex:1;padding:6px 8px;border-radius:6px;background:#FFFBEB;color:#B45309;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:11px;border:1px solid #FEF3C7">-fondo #FFFBEB</span></div></div></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden"><div style="height:72px;background:#94A3B8"></div><div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">--color-desconocido</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">#94A3B8</span></div><div style="display:flex;gap:6px"><span style="flex:1;padding:6px 8px;border-radius:6px;background:#475569;color:#fff;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:11px">-texto #475569</span><span style="flex:1;padding:6px 8px;border-radius:6px;background:#F1F5F9;color:#475569;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:11px;border:1px solid #E2E8F0">-fondo #F1F5F9</span></div></div></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center"><span style="width:44px;height:44px;border-radius:8px;background:#2F6FB0;flex:none"></span><div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">--color-acento · #2F6FB0</span><span style="font-size:12px;color:#5B6B80">Foco, enlaces, gráfica, ping</span></div></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center"><span style="width:44px;height:44px;border-radius:8px;background:#E2E8F0;flex:none"></span><div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">--color-borde · #E2E8F0</span><span style="font-size:12px;color:#5B6B80">Bordes y divisores</span></div></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center"><span style="width:44px;height:44px;border-radius:8px;background:#0B1D2E;flex:none;display:grid;place-items:center;color:#B6C4D3;font-weight:600;font-size:14px">Aa</span><div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">--color-base-texto · #B6C4D3</span><span style="font-size:12px;color:#5B6B80">Texto sobre la barra lateral</span></div></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center"><span style="width:44px;height:44px;border-radius:8px;background:#DC2626;flex:none"></span><div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">--color-peligro · #DC2626</span><span style="font-size:12px;color:#5B6B80">Botón Eliminar (texto blanco AA)</span></div></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;background:#0B1D2E;border-radius:12px;padding:20px 24px;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;line-height:20px;color:#D5E1EC">
+<pre style="margin:0;font:inherit;white-space:pre"><span style="color:#8FA3B8">:root {</span>
+  --color-base: #0B1D2E;
+  --color-base-2: #16324F;
+  --color-fondo: #F3F6F9;
+  --color-superficie: #FFFFFF;
+  --color-texto: #1E293B;
+  --color-texto-2: #5B6B80;
+  --color-activo: #22C55E;
+  --color-inactivo: #EF4444;
+  --color-alerta: #F59E0B;
+  --color-desconocido: #94A3B8;</pre>
+<pre style="margin:0;font:inherit;white-space:pre">  <span style="color:#8FA3B8">/* complementarias */</span>
+  --color-acento: #2F6FB0;
+  --color-borde: #E2E8F0;
+  --color-base-texto: #B6C4D3;
+  --color-peligro: #DC2626;
+  --color-activo-texto: #15803D;
+  --color-inactivo-texto: #B91C1C;
+  --color-alerta-texto: #B45309;
+  --color-desconocido-texto: #475569;</pre>
+<pre style="margin:0;font:inherit;white-space:pre">  --radio-sm: 6px; --radio: 8px;
+  --radio-lg: 12px;
+  --sombra-1: 0 1px 2px rgb(11 29 46/.05);
+  --sombra-2: 0 4px 12px -2px rgb(11 29 46/.10);
+  --sombra-3: 0 20px 40px -8px rgb(11 29 46/.28);
+  <span style="color:#8FA3B8">/* Bootstrap */</span>
+  --bs-primary: var(--color-base-2);
+  --bs-body-bg: var(--color-fondo);
+  --bs-body-font-family: Inter, sans-serif;
+  --bs-border-radius: var(--radio);
+<span style="color:#8FA3B8">}</span></pre>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">02</span><span style="font-size:20px;line-height:28px;font-weight:600">Tipografía</span><span style="font-size:13px;color:#5B6B80">Inter para la interfaz · JetBrains Mono para IP y tiempos</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);padding:8px 24px">
+<div style="display:grid;grid-template-columns:180px minmax(0,1fr) 200px;align-items:center;gap:24px;padding:16px 0;border-bottom:1px solid #EEF2F6"><span style="font-size:12px;color:#5B6B80">Display · login</span><span style="font-size:28px;line-height:36px;font-weight:600;letter-spacing:-.01em">Monitoreo de Red SOA</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">28 / 36 · 600 · -1%</span></div>
+<div style="display:grid;grid-template-columns:180px minmax(0,1fr) 200px;align-items:center;gap:24px;padding:16px 0;border-bottom:1px solid #EEF2F6"><span style="font-size:12px;color:#5B6B80">Título de página</span><span style="font-size:22px;line-height:30px;font-weight:600">Dashboard</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">22 / 30 · 600</span></div>
+<div style="display:grid;grid-template-columns:180px minmax(0,1fr) 200px;align-items:center;gap:24px;padding:16px 0;border-bottom:1px solid #EEF2F6"><span style="font-size:12px;color:#5B6B80">Título de tarjeta</span><span style="font-size:16px;line-height:24px;font-weight:600">Estado de dispositivos</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">16 / 24 · 600</span></div>
+<div style="display:grid;grid-template-columns:180px minmax(0,1fr) 200px;align-items:center;gap:24px;padding:16px 0;border-bottom:1px solid #EEF2F6"><span style="font-size:12px;color:#5B6B80">Indicador</span><span style="font-size:32px;line-height:36px;font-weight:600;font-variant-numeric:tabular-nums">6</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">32 / 36 · 600 · tabular</span></div>
+<div style="display:grid;grid-template-columns:180px minmax(0,1fr) 200px;align-items:center;gap:24px;padding:16px 0;border-bottom:1px solid #EEF2F6"><span style="font-size:12px;color:#5B6B80">Cuerpo</span><span style="font-size:14px;line-height:20px">El dispositivo Servidor principal no respondió al monitoreo.</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">14 / 20 · 400</span></div>
+<div style="display:grid;grid-template-columns:180px minmax(0,1fr) 200px;align-items:center;gap:24px;padding:16px 0;border-bottom:1px solid #EEF2F6"><span style="font-size:12px;color:#5B6B80">Secundario</span><span style="font-size:13px;line-height:18px;color:#5B6B80">Sala de servidores · 3 dispositivos</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">13 / 18 · 400</span></div>
+<div style="display:grid;grid-template-columns:180px minmax(0,1fr) 200px;align-items:center;gap:24px;padding:16px 0;border-bottom:1px solid #EEF2F6"><span style="font-size:12px;color:#5B6B80">Encabezado de tabla</span><span style="font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;color:#5B6B80">ESTADO · NOMBRE · DIRECCIÓN IP</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">11 / 16 · 600 · +6%</span></div>
+<div style="display:grid;grid-template-columns:180px minmax(0,1fr) 200px;align-items:center;gap:24px;padding:16px 0"><span style="font-size:12px;color:#5B6B80">Monoespaciada</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px;line-height:20px;font-weight:500">192.168.1.10 · 0.08 ms · 10:08:00</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">JetBrains Mono 13 / 20 · 500 · cero con barra</span></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">03</span><span style="font-size:20px;line-height:28px;font-weight:600">Espaciado, radios y sombras</span></div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+<div style="font-size:13px;font-weight:600">Espaciado · base 4 px</div>
+<div style="display:grid;grid-template-columns:34px 1fr 80px;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80"><span>4</span><span style="height:12px;width:4px;background:#2F6FB0;border-radius:2px"></span><span>.p-1</span></div>
+<div style="display:grid;grid-template-columns:34px 1fr 80px;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80"><span>8</span><span style="height:12px;width:8px;background:#2F6FB0;border-radius:2px"></span><span>.p-2</span></div>
+<div style="display:grid;grid-template-columns:34px 1fr 80px;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80"><span>12</span><span style="height:12px;width:12px;background:#2F6FB0;border-radius:2px"></span><span>gap 12</span></div>
+<div style="display:grid;grid-template-columns:34px 1fr 80px;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80"><span>16</span><span style="height:12px;width:16px;background:#2F6FB0;border-radius:2px"></span><span>.p-3</span></div>
+<div style="display:grid;grid-template-columns:34px 1fr 80px;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80"><span>24</span><span style="height:12px;width:24px;background:#2F6FB0;border-radius:2px"></span><span>.p-4</span></div>
+<div style="display:grid;grid-template-columns:34px 1fr 80px;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80"><span>32</span><span style="height:12px;width:32px;background:#2F6FB0;border-radius:2px"></span><span>página</span></div>
+<div style="display:grid;grid-template-columns:34px 1fr 80px;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80"><span>48</span><span style="height:12px;width:48px;background:#2F6FB0;border-radius:2px"></span><span>.p-5</span></div>
+</div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+<div style="font-size:13px;font-weight:600">Radios</div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 16px">
+<div style="display:flex;gap:12px;align-items:center"><span style="width:52px;height:52px;border:2px solid #16324F;border-radius:6px;flex:none"></span><div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">6 px</span><span style="font-size:12px;color:#5B6B80">Botón sm, ícono</span></div></div>
+<div style="display:flex;gap:12px;align-items:center"><span style="width:52px;height:52px;border:2px solid #16324F;border-radius:8px;flex:none"></span><div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">8 px</span><span style="font-size:12px;color:#5B6B80">Botón, campo</span></div></div>
+<div style="display:flex;gap:12px;align-items:center"><span style="width:52px;height:52px;border:2px solid #16324F;border-radius:12px;flex:none"></span><div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">12 px</span><span style="font-size:12px;color:#5B6B80">Tarjeta, modal</span></div></div>
+<div style="display:flex;gap:12px;align-items:center"><span style="width:52px;height:52px;border:2px solid #16324F;border-radius:999px;flex:none"></span><div style="display:flex;flex-direction:column;gap:2px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;font-weight:500">999 px</span><span style="font-size:12px;color:#5B6B80">Badge, contador</span></div></div>
+</div>
+</div>
+<div style="background:#F3F6F9;border:1px solid #E2E8F0;border-radius:12px;padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:13px;font-weight:600">Sombras</div>
+<div style="background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 1px 2px rgba(11,29,46,.05),0 2px 6px rgba(11,29,46,.04);display:flex;justify-content:space-between;font-size:12px"><span style="font-weight:500">--sombra-1</span><span style="color:#5B6B80">Tarjetas</span></div>
+<div style="background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 4px 12px -2px rgba(11,29,46,.10),0 2px 4px rgba(11,29,46,.05);display:flex;justify-content:space-between;font-size:12px"><span style="font-weight:500">--sombra-2</span><span style="color:#5B6B80">Hover, menú desplegable</span></div>
+<div style="background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 20px 40px -8px rgba(11,29,46,.28);display:flex;justify-content:space-between;font-size:12px"><span style="font-weight:500">--sombra-3</span><span style="color:#5B6B80">Modal, notificación</span></div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">04</span><span style="font-size:20px;line-height:28px;font-weight:600">Iconos</span><span style="font-size:13px;color:#5B6B80">Bootstrap Icons · 16 px en interfaz, 18 px en navegación</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:8px">
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:10px;background:#F3F6F9;color:#16324F;display:grid;place-items:center;font-size:18px"><i class="bi bi-pc-display"></i></span><span style="font-size:11px;color:#5B6B80;text-align:center">Computadora</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:10px;background:#F3F6F9;color:#16324F;display:grid;place-items:center;font-size:18px"><i class="bi bi-hdd-rack"></i></span><span style="font-size:11px;color:#5B6B80;text-align:center">Servidor</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:10px;background:#F3F6F9;color:#16324F;display:grid;place-items:center;font-size:18px"><i class="bi bi-printer"></i></span><span style="font-size:11px;color:#5B6B80;text-align:center">Impresora</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:10px;background:#F3F6F9;color:#16324F;display:grid;place-items:center;font-size:18px"><i class="bi bi-router"></i></span><span style="font-size:11px;color:#5B6B80;text-align:center">Router</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:10px;color:#475569;display:grid;place-items:center;font-size:18px"><i class="bi bi-grid-1x2"></i></span><span style="font-size:11px;color:#5B6B80;text-align:center">Dashboard</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:10px;color:#475569;display:grid;place-items:center;font-size:18px"><i class="bi bi-hdd-network"></i></span><span style="font-size:11px;color:#5B6B80;text-align:center">Dispositivos</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:10px;color:#475569;display:grid;place-items:center;font-size:18px"><i class="bi bi-activity"></i></span><span style="font-size:11px;color:#5B6B80;text-align:center">Monitoreos</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:10px;color:#475569;display:grid;place-items:center;font-size:18px"><i class="bi bi-bell"></i></span><span style="font-size:11px;color:#5B6B80;text-align:center">Alertas</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:10px;color:#475569;display:grid;place-items:center;font-size:18px"><i class="bi bi-broadcast"></i></span><span style="font-size:11px;color:#5B6B80;text-align:center">Monitorear</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:10px;color:#475569;display:grid;place-items:center;font-size:18px"><i class="bi bi-pencil"></i></span><span style="font-size:11px;color:#5B6B80;text-align:center">Editar</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:10px;color:#475569;display:grid;place-items:center;font-size:18px"><i class="bi bi-trash3"></i></span><span style="font-size:11px;color:#5B6B80;text-align:center">Eliminar</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:10px;color:#475569;display:grid;place-items:center;font-size:18px"><i class="bi bi-search"></i></span><span style="font-size:11px;color:#5B6B80;text-align:center">Buscar</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:10px;color:#475569;display:grid;place-items:center;font-size:18px"><i class="bi bi-wifi-off"></i></span><span style="font-size:11px;color:#5B6B80;text-align:center">Sin respuesta</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:10px;color:#475569;display:grid;place-items:center;font-size:18px"><i class="bi bi-clock-history"></i></span><span style="font-size:11px;color:#5B6B80;text-align:center">Historial</span></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">05</span><span style="font-size:20px;line-height:28px;font-weight:600">Botones</span><span style="font-size:13px;color:#5B6B80">Altura 38 px (sm 32 px) · radio 8 px · 14 / 500</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:24px;display:grid;grid-template-columns:120px repeat(5,minmax(0,1fr));gap:18px 16px;align-items:center">
+<span></span><span style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#5B6B80">NORMAL</span><span style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#5B6B80">HOVER</span><span style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#5B6B80">FOCO</span><span style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#5B6B80">DESHABILITADO</span><span style="font-size:11px;font-weight:600;letter-spacing:.06em;color:#5B6B80">CARGANDO</span>
+<span style="font-size:13px;color:#5B6B80">Primario</span>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#16324F;color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;cursor:pointer"><i class="bi bi-broadcast"></i>Monitorear todos</button></div>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#0B1D2E;color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px"><i class="bi bi-broadcast"></i>Monitorear todos</button></div>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#16324F;color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;box-shadow:0 0 0 2px #fff,0 0 0 4px #2F6FB0"><i class="bi bi-broadcast"></i>Monitorear todos</button></div>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#16324F;color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;opacity:.4"><i class="bi bi-broadcast"></i>Monitorear todos</button></div>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#16324F;color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;cursor:progress">{{ spinW }}Monitoreando…</button></div>
+<span style="font-size:13px;color:#5B6B80">Secundario</span>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px"><i class="bi bi-plus-lg"></i>Agregar</button></div>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:1px solid #94A3B8;background:#F3F6F9;color:#1E293B;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px"><i class="bi bi-plus-lg"></i>Agregar</button></div>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:1px solid #2F6FB0;background:#fff;color:#1E293B;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;box-shadow:0 0 0 3px rgba(47,111,176,.25)"><i class="bi bi-plus-lg"></i>Agregar</button></div>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:1px solid #E2E8F0;background:#F8FAFC;color:#94A3B8;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px"><i class="bi bi-plus-lg"></i>Agregar</button></div>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px">{{ spinD }}Guardando…</button></div>
+<span style="font-size:13px;color:#5B6B80">Peligro</span>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#DC2626;color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px"><i class="bi bi-trash3"></i>Eliminar</button></div>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#B91C1C;color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px"><i class="bi bi-trash3"></i>Eliminar</button></div>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#DC2626;color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;box-shadow:0 0 0 2px #fff,0 0 0 4px #DC2626"><i class="bi bi-trash3"></i>Eliminar</button></div>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#DC2626;color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;opacity:.4"><i class="bi bi-trash3"></i>Eliminar</button></div>
+<div><button style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#DC2626;color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px">{{ spinW }}Eliminando…</button></div>
+<span style="font-size:13px;color:#5B6B80">Texto</span>
+<div><button style="height:38px;padding:0 12px;border-radius:8px;border:none;background:transparent;color:#2F6FB0;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:6px">Ver todas<i class="bi bi-arrow-right"></i></button></div>
+<div><button style="height:38px;padding:0 12px;border-radius:8px;border:none;background:#EFF5FB;color:#16324F;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:6px">Ver todas<i class="bi bi-arrow-right"></i></button></div>
+<div><button style="height:38px;padding:0 12px;border-radius:8px;border:none;background:transparent;color:#2F6FB0;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:6px;box-shadow:0 0 0 3px rgba(47,111,176,.25)">Ver todas<i class="bi bi-arrow-right"></i></button></div>
+<div><button style="height:38px;padding:0 12px;border-radius:8px;border:none;background:transparent;color:#94A3B8;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:6px">Ver todas<i class="bi bi-arrow-right"></i></button></div>
+<span></span>
+<span style="font-size:13px;color:#5B6B80">Acción de tabla</span>
+<div style="display:flex;gap:6px"><span style="width:32px;height:32px;border-radius:8px;border:1px solid #E2E8F0;color:#475569;display:grid;place-items:center;font-size:14px"><i class="bi bi-broadcast"></i></span><span style="width:32px;height:32px;border-radius:8px;border:1px solid #E2E8F0;color:#475569;display:grid;place-items:center;font-size:14px"><i class="bi bi-pencil"></i></span><span style="width:32px;height:32px;border-radius:8px;border:1px solid #E2E8F0;color:#475569;display:grid;place-items:center;font-size:14px"><i class="bi bi-trash3"></i></span></div>
+<div style="display:flex;gap:6px"><span style="width:32px;height:32px;border-radius:8px;border:1px solid #CBD5E1;background:#F3F6F9;color:#1E293B;display:grid;place-items:center;font-size:14px"><i class="bi bi-broadcast"></i></span><span style="width:32px;height:32px;border-radius:8px;border:1px solid #FECACA;background:#FEF2F2;color:#DC2626;display:grid;place-items:center;font-size:14px"><i class="bi bi-trash3"></i></span></div>
+<div style="display:flex;gap:6px"><span style="width:32px;height:32px;border-radius:8px;border:1px solid #2F6FB0;color:#1E293B;display:grid;place-items:center;font-size:14px;box-shadow:0 0 0 3px rgba(47,111,176,.25)"><i class="bi bi-pencil"></i></span></div>
+<div style="display:flex;gap:6px"><span style="width:32px;height:32px;border-radius:8px;border:1px solid #EEF2F6;color:#CBD5E1;display:grid;place-items:center;font-size:14px"><i class="bi bi-pencil"></i></span></div>
+<div style="display:flex;gap:6px"><span style="width:32px;height:32px;border-radius:8px;border:1px solid #BFDBFE;background:#EFF6FF;display:grid;place-items:center">{{ spinA }}</span></div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">06</span><span style="font-size:20px;line-height:28px;font-weight:600">Estado</span><span style="font-size:13px;color:#5B6B80">Punto + texto, siempre</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:20px;flex:1">
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;color:#5B6B80">Badge de dispositivo</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:#F0FDF4;color:#15803D;font-size:12px;font-weight:500"><span style="width:8px;height:8px;border-radius:50%;background:#22C55E"></span>Activo</span>
+<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:#FEF2F2;color:#B91C1C;font-size:12px;font-weight:500"><span style="width:8px;height:8px;border-radius:50%;background:#EF4444"></span>Inactivo</span>
+<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:500"><span style="width:8px;height:8px;border-radius:50%;background:#94A3B8"></span>Sin monitorear</span>
+<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:#EFF6FF;color:#1E4F80;font-size:12px;font-weight:500">{{ pulseA }}Monitoreando…</span>
+</div></div>
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;color:#5B6B80">Punto compacto (tablas, listas)</span>
+<div style="display:flex;flex-wrap:wrap;gap:20px;font-size:13px;font-weight:500">
+<span style="display:inline-flex;align-items:center;gap:8px;color:#15803D"><span style="width:8px;height:8px;border-radius:50%;background:#22C55E"></span>Activo</span>
+<span style="display:inline-flex;align-items:center;gap:8px;color:#B91C1C"><span style="width:8px;height:8px;border-radius:50%;background:#EF4444"></span>Inactivo</span>
+<span style="display:inline-flex;align-items:center;gap:8px;color:#475569"><span style="width:8px;height:8px;border-radius:50%;background:#94A3B8"></span>Sin monitorear</span>
+</div></div>
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;color:#5B6B80">Alertas</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:#FFFBEB;color:#B45309;font-size:12px;font-weight:500"><span style="width:8px;height:8px;border-radius:50%;background:#F59E0B"></span>Pendiente</span>
+<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 8px;border-radius:999px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:500"><i class="bi bi-check2"></i>Atendida</span>
+<span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:6px;border:1px solid #FECACA;color:#B91C1C;font-size:12px;font-weight:500"><i class="bi bi-wifi-off"></i>Sin respuesta</span>
+<span style="min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#F59E0B;color:#0B1D2E;font-size:11px;font-weight:700;display:inline-grid;place-items:center">1</span>
+</div></div>
+<div style="font-size:12px;line-height:18px;color:#5B6B80;border-top:1px solid #EEF2F6;padding-top:14px;text-wrap:pretty">Mientras se hace el ping, el punto emite un anillo que se expande (1.2 s, ease-out, infinito). Con <span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero">prefers-reduced-motion</span> queda fijo.</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">07</span><span style="font-size:20px;line-height:28px;font-weight:600">Navegación, pestañas y progreso</span></div>
+<div style="display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;flex:1">
+<div style="background:#0B1D2E;border-radius:12px;padding:16px 12px;display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:8px;background:#16324F;color:#fff;font-size:14px;font-weight:500"><i class="bi bi-grid-1x2" style="font-size:16px;color:#8CBCEB"></i>Dashboard</div>
+<div style="display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:8px;background:rgba(255,255,255,.06);color:#fff;font-size:14px;font-weight:500"><i class="bi bi-hdd-network" style="font-size:16px"></i>Dispositivos</div>
+<div style="display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:8px;color:#B6C4D3;font-size:14px;font-weight:500"><i class="bi bi-activity" style="font-size:16px"></i>Monitoreos</div>
+<div style="display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:8px;color:#B6C4D3;font-size:14px;font-weight:500"><i class="bi bi-bell" style="font-size:16px"></i>Alertas<span style="margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#F59E0B;color:#0B1D2E;font-size:11px;font-weight:700;display:grid;place-items:center">1</span></div>
+<div style="display:flex;justify-content:space-between;font-size:11px;color:#8FA3B8;padding:10px 12px 0;margin-top:auto"><span>activo</span><span>hover</span><span>normal</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:8px 20px 0">
+<div style="display:flex;gap:24px;border-bottom:1px solid #E2E8F0">
+<span style="display:inline-flex;align-items:center;gap:8px;padding:12px 2px;border-bottom:2px solid #16324F;margin-bottom:-1px;font-size:14px;font-weight:600;color:#1E293B">Pendientes<span style="min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#FEF3C7;color:#B45309;font-size:11px;font-weight:700;display:grid;place-items:center">1</span></span>
+<span style="display:inline-flex;align-items:center;gap:8px;padding:12px 2px;font-size:14px;font-weight:500;color:#5B6B80">Atendidas<span style="min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#F1F5F9;color:#475569;font-size:11px;font-weight:700;display:grid;place-items:center">4</span></span>
+</div>
+<div style="height:14px"></div>
+</div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span style="display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:500">{{ pulseA }}Comprobando Servidor principal <span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80;font-weight:400">192.168.1.10</span></span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">3 de 6</span></div>
+<div style="height:6px;border-radius:999px;background:#E2E8F0;overflow:hidden"><div style="width:42%;height:100%;background:#2F6FB0;border-radius:999px"></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;background:#F0FDF4;color:#15803D;font-size:12px"><i class="bi bi-check2"></i>Mi PC</span>
+<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;background:#F0FDF4;color:#15803D;font-size:12px"><i class="bi bi-check2"></i>Router principal</span>
+<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:6px;background:#EFF6FF;color:#1E4F80;font-size:12px">{{ pulseSm }}Servidor principal</span>
+<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;background:#F3F6F9;color:#5B6B80;font-size:12px">3 en espera</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">08</span><span style="font-size:20px;line-height:28px;font-weight:600">Tarjeta de indicador</span><span style="font-size:13px;color:#5B6B80">col-3 en escritorio · col-6 en celular</span></div>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);padding:20px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500;color:#5B6B80">Total de dispositivos</span><span style="width:36px;height:36px;border-radius:10px;background:#EEF3F8;color:#16324F;display:grid;place-items:center;font-size:17px"><i class="bi bi-hdd-network"></i></span></div><span style="font-size:32px;line-height:36px;font-weight:600;font-variant-numeric:tabular-nums">6</span><span style="font-size:12.5px;color:#5B6B80">4 tipos · 3 ubicaciones</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);padding:20px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500;color:#5B6B80">Activos</span><span style="width:36px;height:36px;border-radius:10px;background:#F0FDF4;color:#15803D;display:grid;place-items:center;font-size:17px"><i class="bi bi-check-circle"></i></span></div><span style="font-size:32px;line-height:36px;font-weight:600;font-variant-numeric:tabular-nums">4</span><span style="font-size:12.5px;color:#5B6B80">67 % de la red responde</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);padding:20px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500;color:#5B6B80">Inactivos</span><span style="width:36px;height:36px;border-radius:10px;background:#FEF2F2;color:#B91C1C;display:grid;place-items:center;font-size:17px"><i class="bi bi-x-circle"></i></span></div><span style="font-size:32px;line-height:36px;font-weight:600;font-variant-numeric:tabular-nums">1</span><span style="font-size:12.5px;color:#5B6B80">Servidor principal</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);padding:20px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500;color:#5B6B80">Alertas pendientes</span><span style="width:36px;height:36px;border-radius:10px;background:#FFFBEB;color:#B45309;display:grid;place-items:center;font-size:17px"><i class="bi bi-exclamation-triangle"></i></span></div><span style="font-size:32px;line-height:36px;font-weight:600;font-variant-numeric:tabular-nums">1</span><span style="font-size:12.5px;color:#5B6B80">Última: 21/09/2026 10:05</span></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">09</span><span style="font-size:20px;line-height:28px;font-weight:600">Tabla</span><span style="font-size:13px;color:#5B6B80">Filas de 56 px · encabezado 40 px · hover #F8FAFC</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);overflow:hidden">
+<div style="display:grid;grid-template-columns:170px minmax(0,1.4fr) 150px minmax(0,1fr) 140px 130px 132px;align-items:center;gap:16px;height:40px;padding:0 20px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;font-size:11px;font-weight:600;letter-spacing:.06em;color:#5B6B80"><span>ESTADO</span><span>NOMBRE</span><span>DIRECCIÓN IP</span><span>TIPO</span><span>ÚLT. RESPUESTA</span><span>ÚLT. COMPROBACIÓN</span><span style="text-align:right">ACCIONES</span></div>
+<div style="display:grid;grid-template-columns:170px minmax(0,1.4fr) 150px minmax(0,1fr) 140px 130px 132px;align-items:center;gap:16px;height:56px;padding:0 20px;border-bottom:1px solid #EEF2F6;font-size:14px">
+<span><span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:#F0FDF4;color:#15803D;font-size:12px;font-weight:500"><span style="width:8px;height:8px;border-radius:50%;background:#22C55E"></span>Activo</span></span>
+<span style="font-weight:500">Router principal</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px">192.168.1.1</span><span style="display:inline-flex;align-items:center;gap:8px;color:#475569"><i class="bi bi-router"></i>Router</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px">1.8 ms</span><span style="font-size:13px;color:#5B6B80">Hoy, 10:05</span>
+<span style="display:flex;gap:6px;justify-content:flex-end"><span style="width:32px;height:32px;border-radius:8px;border:1px solid #E2E8F0;color:#475569;display:grid;place-items:center;font-size:14px"><i class="bi bi-broadcast"></i></span><span style="width:32px;height:32px;border-radius:8px;border:1px solid #E2E8F0;color:#475569;display:grid;place-items:center;font-size:14px"><i class="bi bi-pencil"></i></span><span style="width:32px;height:32px;border-radius:8px;border:1px solid #E2E8F0;color:#475569;display:grid;place-items:center;font-size:14px"><i class="bi bi-trash3"></i></span></span>
+</div>
+<div style="display:grid;grid-template-columns:170px minmax(0,1.4fr) 150px minmax(0,1fr) 140px 130px 132px;align-items:center;gap:16px;height:56px;padding:0 20px;border-bottom:1px solid #EEF2F6;font-size:14px">
+<span><span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:#FEF2F2;color:#B91C1C;font-size:12px;font-weight:500"><span style="width:8px;height:8px;border-radius:50%;background:#EF4444"></span>Inactivo</span></span>
+<span style="font-weight:500">Servidor principal</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px">192.168.1.10</span><span style="display:inline-flex;align-items:center;gap:8px;color:#475569"><i class="bi bi-hdd-rack"></i>Servidor</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px;color:#B91C1C">Sin respuesta</span><span style="font-size:13px;color:#5B6B80">Hoy, 10:05</span>
+<span style="display:flex;gap:6px;justify-content:flex-end"><span style="width:32px;height:32px;border-radius:8px;border:1px solid #E2E8F0;color:#475569;display:grid;place-items:center;font-size:14px"><i class="bi bi-broadcast"></i></span><span style="width:32px;height:32px;border-radius:8px;border:1px solid #E2E8F0;color:#475569;display:grid;place-items:center;font-size:14px"><i class="bi bi-pencil"></i></span><span style="width:32px;height:32px;border-radius:8px;border:1px solid #E2E8F0;color:#475569;display:grid;place-items:center;font-size:14px"><i class="bi bi-trash3"></i></span></span>
+</div>
+<div style="display:grid;grid-template-columns:170px minmax(0,1.4fr) 150px minmax(0,1fr) 140px 130px 132px;align-items:center;gap:16px;height:56px;padding:0 20px;border-bottom:1px solid #EEF2F6;font-size:14px;background:#FAFCFF">
+<span><span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:#EFF6FF;color:#1E4F80;font-size:12px;font-weight:500">{{ pulseA }}Monitoreando…</span></span>
+<span style="font-weight:500">PC Recepción</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px">192.168.1.35</span><span style="display:inline-flex;align-items:center;gap:8px;color:#475569"><i class="bi bi-pc-display"></i>Computadora</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px;color:#5B6B80">Enviando ping…</span><span style="font-size:13px;color:#5B6B80">Hoy, 10:05</span>
+<span style="display:flex;gap:6px;justify-content:flex-end"><span style="width:32px;height:32px;border-radius:8px;border:1px solid #BFDBFE;background:#EFF6FF;display:grid;place-items:center">{{ spinA }}</span><span style="width:32px;height:32px;border-radius:8px;border:1px solid #EEF2F6;color:#CBD5E1;display:grid;place-items:center;font-size:14px"><i class="bi bi-pencil"></i></span><span style="width:32px;height:32px;border-radius:8px;border:1px solid #EEF2F6;color:#CBD5E1;display:grid;place-items:center;font-size:14px"><i class="bi bi-trash3"></i></span></span>
+</div>
+<div style="display:grid;grid-template-columns:170px minmax(0,1.4fr) 150px minmax(0,1fr) 140px 130px 132px;align-items:center;gap:16px;height:56px;padding:0 20px;font-size:14px;background:#F8FAFC">
+<span><span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:500"><span style="width:8px;height:8px;border-radius:50%;background:#94A3B8"></span>Sin monitorear</span></span>
+<span style="font-weight:500">Servidor de respaldo</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px">192.168.1.11</span><span style="display:inline-flex;align-items:center;gap:8px;color:#475569"><i class="bi bi-hdd-rack"></i>Servidor</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px;color:#94A3B8">—</span><span style="font-size:13px;color:#5B6B80">Nunca</span>
+<span style="display:flex;gap:6px;justify-content:flex-end"><span style="width:32px;height:32px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;display:grid;place-items:center;font-size:14px"><i class="bi bi-broadcast"></i></span><span style="width:32px;height:32px;border-radius:8px;border:1px solid #E2E8F0;color:#475569;display:grid;place-items:center;font-size:14px"><i class="bi bi-pencil"></i></span><span style="width:32px;height:32px;border-radius:8px;border:1px solid #E2E8F0;color:#475569;display:grid;place-items:center;font-size:14px"><i class="bi bi-trash3"></i></span></span>
+</div>
+</div>
+<div style="display:flex;gap:24px;font-size:12px;color:#5B6B80"><span>Fila 3 · monitoreando: el punto pulsa, el botón muestra spinner y Editar/Eliminar se deshabilitan.</span><span>Fila 4 · hover.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">10</span><span style="font-size:20px;line-height:28px;font-weight:600">Campos de formulario</span><span style="font-size:13px;color:#5B6B80">38 px · radio 8 px · etiqueta siempre visible</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:24px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px 20px">
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Nombre</span><div style="height:38px;border-radius:8px;border:1px solid #CBD5E1;padding:0 12px;display:flex;align-items:center;font-size:14px;color:#94A3B8">Ej. Router principal</div><span style="font-size:12px;color:#5B6B80">Normal</span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Dirección IP</span><div style="height:38px;border-radius:8px;border:1px solid #2F6FB0;box-shadow:0 0 0 3px rgba(47,111,176,.18);padding:0 12px;display:flex;align-items:center;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13.5px">192.168.1.2<span style="width:1px;height:18px;background:#1E293B;margin-left:1px"></span></div><span style="font-size:12px;color:#5B6B80">Formato IPv4, p. ej. 192.168.1.25</span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Dirección IP</span><div style="height:38px;border-radius:8px;border:1px solid #EF4444;box-shadow:0 0 0 3px rgba(239,68,68,.12);padding:0 12px;display:flex;align-items:center;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13.5px">192.168.1.300<i class="bi bi-exclamation-circle-fill" style="color:#EF4444;font-size:15px"></i></div><span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:#B91C1C">Dirección IP no válida</span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500;color:#94A3B8">Ubicación</span><div style="height:38px;border-radius:8px;border:1px solid #E2E8F0;background:#F3F6F9;padding:0 12px;display:flex;align-items:center;font-size:14px;color:#94A3B8">Laboratorio</div><span style="font-size:12px;color:#5B6B80">Deshabilitado</span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Tipo</span><div style="height:38px;border-radius:8px;border:1px solid #CBD5E1;padding:0 12px;display:flex;align-items:center;justify-content:space-between;font-size:14px"><span style="display:inline-flex;align-items:center;gap:8px"><i class="bi bi-router" style="color:#475569"></i>Router</span><i class="bi bi-chevron-down" style="font-size:12px;color:#5B6B80"></i></div><span style="font-size:12px;color:#5B6B80">Select</span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Buscar</span><div style="height:38px;border-radius:8px;border:1px solid #CBD5E1;padding:0 12px;display:flex;align-items:center;gap:10px;font-size:14px;color:#94A3B8"><i class="bi bi-search" style="color:#5B6B80"></i>Buscar por nombre o IP</div><span style="font-size:12px;color:#5B6B80">Buscador con ícono</span></div>
+<div style="display:flex;flex-direction:column;gap:6px;grid-column:span 2"><span style="font-size:13px;font-weight:500">Filtro por estado</span><div style="display:flex;height:38px;border-radius:8px;border:1px solid #CBD5E1;overflow:hidden;font-size:13px;font-weight:500"><span style="flex:1;display:grid;place-items:center;background:#16324F;color:#fff">Todos</span><span style="flex:1;display:grid;place-items:center;border-left:1px solid #CBD5E1;color:#475569">Activos</span><span style="flex:1;display:grid;place-items:center;border-left:1px solid #CBD5E1;color:#475569">Inactivos</span><span style="flex:1.4;display:grid;place-items:center;border-left:1px solid #CBD5E1;color:#475569">Sin monitorear</span></div><span style="font-size:12px;color:#5B6B80">btn-group</span></div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px">
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">11</span><span style="font-size:20px;line-height:28px;font-weight:600">Modal</span><span style="font-size:13px;color:#5B6B80">Fondo rgba(11,29,46,.5) · sin desenfoque</span></div>
+<div style="background:#F3F6F9;border-radius:12px;position:relative;overflow:hidden;height:340px;border:1px solid #E2E8F0">
+<div style="position:absolute;inset:0;background:rgba(11,29,46,.5)"></div>
+<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:420px;background:#fff;border-radius:12px;box-shadow:0 20px 40px -8px rgba(11,29,46,.28)">
+<div style="padding:24px 24px 0;display:flex;gap:16px"><span style="width:40px;height:40px;border-radius:50%;background:#FEF2F2;color:#DC2626;display:grid;place-items:center;flex:none;font-size:17px"><i class="bi bi-trash3"></i></span><div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:16px;line-height:24px;font-weight:600">¿Eliminar dispositivo?</span><span style="font-size:14px;line-height:20px;color:#475569;text-wrap:pretty">Se eliminará <b style="color:#1E293B;font-weight:600">Servidor de respaldo</b> (<span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px">192.168.1.11</span>) y todo su historial de monitoreos. Esta acción no se puede deshacer.</span></div></div>
+<div style="padding:20px 24px;display:flex;justify-content:flex-end;gap:8px"><button style="height:38px;padding:0 16px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;font-size:14px;font-weight:500">Cancelar</button><button style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#DC2626;color:#fff;font-size:14px;font-weight:500">Eliminar</button></div>
+</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">12</span><span style="font-size:20px;line-height:28px;font-weight:600">Notificaciones</span><span style="font-size:13px;color:#5B6B80">Toast arriba a la derecha · 4.5 s</span></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="background:#fff;border-radius:12px;border:1px solid #E2E8F0;box-shadow:0 12px 28px -8px rgba(11,29,46,.18);padding:14px 16px;display:flex;gap:12px;align-items:flex-start"><span style="width:32px;height:32px;border-radius:50%;background:#F0FDF4;color:#15803D;display:grid;place-items:center;flex:none"><i class="bi bi-check-lg"></i></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">Monitoreo completado</span><span style="font-size:13px;color:#5B6B80">4 de 6 dispositivos responden.</span></div><i class="bi bi-x-lg" style="color:#94A3B8;font-size:13px"></i></div>
+<div style="background:#fff;border-radius:12px;border:1px solid #E2E8F0;box-shadow:0 12px 28px -8px rgba(11,29,46,.18);padding:14px 16px;display:flex;gap:12px;align-items:flex-start"><span style="width:32px;height:32px;border-radius:50%;background:#FEF2F2;color:#B91C1C;display:grid;place-items:center;flex:none"><i class="bi bi-wifi-off"></i></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">Servidor principal no respondió</span><span style="font-size:13px;color:#5B6B80">Se generó una alerta pendiente. <a href="#">Ver alerta</a></span></div><i class="bi bi-x-lg" style="color:#94A3B8;font-size:13px"></i></div>
+<div style="background:#fff;border-radius:12px;border:1px solid #E2E8F0;box-shadow:0 12px 28px -8px rgba(11,29,46,.18);padding:14px 16px;display:flex;gap:12px;align-items:flex-start"><span style="width:32px;height:32px;border-radius:50%;background:#EEF3F8;color:#16324F;display:grid;place-items:center;flex:none"><i class="bi bi-plus-lg"></i></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">Dispositivo agregado</span><span style="font-size:13px;color:#5B6B80">Impresora Laboratorio se registró correctamente.</span></div><i class="bi bi-x-lg" style="color:#94A3B8;font-size:13px"></i></div>
+</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">13</span><span style="font-size:20px;line-height:28px;font-weight:600">Estado vacío</span></div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:36px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px"><span style="width:56px;height:56px;border-radius:50%;background:#F0FDF4;color:#15803D;display:grid;place-items:center;font-size:26px;box-shadow:0 0 0 8px #F7FEF9"><i class="bi bi-check2-circle"></i></span><span style="font-size:16px;font-weight:600;margin-top:8px">Toda la red responde</span><span style="font-size:13px;line-height:19px;color:#5B6B80;text-wrap:pretty">No hay alertas pendientes. La última comprobación fue hoy a las 10:05.</span><button style="margin-top:6px;height:32px;padding:0 12px;border-radius:6px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;font-size:13px;font-weight:500">Ver atendidas</button></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:36px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px"><span style="width:56px;height:56px;border-radius:50%;background:#EEF3F8;color:#16324F;display:grid;place-items:center;font-size:24px;box-shadow:0 0 0 8px #F6F9FB"><i class="bi bi-hdd-network"></i></span><span style="font-size:16px;font-weight:600;margin-top:8px">Aún no hay dispositivos</span><span style="font-size:13px;line-height:19px;color:#5B6B80;text-wrap:pretty">Registra el primer equipo de la red para empezar a monitorearlo.</span><button style="margin-top:6px;height:32px;padding:0 12px;border-radius:6px;border:none;background:#16324F;color:#fff;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px"><i class="bi bi-plus-lg"></i>Agregar dispositivo</button></div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">14</span><span style="font-size:20px;line-height:28px;font-weight:600">Esqueleto de carga</span><span style="font-size:13px;color:#5B6B80">Opacidad 1 → .55, 1.4 s</span></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px">
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="width:110px;height:10px;border-radius:5px;background:#E7ECF1"></span><span style="width:36px;height:36px;border-radius:10px;background:#EEF2F6"></span></div><span style="width:44px;height:26px;border-radius:6px;background:#E7ECF1"></span><span style="width:130px;height:9px;border-radius:5px;background:#EEF2F6"></span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="width:80px;height:10px;border-radius:5px;background:#E7ECF1"></span><span style="width:36px;height:36px;border-radius:10px;background:#EEF2F6"></span></div><span style="width:30px;height:26px;border-radius:6px;background:#E7ECF1"></span><span style="width:100px;height:9px;border-radius:5px;background:#EEF2F6"></span></div>
+</div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden">
+<div style="height:40px;background:#F8FAFC;border-bottom:1px solid #E2E8F0"></div>
+<div style="display:grid;grid-template-columns:90px 1fr 110px 70px;gap:16px;align-items:center;height:52px;padding:0 20px;border-bottom:1px solid #EEF2F6"><span style="height:20px;border-radius:999px;background:#EEF2F6"></span><span style="height:10px;width:70%;border-radius:5px;background:#E7ECF1"></span><span style="height:10px;border-radius:5px;background:#EEF2F6"></span><span style="height:10px;border-radius:5px;background:#EEF2F6"></span></div>
+<div style="display:grid;grid-template-columns:90px 1fr 110px 70px;gap:16px;align-items:center;height:52px;padding:0 20px;border-bottom:1px solid #EEF2F6"><span style="height:20px;border-radius:999px;background:#EEF2F6"></span><span style="height:10px;width:55%;border-radius:5px;background:#E7ECF1"></span><span style="height:10px;border-radius:5px;background:#EEF2F6"></span><span style="height:10px;border-radius:5px;background:#EEF2F6"></span></div>
+<div style="display:grid;grid-template-columns:90px 1fr 110px 70px;gap:16px;align-items:center;height:52px;padding:0 20px"><span style="height:20px;border-radius:999px;background:#EEF2F6"></span><span style="height:10px;width:80%;border-radius:5px;background:#E7ECF1"></span><span style="height:10px;border-radius:5px;background:#EEF2F6"></span><span style="height:10px;border-radius:5px;background:#EEF2F6"></span></div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opts" style="margin-top:48px">
+<div class="dv-opt" id="1b"><div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Dashboard · escritorio 1440 px (interactivo)</div>
+<div class="dv-card" style="width:1440px">
+<div style="width:1440px;min-height:1010px;display:flex;background:#F3F6F9;position:relative;font-family:Inter,system-ui,sans-serif;color:#1E293B">
+<aside style="width:248px;flex:none;background:#0B1D2E;display:flex;flex-direction:column;padding:22px 14px 18px;gap:28px">
+<div style="display:flex;align-items:center;gap:12px;padding:0 8px">
+<div style="position:relative;width:38px;height:38px;border-radius:10px;background:#16324F;display:grid;place-items:center;color:#8CBCEB;font-size:18px;flex:none"><i class="bi bi-diagram-3-fill"></i><span style="position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 2px #16324F"></span></div>
+<div style="display:flex;flex-direction:column;gap:1px"><span style="font-size:15px;font-weight:600;color:#fff;line-height:20px">Monitoreo de Red</span><span style="font-size:12px;color:#8FA3B8">SOA · Laboratorio</span></div>
+</div>
+<nav style="display:flex;flex-direction:column;gap:2px">
+<div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6B8299;padding:0 12px 8px">MENÚ</div>
+<div style="display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:8px;background:#16324F;color:#fff;font-size:14px;font-weight:500;cursor:pointer"><i class="bi bi-grid-1x2" style="font-size:16px;color:#8CBCEB"></i>Dashboard</div>
+<div style="display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:8px;color:#B6C4D3;font-size:14px;font-weight:500;cursor:pointer" style-hover="background:rgba(255,255,255,.06);color:#FFFFFF"><i class="bi bi-hdd-network" style="font-size:16px"></i>Dispositivos</div>
+<div style="display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:8px;color:#B6C4D3;font-size:14px;font-weight:500;cursor:pointer" style-hover="background:rgba(255,255,255,.06);color:#FFFFFF"><i class="bi bi-activity" style="font-size:16px"></i>Monitoreos</div>
+<div style="display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:8px;color:#B6C4D3;font-size:14px;font-weight:500;cursor:pointer" style-hover="background:rgba(255,255,255,.06);color:#FFFFFF"><i class="bi bi-bell" style="font-size:16px"></i>Alertas<span style="margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#F59E0B;color:#0B1D2E;font-size:11px;font-weight:700;display:grid;place-items:center">1</span></div>
+</nav>
+<div style="margin-top:auto;border-top:1px solid rgba(255,255,255,.08);padding:16px 8px 0;display:flex;align-items:center;gap:12px">
+<span style="width:34px;height:34px;border-radius:50%;background:#16324F;color:#D5E1EC;display:grid;place-items:center;font-size:12px;font-weight:600;flex:none">AD</span>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px"><span style="font-size:13.5px;font-weight:500;color:#fff">Administrador</span><span style="font-size:12px;color:#8FA3B8">admin</span></div>
+<span style="width:32px;height:32px;border-radius:8px;color:#8FA3B8;display:grid;place-items:center;font-size:16px;cursor:pointer" style-hover="background:rgba(255,255,255,.06);color:#FFFFFF"><i class="bi bi-box-arrow-right"></i></span>
+</div>
+</aside>
+
+<main style="flex:1;min-width:0;padding:28px 32px 40px;display:flex;flex-direction:column;gap:24px">
+<header style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px">
+<div style="display:flex;flex-direction:column;gap:4px"><h1 style="margin:0;font-size:22px;line-height:30px;font-weight:600">Dashboard</h1><span style="font-size:14px;color:#5B6B80">Estado general de la red del laboratorio</span></div>
+<div style="display:flex;align-items:center;gap:20px">
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px"><span style="font-size:12px;color:#5B6B80;display:inline-flex;align-items:center;gap:6px"><i class="bi bi-clock-history"></i>Última comprobación</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px;font-weight:500">{{ lastCheck }}</span></div>
+<sc-if value="{{ running }}" hint-placeholder-val="{{ false }}"><button disabled="" style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#16324F;color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;cursor:progress;min-width:198px;justify-content:center">{{ spinW }}{{ btnLabel }}</button></sc-if>
+<sc-if value="{{ idle }}" hint-placeholder-val="{{ true }}"><button onClick="{{ monitorAll }}" style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#16324F;color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;cursor:pointer;min-width:198px;justify-content:center" style-hover="background:#0B1D2E"><i class="bi bi-broadcast"></i>Monitorear todos</button></sc-if>
+</div>
+</header>
+
+<sc-if value="{{ running }}" hint-placeholder-val="{{ false }}">
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 2px rgba(11,29,46,.04)">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:500">{{ pulseA }}Comprobando {{ curName }} <span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80;font-weight:400">{{ curIp }}</span></span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">{{ progText }}</span></div>
+<div style="height:6px;border-radius:999px;background:#E2E8F0;overflow:hidden"><div style="width:{{ progPct }};height:100%;background:#2F6FB0;border-radius:999px;transition:width .3s"></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ steps }}" as="s" hint-placeholder-count="6"><span style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:6px;background:{{ s.bg }};color:{{ s.fg }};font-size:12px">{{ s.lead }}{{ s.name }}<span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:11.5px">{{ s.ms }}</span></span></sc-for></div>
+</div>
+</sc-if>
+
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);padding:20px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500;color:#5B6B80">Total de dispositivos</span><span style="width:36px;height:36px;border-radius:10px;background:#EEF3F8;color:#16324F;display:grid;place-items:center;font-size:17px"><i class="bi bi-hdd-network"></i></span></div><span style="font-size:32px;line-height:36px;font-weight:600;font-variant-numeric:tabular-nums">{{ kTotal }}</span><span style="font-size:12.5px;color:#5B6B80">4 tipos · 3 ubicaciones</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);padding:20px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500;color:#5B6B80">Activos</span><span style="width:36px;height:36px;border-radius:10px;background:#F0FDF4;color:#15803D;display:grid;place-items:center;font-size:17px"><i class="bi bi-check-circle"></i></span></div><span style="font-size:32px;line-height:36px;font-weight:600;font-variant-numeric:tabular-nums">{{ kAct }}</span><span style="font-size:12.5px;color:#5B6B80">{{ kActSub }}</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);padding:20px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500;color:#5B6B80">Inactivos</span><span style="width:36px;height:36px;border-radius:10px;background:#FEF2F2;color:#B91C1C;display:grid;place-items:center;font-size:17px"><i class="bi bi-x-circle"></i></span></div><span style="font-size:32px;line-height:36px;font-weight:600;font-variant-numeric:tabular-nums">{{ kIna }}</span><span style="font-size:12.5px;color:#5B6B80">{{ kInaSub }}</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);padding:20px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500;color:#5B6B80">Alertas pendientes</span><span style="width:36px;height:36px;border-radius:10px;background:#FFFBEB;color:#B45309;display:grid;place-items:center;font-size:17px"><i class="bi bi-exclamation-triangle"></i></span></div><span style="font-size:32px;line-height:36px;font-weight:600;font-variant-numeric:tabular-nums">1</span><span style="font-size:12.5px;color:#5B6B80">Última: 21/09/2026 10:05</span></div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px">
+<div style="grid-column:span 8;background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);padding:20px 24px 24px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;justify-content:space-between;align-items:center"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;line-height:24px;font-weight:600">Estado de dispositivos</span><span style="font-size:13px;color:#5B6B80">{{ summary }}</span></div><a href="#" style="font-size:13px;font-weight:500;display:inline-flex;gap:6px;align-items:center">Ver dispositivos<i class="bi bi-arrow-right"></i></a></div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+<sc-for list="{{ devs }}" as="d" hint-placeholder-count="6">
+<div style="border:{{ d.tileBorder }};background:{{ d.tileBg }};border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;transition:border-color .2s,background .2s">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="width:32px;height:32px;border-radius:8px;background:#F3F6F9;display:grid;place-items:center;color:#16324F;font-size:15px"><i class="{{ d.icon }}"></i></span><span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:{{ d.tint }};color:{{ d.txt }};font-size:12px;font-weight:500">{{ d.dotEl }}{{ d.label }}</span></div>
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">{{ d.name }}</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12.5px;color:#5B6B80">{{ d.ip }}</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #EEF2F6;padding-top:10px"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px;font-weight:500;color:{{ d.msColor }}">{{ d.msText }}</span><span style="font-size:12px;color:#5B6B80">{{ d.lastText }}</span></div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="grid-column:span 4;background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);padding:20px 24px 12px;display:flex;flex-direction:column">
+<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:6px"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:16px;line-height:24px;font-weight:600">Últimas alertas</span><span style="min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#FEF3C7;color:#B45309;font-size:11px;font-weight:700;display:grid;place-items:center">1</span></div><a href="#" style="font-size:13px;font-weight:500;display:inline-flex;gap:6px;align-items:center">Ver todas<i class="bi bi-arrow-right"></i></a></div>
+<div style="display:flex;gap:12px;padding:14px 0;border-bottom:1px solid #EEF2F6"><span style="width:32px;height:32px;border-radius:8px;background:#FEF2F2;color:#B91C1C;display:grid;place-items:center;flex:none;font-size:14px"><i class="bi bi-wifi-off"></i></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span style="font-size:13.5px;font-weight:600">Servidor principal</span><span style="display:inline-flex;align-items:center;gap:6px;padding:2px 9px 2px 7px;border-radius:999px;background:#FFFBEB;color:#B45309;font-size:11.5px;font-weight:500"><span style="width:7px;height:7px;border-radius:50%;background:#F59E0B"></span>Pendiente</span></div><span style="font-size:13px;line-height:18px;color:#475569;text-wrap:pretty">El dispositivo Servidor principal no respondió al monitoreo.</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">21/09/2026 10:05</span></div></div>
+<div style="display:flex;gap:12px;padding:14px 0;border-bottom:1px solid #EEF2F6"><span style="width:32px;height:32px;border-radius:8px;background:#F1F5F9;color:#5B6B80;display:grid;place-items:center;flex:none;font-size:14px"><i class="bi bi-wifi-off"></i></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span style="font-size:13.5px;font-weight:600">PC Recepción</span><span style="display:inline-flex;align-items:center;gap:5px;padding:2px 9px 2px 7px;border-radius:999px;background:#F1F5F9;color:#475569;font-size:11.5px;font-weight:500"><i class="bi bi-check2"></i>Atendida</span></div><span style="font-size:13px;line-height:18px;color:#5B6B80;text-wrap:pretty">El dispositivo PC Recepción no respondió al monitoreo.</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">20/09/2026 17:48</span></div></div>
+<div style="display:flex;gap:12px;padding:14px 0;border-bottom:1px solid #EEF2F6"><span style="width:32px;height:32px;border-radius:8px;background:#F1F5F9;color:#5B6B80;display:grid;place-items:center;flex:none;font-size:14px"><i class="bi bi-wifi-off"></i></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span style="font-size:13.5px;font-weight:600">Impresora Laboratorio</span><span style="display:inline-flex;align-items:center;gap:5px;padding:2px 9px 2px 7px;border-radius:999px;background:#F1F5F9;color:#475569;font-size:11.5px;font-weight:500"><i class="bi bi-check2"></i>Atendida</span></div><span style="font-size:13px;line-height:18px;color:#5B6B80;text-wrap:pretty">El dispositivo Impresora Laboratorio no respondió al monitoreo.</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">19/09/2026 14:30</span></div></div>
+<div style="display:flex;gap:12px;padding:14px 0"><span style="width:32px;height:32px;border-radius:8px;background:#F1F5F9;color:#5B6B80;display:grid;place-items:center;flex:none;font-size:14px"><i class="bi bi-wifi-off"></i></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span style="font-size:13.5px;font-weight:600">Router principal</span><span style="display:inline-flex;align-items:center;gap:5px;padding:2px 9px 2px 7px;border-radius:999px;background:#F1F5F9;color:#475569;font-size:11.5px;font-weight:500"><i class="bi bi-check2"></i>Atendida</span></div><span style="font-size:13px;line-height:18px;color:#5B6B80;text-wrap:pretty">El dispositivo Router principal no respondió al monitoreo.</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">18/09/2026 08:12</span></div></div>
+</div>
+</div>
+
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);padding:20px 24px 16px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;line-height:24px;font-weight:600">Tiempos de respuesta recientes</span><span style="font-size:13px;color:#5B6B80">Últimas 10 comprobaciones · milisegundos (ms) · solo dispositivos que responden</span></div>
+<div style="display:flex;gap:18px;font-size:12.5px;color:#475569;padding-top:4px">
+<span style="display:inline-flex;align-items:center;gap:7px"><span style="width:14px;height:3px;border-radius:2px;background:#16324F"></span>Router principal</span>
+<span style="display:inline-flex;align-items:center;gap:7px"><span style="width:14px;height:3px;border-radius:2px;background:#2F6FB0"></span>Impresora Laboratorio</span>
+<span style="display:inline-flex;align-items:center;gap:7px"><span style="width:14px;height:3px;border-radius:2px;background:#14958A"></span>PC Recepción</span>
+<span style="display:inline-flex;align-items:center;gap:7px"><span style="width:14px;height:3px;border-radius:2px;background:#6FA3D6"></span>Mi PC</span>
+</div></div>
+{{ chartDesk }}
+</div>
+</main>
+
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:24px;right:32px;width:340px;background:#fff;border-radius:12px;border:1px solid #E2E8F0;box-shadow:0 20px 40px -8px rgba(11,29,46,.28);padding:14px 16px;display:flex;gap:12px;align-items:flex-start"><span style="width:32px;height:32px;border-radius:50%;background:#F0FDF4;color:#15803D;display:grid;place-items:center;flex:none"><i class="bi bi-check-lg"></i></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">Monitoreo completado</span><span style="font-size:13px;color:#5B6B80">{{ toastText }}</span></div><span onClick="{{ closeToast }}" style="cursor:pointer;color:#94A3B8;font-size:13px"><i class="bi bi-x-lg"></i></span></div>
+</sc-if>
+</div>
+</div>
+</div>
+
+<sc-for list="{{ mobiles }}" as="mv" hint-placeholder-count="2">
+<div class="dv-opt" id="{{ mv.id }}"><div class="dv-olabel"><a class="dv-oid" href="{{ mv.href }}">{{ mv.id }}</a>{{ mv.label }}</div>
+<div class="dv-card" style="width:390px;border-radius:20px">
+<div style="width:390px;height:{{ mv.h }};overflow:hidden;background:#F3F6F9;position:relative;font-family:Inter,system-ui,sans-serif;color:#1E293B">
+<div style="height:56px;background:#0B1D2E;display:flex;align-items:center;gap:8px;padding:0 8px 0 6px;position:relative;z-index:3">
+<button onClick="{{ mv.toggle }}" style="width:44px;height:44px;border:none;background:transparent;color:#fff;font-size:22px;display:grid;place-items:center;border-radius:8px;cursor:pointer" aria-label="Menú"><i class="{{ mv.menuIcon }}"></i></button>
+<div style="position:relative;width:28px;height:28px;border-radius:8px;background:#16324F;display:grid;place-items:center;color:#8CBCEB;font-size:13px;flex:none"><i class="bi bi-diagram-3-fill"></i><span style="position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 1.5px #16324F"></span></div>
+<span style="font-size:15px;font-weight:600;color:#fff;flex:1">Monitoreo de Red SOA</span>
+<span style="width:44px;height:44px;display:grid;place-items:center;color:#B6C4D3;font-size:19px;position:relative"><i class="bi bi-bell"></i><span style="position:absolute;top:8px;right:7px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#F59E0B;color:#0B1D2E;font-size:10px;font-weight:700;display:grid;place-items:center">1</span></span>
+</div>
+
+<sc-if value="{{ mv.open }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:56px;left:0;right:0;bottom:0;background:rgba(11,29,46,.5);z-index:2" onClick="{{ mv.toggle }}"></div>
+<div style="position:absolute;top:56px;left:0;right:0;background:#0B1D2E;z-index:3;padding:8px 12px 16px;display:flex;flex-direction:column;gap:2px;border-radius:0 0 16px 16px;box-shadow:0 20px 40px -8px rgba(11,29,46,.4)">
+<div style="display:flex;align-items:center;gap:14px;height:48px;padding:0 14px;border-radius:10px;background:#16324F;color:#fff;font-size:15px;font-weight:500"><i class="bi bi-grid-1x2" style="font-size:17px;color:#8CBCEB"></i>Dashboard</div>
+<div style="display:flex;align-items:center;gap:14px;height:48px;padding:0 14px;border-radius:10px;color:#B6C4D3;font-size:15px;font-weight:500"><i class="bi bi-hdd-network" style="font-size:17px"></i>Dispositivos</div>
+<div style="display:flex;align-items:center;gap:14px;height:48px;padding:0 14px;border-radius:10px;color:#B6C4D3;font-size:15px;font-weight:500"><i class="bi bi-activity" style="font-size:17px"></i>Monitoreos</div>
+<div style="display:flex;align-items:center;gap:14px;height:48px;padding:0 14px;border-radius:10px;color:#B6C4D3;font-size:15px;font-weight:500"><i class="bi bi-bell" style="font-size:17px"></i>Alertas<span style="margin-left:auto;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:#F59E0B;color:#0B1D2E;font-size:11px;font-weight:700;display:grid;place-items:center">1</span></div>
+<div style="border-top:1px solid rgba(255,255,255,.08);margin-top:10px;padding:14px 6px 0;display:flex;align-items:center;gap:12px"><span style="width:34px;height:34px;border-radius:50%;background:#16324F;color:#D5E1EC;display:grid;place-items:center;font-size:12px;font-weight:600">AD</span><div style="flex:1;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;font-weight:500;color:#fff">Administrador</span><span style="font-size:12px;color:#8FA3B8">admin</span></div><span style="height:40px;padding:0 12px;border-radius:8px;border:1px solid rgba(255,255,255,.14);color:#D5E1EC;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:8px"><i class="bi bi-box-arrow-right"></i>Salir</span></div>
+</div>
+</sc-if>
+
+<div style="padding:20px 16px 32px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:6px"><h1 style="margin:0;font-size:22px;line-height:30px;font-weight:600">Dashboard</h1><span style="font-size:12.5px;color:#5B6B80;display:inline-flex;align-items:center;gap:6px"><i class="bi bi-clock-history"></i>Última comprobación <span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;color:#1E293B;font-weight:500">{{ lastCheck }}</span></span></div>
+<sc-if value="{{ running }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:8px"><button disabled="" style="height:44px;width:100%;border-radius:8px;border:none;background:#16324F;color:#fff;font-size:15px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:8px">{{ spinW }}{{ btnLabel }}</button><div style="height:4px;border-radius:999px;background:#E2E8F0;overflow:hidden"><div style="width:{{ progPct }};height:100%;background:#2F6FB0;transition:width .3s"></div></div></div></sc-if>
+<sc-if value="{{ idle }}" hint-placeholder-val="{{ true }}"><button onClick="{{ monitorAll }}" style="height:44px;width:100%;border-radius:8px;border:none;background:#16324F;color:#fff;font-size:15px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer"><i class="bi bi-broadcast"></i>Monitorear todos</button></sc-if>
+
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px">
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;gap:8px"><span style="width:28px;height:28px;border-radius:8px;background:#EEF3F8;color:#16324F;display:grid;place-items:center;font-size:14px"><i class="bi bi-hdd-network"></i></span><span style="font-size:12px;font-weight:500;color:#5B6B80;line-height:15px">Total de dispositivos</span></div><span style="font-size:26px;line-height:32px;font-weight:600">{{ kTotal }}</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;gap:8px"><span style="width:28px;height:28px;border-radius:8px;background:#F0FDF4;color:#15803D;display:grid;place-items:center;font-size:14px"><i class="bi bi-check-circle"></i></span><span style="font-size:12px;font-weight:500;color:#5B6B80">Activos</span></div><span style="font-size:26px;line-height:32px;font-weight:600">{{ kAct }}</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;gap:8px"><span style="width:28px;height:28px;border-radius:8px;background:#FEF2F2;color:#B91C1C;display:grid;place-items:center;font-size:14px"><i class="bi bi-x-circle"></i></span><span style="font-size:12px;font-weight:500;color:#5B6B80">Inactivos</span></div><span style="font-size:26px;line-height:32px;font-weight:600">{{ kIna }}</span></div>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;gap:8px"><span style="width:28px;height:28px;border-radius:8px;background:#FFFBEB;color:#B45309;display:grid;place-items:center;font-size:14px"><i class="bi bi-exclamation-triangle"></i></span><span style="font-size:12px;font-weight:500;color:#5B6B80;line-height:15px">Alertas pendientes</span></div><span style="font-size:26px;line-height:32px;font-weight:600">1</span></div>
+</div>
+
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 16px 4px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:4px"><span style="font-size:16px;font-weight:600">Estado de dispositivos</span><a href="#" style="font-size:13px;font-weight:500">Ver todos</a></div>
+<sc-for list="{{ devs }}" as="d" hint-placeholder-count="6">
+<div style="display:flex;align-items:center;gap:12px;min-height:60px;border-top:{{ d.rowBorder }}">
+<span style="width:36px;height:36px;border-radius:8px;background:#F3F6F9;display:grid;place-items:center;color:#16324F;font-size:15px;flex:none"><i class="{{ d.icon }}"></i></span>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.name }}</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">{{ d.ip }}</span></div>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="display:inline-flex;align-items:center;gap:6px;padding:2px 9px 2px 7px;border-radius:999px;background:{{ d.tint }};color:{{ d.txt }};font-size:11.5px;font-weight:500;white-space:nowrap">{{ d.dotEl }}{{ d.label }}</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:{{ d.msColor }}">{{ d.msText }}</span></div>
+</div>
+</sc-for>
+</div>
+
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:600">Tiempos de respuesta</span><span style="font-size:12.5px;color:#5B6B80">Últimas 10 comprobaciones · ms</span></div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 12px;font-size:12px;color:#475569">
+<span style="display:inline-flex;align-items:center;gap:7px"><span style="width:12px;height:3px;border-radius:2px;background:#16324F"></span>Router principal</span>
+<span style="display:inline-flex;align-items:center;gap:7px"><span style="width:12px;height:3px;border-radius:2px;background:#2F6FB0"></span>Impresora Lab.</span>
+<span style="display:inline-flex;align-items:center;gap:7px"><span style="width:12px;height:3px;border-radius:2px;background:#14958A"></span>PC Recepción</span>
+<span style="display:inline-flex;align-items:center;gap:7px"><span style="width:12px;height:3px;border-radius:2px;background:#6FA3D6"></span>Mi PC</span>
+</div>
+{{ chartMob }}
+</div>
+
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 16px 4px">
+<div style="display:flex;justify-content:space-between;align-items:center"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:16px;font-weight:600">Últimas alertas</span><span style="min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#FEF3C7;color:#B45309;font-size:11px;font-weight:700;display:grid;place-items:center">1</span></div><a href="#" style="font-size:13px;font-weight:500">Ver todas</a></div>
+<div style="display:flex;gap:12px;padding:14px 0;border-bottom:1px solid #EEF2F6"><span style="width:32px;height:32px;border-radius:8px;background:#FEF2F2;color:#B91C1C;display:grid;place-items:center;flex:none;font-size:14px"><i class="bi bi-wifi-off"></i></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span style="font-size:13.5px;font-weight:600">Servidor principal</span><span style="display:inline-flex;align-items:center;gap:6px;padding:2px 9px 2px 7px;border-radius:999px;background:#FFFBEB;color:#B45309;font-size:11.5px;font-weight:500"><span style="width:7px;height:7px;border-radius:50%;background:#F59E0B"></span>Pendiente</span></div><span style="font-size:13px;line-height:18px;color:#475569">El dispositivo Servidor principal no respondió al monitoreo.</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">21/09/2026 10:05</span></div></div>
+<div style="display:flex;gap:12px;padding:14px 0"><span style="width:32px;height:32px;border-radius:8px;background:#F1F5F9;color:#5B6B80;display:grid;place-items:center;flex:none;font-size:14px"><i class="bi bi-wifi-off"></i></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span style="font-size:13.5px;font-weight:600">PC Recepción</span><span style="display:inline-flex;align-items:center;gap:5px;padding:2px 9px 2px 7px;border-radius:999px;background:#F1F5F9;color:#475569;font-size:11.5px;font-weight:500"><i class="bi bi-check2"></i>Atendida</span></div><span style="font-size:13px;line-height:18px;color:#5B6B80">El dispositivo PC Recepción no respondió al monitoreo.</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">20/09/2026 17:48</span></div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+<p class="dv-next"><b>Aprobado.</b> Continúa en <a href="Monitoreo de Red SOA · Pantallas.dc.html">Entrega 2 · Pantallas</a>. Pendiente anterior: «apruebo <a class="dv-oid" href="#1a">1a</a> y <a class="dv-oid" href="#1b">1b</a>, sigue con Dispositivos» · «cambia la cuadrícula de <a class="dv-oid" href="#1b">1b</a> a 6 columnas» · «usa otro acento en la gráfica»</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;pingMs&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:800,&quot;min&quot;:300,&quot;max&quot;:2000,&quot;step&quot;:100,&quot;unit&quot;:&quot;ms&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Monitoreo&quot;},&quot;chartCurve&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Suave&quot;,&quot;Recta&quot;],&quot;default&quot;:&quot;Suave&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Gráfica&quot;},&quot;chartPoints&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Gráfica&quot;}}">
+class Component extends DCLogic {
+  static ST = {
+    activo: { label: 'Activo', dot: '#22C55E', text: '#15803D', bg: '#F0FDF4', tile: '1px solid #E2E8F0' },
+    inactivo: { label: 'Inactivo', dot: '#EF4444', text: '#B91C1C', bg: '#FEF2F2', tile: '1px solid #FECACA' },
+    desconocido: { label: 'Sin monitorear', dot: '#94A3B8', text: '#475569', bg: '#F1F5F9', tile: '1px dashed #CBD5E1' },
+    monitoreando: { label: 'Monitoreando…', dot: '#2F6FB0', text: '#1E4F80', bg: '#EFF6FF', tile: '1px solid #93C5FD' }
+  };
+  static ICON = { Computadora: 'bi bi-pc-display', Router: 'bi bi-router', Servidor: 'bi bi-hdd-rack', Impresora: 'bi bi-printer' };
+  static DEV = [
+    { name: 'Mi PC', ip: '127.0.0.1', type: 'Computadora', status: 'activo', ms: 0.32, last: '10:05:12' },
+    { name: 'Router principal', ip: '192.168.1.1', type: 'Router', status: 'activo', ms: 1.8, last: '10:05:10' },
+    { name: 'Servidor principal', ip: '192.168.1.10', type: 'Servidor', status: 'inactivo', ms: null, last: '10:05:08' },
+    { name: 'Servidor de respaldo', ip: '192.168.1.11', type: 'Servidor', status: 'desconocido', ms: null, last: null },
+    { name: 'Impresora Laboratorio', ip: '192.168.1.20', type: 'Impresora', status: 'activo', ms: 4.1, last: '10:05:05' },
+    { name: 'PC Recepción', ip: '192.168.1.35', type: 'Computadora', status: 'activo', ms: 2.5, last: '10:05:03' }
+  ];
+  static RES = [0.32, 1.8, null, 0.95, 4.1, 2.5];
+  static LABELS = ['09:20', '09:25', '09:30', '09:35', '09:40', '09:45', '09:50', '09:55', '10:00', '10:05'];
+  static SERIES = [
+    { name: 'Router principal', color: '#16324F', data: [1.6, 1.9, 1.7, 2.1, 1.8, 1.7, 2.4, 1.9, 1.7, 1.8] },
+    { name: 'Impresora Laboratorio', color: '#2F6FB0', data: [3.8, 4.4, 4.0, 5.2, 4.6, 3.9, 4.3, 4.8, 4.2, 4.1] },
+    { name: 'PC Recepción', color: '#14958A', data: [2.2, 2.6, 2.4, 2.3, 3.1, 2.7, 2.5, 2.4, 2.8, 2.5] },
+    { name: 'Mi PC', color: '#6FA3D6', data: [0.3, 0.28, 0.35, 0.31, 0.3, 0.34, 0.29, 0.33, 0.3, 0.32] }
+  ];
+  state = { devices: Component.DEV.map(d => ({ ...d })), running: false, current: -1, done: 0, lastCheck: '21/09/2026 · 10:05:12', toast: false, menuOpen: false, hover: null, hoverM: null };
+
+  componentWillUnmount() { clearTimeout(this.t); clearTimeout(this.tt); }
+
+  fmt(ms) { return ms < 1 ? ms.toFixed(2) : ms.toFixed(1); }
+  dot(c, pulse, s = 8) {
+    const h = React.createElement;
+    if (!pulse) return h('span', { style: { width: s, height: s, borderRadius: '50%', background: c, flex: 'none', display: 'inline-block' } });
+    return h('span', { style: { position: 'relative', width: s, height: s, flex: 'none', display: 'inline-block' } },
+      h('span', { style: { position: 'absolute', inset: 0, borderRadius: '50%', background: c, animation: 'somPulse 1.2s ease-out infinite' } }),
+      h('span', { style: { position: 'absolute', inset: 0, borderRadius: '50%', background: c } }));
+  }
+  spin(c, track) {
+    return React.createElement('span', { style: { width: 14, height: 14, boxSizing: 'border-box', borderRadius: '50%', border: `2px solid ${track}`, borderTopColor: c, animation: 'somSpin .7s linear infinite', display: 'inline-block', flex: 'none' } });
+  }
+
+  monitorAll = () => {
+    if (this.state.running) return;
+    const delay = this.props.pingMs ?? 800;
+    const p = n => String(n).padStart(2, '0');
+    const stamp = () => { const d = new Date(); return { t: `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`, d: `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}` }; };
+    clearTimeout(this.tt);
+    this.setState({ running: true, current: 0, done: 0, toast: false });
+    const step = i => {
+      if (i >= this.state.devices.length) {
+        const s = stamp();
+        this.setState({ running: false, current: -1, lastCheck: `${s.d} · ${s.t}`, toast: true });
+        this.tt = setTimeout(() => this.setState({ toast: false }), 4500);
+        return;
+      }
+      this.setState({ current: i });
+      this.t = setTimeout(() => {
+        const base = Component.RES[i];
+        const ms = base == null ? null : +(base * (0.88 + Math.random() * 0.24)).toFixed(base < 1 ? 2 : 1);
+        this.setState(st => ({ done: i + 1, devices: st.devices.map((d, j) => j === i ? { ...d, status: ms == null ? 'inactivo' : 'activo', ms, last: stamp().t } : d) }));
+        step(i + 1);
+      }, delay);
+    };
+    step(0);
+  };
+
+  chart(o) {
+    const h = React.createElement, MONO = "'JetBrains Mono', ui-monospace, monospace";
+    const { w, hgt, every, key } = o;
+    const labels = Component.LABELS, series = Component.SERIES, n = labels.length;
+    const L = 34, R = 10, T = 12, B = 28, iw = w - L - R, ih = hgt - T - B, yMax = 6;
+    const X = i => L + i * iw / (n - 1), Y = v => T + ih - v / yMax * ih;
+    const t = (this.props.chartCurve ?? 'Suave') === 'Suave' ? 0.18 : 0;
+    const showPts = this.props.chartPoints ?? false;
+    const hi = this.state[key];
+    const kids = [];
+    [0, 2, 4, 6].forEach(v => {
+      kids.push(h('line', { key: 'g' + v, x1: L, x2: w - R, y1: Y(v), y2: Y(v), stroke: v ? '#EEF2F6' : '#E2E8F0', strokeDasharray: v ? '3 4' : null }));
+      kids.push(h('text', { key: 'y' + v, x: L - 8, y: Y(v) + 4, textAnchor: 'end', fontSize: 11, fill: '#5B6B80', fontFamily: MONO, style: { fontVariantNumeric: 'slashed-zero' } }, v));
+    });
+    labels.forEach((l, i) => { if (i % every) return; kids.push(h('text', { key: 'x' + i, x: X(i), y: hgt - 8, textAnchor: i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle', fontSize: 11, fill: hi === i ? '#1E293B' : '#5B6B80', fontFamily: MONO, style: { fontVariantNumeric: 'slashed-zero' } }, l)); });
+    if (hi != null) kids.push(h('line', { key: 'guide', x1: X(hi), x2: X(hi), y1: T, y2: T + ih, stroke: '#94A3B8', strokeDasharray: '3 3' }));
+    series.forEach((s, k) => {
+      const pts = s.data.map((v, i) => [X(i), Y(v)]);
+      let d = `M${pts[0]}`;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+        d += ` C${[p1[0] + (p2[0] - p0[0]) * t, p1[1] + (p2[1] - p0[1]) * t]} ${[p2[0] - (p3[0] - p1[0]) * t, p2[1] - (p3[1] - p1[1]) * t]} ${p2}`;
+      }
+      kids.push(h('path', { key: 's' + k, d, fill: 'none', stroke: s.color, strokeWidth: 2, strokeLinejoin: 'round', strokeLinecap: 'round' }));
+      if (showPts) pts.forEach((p, i) => kids.push(h('circle', { key: `p${k}-${i}`, cx: p[0], cy: p[1], r: 2.5, fill: s.color })));
+      const idx = hi != null ? hi : n - 1;
+      kids.push(h('circle', { key: 'e' + k, cx: X(idx), cy: Y(s.data[idx]), r: hi != null ? 4 : 3.5, fill: '#fff', stroke: s.color, strokeWidth: 2 }));
+    });
+    if (hi != null) {
+      const bw = o.compact ? 150 : 190, bh = 34 + series.length * 18;
+      let bx = X(hi) + 12; if (bx + bw > w - R) bx = X(hi) - 12 - bw;
+      const by = T;
+      const rows = series.map((s, k) => h('g', { key: 'r' + k },
+        h('rect', { x: bx + 12, y: by + 32 + k * 18, width: 8, height: 8, rx: 2, fill: s.color, stroke: '#fff', strokeWidth: 1 }),
+        h('text', { x: bx + 26, y: by + 40 + k * 18, fontSize: 12, fill: '#E2E8F0', fontFamily: 'Inter, sans-serif' }, o.compact ? s.name.replace('Laboratorio', 'Lab.') : s.name),
+        h('text', { x: bx + bw - 12, y: by + 40 + k * 18, fontSize: 12, fill: '#fff', textAnchor: 'end', fontFamily: MONO, style: { fontVariantNumeric: 'slashed-zero' } }, this.fmt(s.data[hi]))));
+      kids.push(h('g', { key: 'tt', pointerEvents: 'none' },
+        h('rect', { x: bx, y: by, width: bw, height: bh, rx: 8, fill: '#0B1D2E' }),
+        h('text', { x: bx + 12, y: by + 20, fontSize: 11, fill: '#8FA3B8', fontFamily: MONO, style: { fontVariantNumeric: 'slashed-zero' } }, `${labels[hi]} · ms`), ...rows));
+    }
+    kids.push(h('rect', {
+      key: 'hit', x: 0, y: 0, width: w, height: hgt, fill: 'transparent',
+      onMouseMove: e => { const r = e.currentTarget.ownerSVGElement.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width * w; const i = Math.max(0, Math.min(n - 1, Math.round((x - L) / (iw / (n - 1))))); if (this.state[key] !== i) this.setState({ [key]: i }); },
+      onMouseLeave: () => this.setState({ [key]: null })
+    }));
+    return h('svg', { viewBox: `0 0 ${w} ${hgt}`, style: { width: '100%', height: 'auto', display: 'block', overflow: 'visible' } }, kids);
+  }
+
+  renderVals() {
+    const s = this.state, ST = Component.ST;
+    const devs = s.devices.map((d, i) => {
+      const mon = s.running && s.current === i;
+      const k = mon ? 'monitoreando' : d.status, st = ST[k];
+      return {
+        ...d, icon: Component.ICON[d.type], label: st.label, txt: st.text, tint: st.bg, tileBorder: st.tile,
+        tileBg: mon ? '#F8FBFF' : '#FFFFFF', dotEl: this.dot(st.dot, mon),
+        msText: mon ? 'Enviando ping…' : d.ms != null ? `${this.fmt(d.ms)} ms` : d.status === 'inactivo' ? 'Sin respuesta' : '—',
+        msColor: mon ? '#5B6B80' : d.status === 'inactivo' ? '#B91C1C' : d.ms == null ? '#94A3B8' : '#1E293B',
+        lastText: d.last ? `Hoy, ${d.last.slice(0, 5)}` : 'Nunca comprobado',
+        rowBorder: i === 0 ? 'none' : '1px solid #EEF2F6'
+      };
+    });
+    const act = s.devices.filter(d => d.status === 'activo').length;
+    const ina = s.devices.filter(d => d.status === 'inactivo');
+    const unk = s.devices.filter(d => d.status === 'desconocido').length;
+    const total = s.devices.length;
+    const steps = s.devices.map((d, i) => {
+      const done = i < s.done, cur = s.running && i === s.current;
+      const bad = done && d.status === 'inactivo';
+      return {
+        name: d.name, ms: done && d.ms != null ? `${this.fmt(d.ms)} ms` : '',
+        bg: cur ? '#EFF6FF' : bad ? '#FEF2F2' : done ? '#F0FDF4' : '#F3F6F9',
+        fg: cur ? '#1E4F80' : bad ? '#B91C1C' : done ? '#15803D' : '#5B6B80',
+        lead: cur ? this.dot('#2F6FB0', true, 6) : React.createElement('i', { className: bad ? 'bi bi-x-lg' : done ? 'bi bi-check2' : 'bi bi-circle', style: { fontSize: done ? 12 : 8 } })
+      };
+    });
+    const cur = s.devices[s.current] || {};
+    const toggle = () => this.setState(st => ({ menuOpen: !st.menuOpen }));
+    return {
+      devs, steps, running: s.running, idle: !s.running, lastCheck: s.lastCheck, monitorAll: this.monitorAll,
+      btnLabel: `Monitoreando ${Math.min(s.done + 1, total)} de ${total}…`,
+      curName: cur.name, curIp: cur.ip, progText: `${s.done} de ${total}`, progPct: `${(s.done / total) * 100}%`,
+      kTotal: total, kAct: act, kActSub: `${Math.round(act / total * 100)} % de la red responde`,
+      kIna: ina.length, kInaSub: ina.length ? ina.map(d => d.name).join(', ') : 'Ninguno',
+      summary: [`${act} activos`, `${ina.length} inactivo${ina.length === 1 ? '' : 's'}`, unk ? `${unk} sin monitorear` : null].filter(Boolean).join(' · '),
+      toast: s.toast, toastText: `${act} de ${total} dispositivos responden.`, closeToast: () => this.setState({ toast: false }),
+      spinW: this.spin('#FFFFFF', 'rgba(255,255,255,.35)'), spinD: this.spin('#1E293B', '#CBD5E1'), spinA: this.spin('#2F6FB0', '#BFDBFE'),
+      pulseA: this.dot('#2F6FB0', true), pulseSm: this.dot('#2F6FB0', true, 6),
+      chartDesk: this.chart({ w: 1078, hgt: 250, every: 1, key: 'hover' }),
+      chartMob: this.chart({ w: 324, hgt: 190, every: 3, key: 'hoverM', compact: true }),
+      mobiles: [
+        { id: '1c', href: '#1c', label: 'Dashboard · celular 390 px (toca ☰)', open: s.menuOpen, h: 'auto', toggle, menuIcon: s.menuOpen ? 'bi bi-x-lg' : 'bi bi-list' },
+        { id: '1d', href: '#1d', label: 'Celular · menú desplegable abierto', open: true, h: '844px', toggle: () => {}, menuIcon: 'bi bi-x-lg' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

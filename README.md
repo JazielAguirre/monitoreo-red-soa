@@ -40,3 +40,4 @@ Se guardan en `web/vendor/` (sin CDN, para que la demo funcione sin internet):
 | Bootstrap Icons | 1.13.1 |
 | Chart.js | 4.5.1 |
 | Inter (woff2: 400, 500, 600, 700) | 4.1 |
+| JetBrains Mono (woff2: 400, 500, 600) | 2.304 |

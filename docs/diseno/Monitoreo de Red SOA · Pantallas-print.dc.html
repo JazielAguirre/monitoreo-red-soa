@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="omelette-print-source" content="v1790551727930793 Monitoreo de Red SOA · Pantallas.dc.html">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<script src="./doc-page.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<style>
+body{margin:0;background:#DCE2E8;font-family:Inter,system-ui,sans-serif;color:#1E293B;-webkit-font-smoothing:antialiased}
+a{color:#2F6FB0;text-decoration:none}a:hover{color:#16324F;text-decoration:underline}
+button,input,select{font-family:inherit}
+@font-face{font-family:'JetBrains Mono';src:url(https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@master/fonts/webfonts/JetBrainsMono-Regular.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'JetBrains Mono';src:url(https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@master/fonts/webfonts/JetBrainsMono-Medium.woff2) format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'JetBrains Mono';src:url(https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@master/fonts/webfonts/JetBrainsMono-SemiBold.woff2) format('woff2');font-weight:600;font-display:swap}
+@keyframes somPulse{0%{transform:scale(1);opacity:.55}100%{transform:scale(2.8);opacity:0}}
+@keyframes somSpin{to{transform:rotate(360deg)}}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}.dv-tname{font:600 13px/1.2 Inter,system-ui,sans-serif;color:#1a1a1a}.dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 12px/1.3 Inter,system-ui,sans-serif;color:rgba(0,0,0,.62)}.dv-card{max-width:100%;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}.dv-next{margin:28px 0 0;font:12px/1.5 Inter,system-ui,sans-serif;color:rgba(0,0,0,.55)}.dv-sub{font:600 12px/1 Inter,system-ui,sans-serif;color:#1a1a1a;margin:48px 0 16px;letter-spacing:.02em}
+.dv-card{border:none !important;border-radius:0 !important;box-shadow:none !important}.dv-opt{gap:10px !important}.dv-olabel{padding:0 20px;font-size:13px !important}
+doc-page:not(:defined){visibility:hidden}
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+*{animation-delay:-99s !important;animation-duration:.001s !important;animation-iteration-count:1 !important;animation-fill-mode:both !important;animation-play-state:running !important;transition-duration:0s !important}
+</style>
+</helmet>
+<doc-page width="1440px" height="1380px">
+<sc-for list="{{ dispVariants }}" as="v" hint-placeholder-count="4"><section class="page" style="background:#DCE2E8;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;padding:14px 0 0;font-family:Inter,system-ui,sans-serif">
+<div class="dv-opt" id="{{ v.id }}"><div class="dv-olabel"><a class="dv-oid" href="{{ v.href }}">{{ v.id }}</a>{{ v.label }}</div>
+<div class="dv-card" style="width:1440px">
+<div style="width:1440px;min-height:900px;display:flex;background:#F3F6F9;position:relative;font-family:Inter,system-ui,sans-serif;color:#1E293B">
+<dc-import name="Sidebar" active="dispositivos" alerts="{{ pendingCount }}" hint-size="248px,900px" style="align-self:stretch;flex:none"></dc-import>
+<main style="flex:1;min-width:0;padding:28px 32px 40px;display:flex;flex-direction:column;gap:20px">
+<header style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px">
+<div style="display:flex;flex-direction:column;gap:4px"><h1 style="margin:0;font-size:22px;line-height:30px;font-weight:600">Dispositivos</h1><span style="font-size:14px;color:#5B6B80">{{ v.subtitle }}</span></div>
+<div style="display:flex;align-items:center;gap:10px">
+<sc-if value="{{ v.running }}" hint-placeholder-val="{{ false }}"><button disabled="" style="height:38px;padding:0 16px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;cursor:progress;min-width:190px;justify-content:center">{{ spinD }}{{ v.btnLabel }}</button></sc-if>
+<sc-if value="{{ v.idle }}" hint-placeholder-val="{{ true }}"><button onClick="{{ v.onAll }}" style="height:38px;padding:0 16px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;cursor:pointer;min-width:190px;justify-content:center" style-hover="background:#F3F6F9;border-color:#94A3B8"><i class="bi bi-broadcast"></i>Monitorear todos</button></sc-if>
+<button onClick="{{ v.onAdd }}" style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#16324F;color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;cursor:pointer" style-hover="background:#0B1D2E"><i class="bi bi-plus-lg"></i>Agregar dispositivo</button>
+</div>
+</header>
+
+<sc-if value="{{ v.running }}" hint-placeholder-val="{{ false }}">
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 2px rgba(11,29,46,.04)">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:500">{{ pulseA }}Comprobando {{ v.curName }} <span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80;font-weight:400">{{ v.curIp }}</span></span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:#5B6B80">{{ v.progText }}</span></div>
+<div style="height:6px;border-radius:999px;background:#E2E8F0;overflow:hidden"><div style="width:{{ v.progPct }};height:100%;background:#2F6FB0;border-radius:999px;transition:width .3s"></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ v.steps }}" as="s" hint-placeholder-count="6"><span style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:6px;background:{{ s.bg }};color:{{ s.fg }};font-size:12px">{{ s.lead }}{{ s.name }}<span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:11.5px">{{ s.ms }}</span></span></sc-for></div>
+</div>
+</sc-if>
+
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);overflow:hidden">
+<div style="display:flex;align-items:center;gap:12px;padding:16px 20px;flex-wrap:wrap">
+<div style="position:relative;width:280px"><i class="bi bi-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#5B6B80;font-size:14px"></i><input value="{{ v.q }}" onChange="{{ v.onQ }}" placeholder="Buscar por nombre o IP" style="width:100%;box-sizing:border-box;height:38px;border-radius:8px;border:1px solid #CBD5E1;padding:0 12px 0 36px;font-size:14px;color:#1E293B;outline:none;background:#fff" style-focus="border-color:#2F6FB0;box-shadow:0 0 0 3px rgba(47,111,176,.18)"></div>
+<div style="display:flex;height:38px;border:1px solid #CBD5E1;border-radius:8px;overflow:hidden">
+<sc-for list="{{ v.statusOpts }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.onClick }}" style="border:none;border-left:{{ o.bl }};background:{{ o.bg }};color:{{ o.fg }};padding:0 12px;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:7px;cursor:pointer">{{ o.dotEl }}{{ o.label }}<span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:11.5px;color:{{ o.nfg }}">{{ o.n }}</span></button></sc-for>
+</div>
+<div style="position:relative"><select value="{{ v.fType }}" onChange="{{ v.onType }}" style="appearance:none;-webkit-appearance:none;height:38px;border:1px solid #CBD5E1;border-radius:8px;padding:0 36px 0 12px;font-size:14px;background:#fff;color:#1E293B;cursor:pointer;outline:none"><sc-for list="{{ typeOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.label }}</option></sc-for></select><i class="bi bi-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#5B6B80;pointer-events:none"></i></div>
+<sc-if value="{{ v.hasFilters }}" hint-placeholder-val="{{ false }}"><button onClick="{{ v.onClear }}" style="height:38px;padding:0 10px;border:none;background:transparent;color:#2F6FB0;font-size:13.5px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><i class="bi bi-x-circle"></i>Limpiar filtros</button></sc-if>
+</div>
+<div style="display:grid;grid-template-columns:136px minmax(160px,1.3fr) 118px 124px minmax(120px,1fr) 112px 108px 108px;align-items:center;gap:12px;height:40px;padding:0 20px;background:#F8FAFC;border-top:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;font-size:11px;font-weight:600;letter-spacing:.06em;color:#5B6B80"><span>ESTADO</span><span>NOMBRE</span><span>DIRECCIÓN IP</span><span>TIPO</span><span>UBICACIÓN</span><span>RESPUESTA</span><span>COMPROBADO</span><span style="text-align:right">ACCIONES</span></div>
+<sc-for list="{{ v.rows }}" as="r" hint-placeholder-count="6">
+<div style="display:grid;grid-template-columns:136px minmax(160px,1.3fr) 118px 124px minmax(120px,1fr) 112px 108px 108px;align-items:center;gap:12px;height:56px;padding:0 20px;border-top:{{ r.bt }};font-size:14px;background:{{ r.rowBg }}">
+<span><span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:{{ r.tint }};color:{{ r.txt }};font-size:12px;font-weight:500;white-space:nowrap">{{ r.dotEl }}{{ r.label }}</span></span>
+<span style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px">{{ r.ip }}</span>
+<span style="display:inline-flex;align-items:center;gap:8px;color:#475569"><i class="{{ r.icon }}"></i>{{ r.type }}</span>
+<span style="color:#475569;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.loc }}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px;color:{{ r.msColor }}">{{ r.msText }}</span>
+<span style="font-size:13px;color:#5B6B80">{{ r.lastText }}</span>
+<span style="display:flex;gap:6px;justify-content:flex-end">
+<button onClick="{{ r.onMon }}" disabled="{{ r.monDis }}" title="Monitorear" style="width:32px;height:32px;padding:0;border-radius:8px;border:1px solid {{ r.monBd }};background:{{ r.monBg }};color:{{ r.monFg }};display:grid;place-items:center;font-size:14px;cursor:pointer">{{ r.monIcon }}</button>
+<button onClick="{{ r.onEdit }}" disabled="{{ r.actDis }}" title="Editar" style="width:32px;height:32px;padding:0;border-radius:8px;border:1px solid {{ r.actBd }};background:#fff;color:{{ r.actFg }};display:grid;place-items:center;font-size:14px;cursor:pointer"><i class="bi bi-pencil"></i></button>
+<button onClick="{{ r.onDel }}" disabled="{{ r.actDis }}" title="Eliminar" style="width:32px;height:32px;padding:0;border-radius:8px;border:1px solid {{ r.actBd }};background:#fff;color:{{ r.actFg }};display:grid;place-items:center;font-size:14px;cursor:pointer"><i class="bi bi-trash3"></i></button>
+</span>
+</div>
+</sc-for>
+<sc-if value="{{ v.isEmpty }}" hint-placeholder-val="{{ false }}">
+<div style="border-top:1px solid #EEF2F6;padding:48px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center"><span style="width:52px;height:52px;border-radius:50%;background:#EEF3F8;color:#16324F;display:grid;place-items:center;font-size:22px"><i class="bi bi-search"></i></span><span style="font-size:15px;font-weight:600;margin-top:6px">Ningún dispositivo coincide</span><span style="font-size:13px;color:#5B6B80">Prueba con otro nombre, IP o filtro.</span><button onClick="{{ v.onClear }}" style="margin-top:4px;height:32px;padding:0 12px;border-radius:6px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;font-size:13px;font-weight:500;cursor:pointer">Limpiar filtros</button></div>
+</sc-if>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid #EEF2F6;font-size:13px;color:#5B6B80"><span>{{ v.footer }}</span><span style="display:inline-flex;align-items:center;gap:6px"><i class="bi bi-info-circle"></i>El monitoreo envía un ping por dispositivo</span></div>
+</div>
+</main>
+
+<sc-if value="{{ v.hasModal }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;background:rgba(11,29,46,.5);display:flex;align-items:flex-start;justify-content:center;padding-top:88px;z-index:5">
+<div style="width:520px;background:#fff;border-radius:12px;box-shadow:0 20px 40px -8px rgba(11,29,46,.28)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:20px 24px 16px"><div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:16px;line-height:24px;font-weight:600">{{ v.mTitle }}</span><span style="font-size:13px;color:#5B6B80">{{ v.mSub }}</span></div><button onClick="{{ v.onClose }}" title="Cerrar" style="width:32px;height:32px;border:none;background:transparent;border-radius:8px;color:#5B6B80;cursor:pointer;font-size:14px" style-hover="background:#F3F6F9"><i class="bi bi-x-lg"></i></button></div>
+<div style="padding:4px 24px 24px;display:flex;flex-direction:column;gap:18px">
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Nombre</span><input value="{{ v.mName }}" onChange="{{ v.onMName }}" placeholder="Ej. Router principal" style="height:38px;box-sizing:border-box;border-radius:8px;border:1px solid {{ v.nameBd }};box-shadow:{{ v.nameSh }};padding:0 12px;font-size:14px;color:#1E293B;outline:none"><sc-if value="{{ v.nameErr }}" hint-placeholder-val="{{ false }}"><span style="font-size:12.5px;font-weight:500;color:#B91C1C">{{ v.nameErr }}</span></sc-if></label>
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Dirección IP</span><span style="position:relative;display:block"><input value="{{ v.mIp }}" onChange="{{ v.onMIp }}" placeholder="192.168.1.25" style="width:100%;height:38px;box-sizing:border-box;border-radius:8px;border:1px solid {{ v.ipBd }};box-shadow:{{ v.ipSh }};padding:0 36px 0 12px;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13.5px;color:#1E293B;outline:none"><sc-if value="{{ v.ipErr }}" hint-placeholder-val="{{ false }}"><i class="bi bi-exclamation-circle-fill" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#EF4444;font-size:15px"></i></sc-if></span><sc-if value="{{ v.ipErr }}" hint-placeholder-val="{{ false }}"><span style="font-size:12.5px;font-weight:500;color:#B91C1C">{{ v.ipErr }}</span></sc-if><sc-if value="{{ v.ipOk }}" hint-placeholder-val="{{ true }}"><span style="font-size:12px;color:#5B6B80">Formato IPv4, p. ej. 192.168.1.25</span></sc-if></label>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Tipo</span><div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px"><sc-for list="{{ v.typeTiles }}" as="t" hint-placeholder-count="4"><button onClick="{{ t.onClick }}" style="height:64px;border-radius:8px;border:1px solid {{ t.bd }};box-shadow:{{ t.sh }};background:{{ t.bg }};color:{{ t.fg }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:12.5px;font-weight:500;cursor:pointer"><i class="{{ t.icon }}" style="font-size:18px"></i>{{ t.label }}</button></sc-for></div></div>
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Ubicación</span><input value="{{ v.mLoc }}" onChange="{{ v.onMLoc }}" placeholder="Ej. Laboratorio" style="height:38px;box-sizing:border-box;border-radius:8px;border:1px solid #CBD5E1;padding:0 12px;font-size:14px;color:#1E293B;outline:none" style-focus="border-color:#2F6FB0;box-shadow:0 0 0 3px rgba(47,111,176,.18)"></label>
+</div>
+<div style="display:flex;justify-content:flex-end;gap:8px;padding:16px 24px;border-top:1px solid #EEF2F6"><button onClick="{{ v.onClose }}" style="height:38px;padding:0 16px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;font-size:14px;font-weight:500;cursor:pointer">Cancelar</button><button onClick="{{ v.onSave }}" style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#16324F;color:#fff;font-size:14px;font-weight:500;cursor:pointer" style-hover="background:#0B1D2E">{{ v.mSave }}</button></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ v.hasDel }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;background:rgba(11,29,46,.5);display:flex;align-items:flex-start;justify-content:center;padding-top:160px;z-index:5">
+<div style="width:440px;background:#fff;border-radius:12px;box-shadow:0 20px 40px -8px rgba(11,29,46,.28)">
+<div style="padding:24px 24px 0;display:flex;gap:16px"><span style="width:40px;height:40px;border-radius:50%;background:#FEF2F2;color:#DC2626;display:grid;place-items:center;flex:none;font-size:17px"><i class="bi bi-trash3"></i></span><div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:16px;line-height:24px;font-weight:600">¿Eliminar dispositivo?</span><span style="font-size:14px;line-height:20px;color:#475569;text-wrap:pretty">Se eliminará <b style="color:#1E293B;font-weight:600">{{ v.delName }}</b> (<span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px">{{ v.delIp }}</span>) y todo su historial de monitoreos. Esta acción no se puede deshacer.</span></div></div>
+<div style="padding:20px 24px;display:flex;justify-content:flex-end;gap:8px"><button onClick="{{ v.onCancelDel }}" style="height:38px;padding:0 16px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;font-size:14px;font-weight:500;cursor:pointer">Cancelar</button><button onClick="{{ v.onConfirmDel }}" style="height:38px;padding:0 16px;border-radius:8px;border:none;background:#DC2626;color:#fff;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px" style-hover="background:#B91C1C"><i class="bi bi-trash3"></i>Eliminar</button></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ v.hasToast }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:24px;right:32px;width:340px;z-index:6;background:#fff;border-radius:12px;border:1px solid #E2E8F0;box-shadow:0 20px 40px -8px rgba(11,29,46,.28);padding:14px 16px;display:flex;gap:12px;align-items:flex-start"><span style="width:32px;height:32px;border-radius:50%;background:{{ v.tBg }};color:{{ v.tFg }};display:grid;place-items:center;flex:none"><i class="{{ v.tIcon }}"></i></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">{{ v.tTitle }}</span><span style="font-size:13px;color:#5B6B80">{{ v.tText }}</span></div><span onClick="{{ closeToast }}" style="cursor:pointer;color:#94A3B8;font-size:13px"><i class="bi bi-x-lg"></i></span></div>
+</sc-if>
+</div>
+</div>
+</div>
+</section></sc-for>
+<section class="page" style="background:#DCE2E8;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;padding:14px 0 0;font-family:Inter,system-ui,sans-serif;padding:40px 56px"><div class="dv-opts" style="gap:56px;justify-content:center"><sc-for list="{{ mobVariants }}" as="v" hint-placeholder-count="2">
+<div class="dv-opt" id="{{ v.id }}"><div class="dv-olabel"><a class="dv-oid" href="{{ v.href }}">{{ v.id }}</a>{{ v.label }}</div>
+<div class="dv-card" style="width:390px;border-radius:20px">
+<div style="width:390px;height:844px;overflow:hidden;background:#F3F6F9;position:relative;font-family:Inter,system-ui,sans-serif;color:#1E293B;display:flex;flex-direction:column">
+<div style="height:56px;flex:none;background:#0B1D2E;display:flex;align-items:center;gap:8px;padding:0 8px 0 6px;position:relative;z-index:3">
+<button onClick="{{ v.onMenu }}" style="width:44px;height:44px;border:none;background:transparent;color:#fff;font-size:22px;display:grid;place-items:center;border-radius:8px;cursor:pointer" aria-label="Menú"><i class="{{ v.menuIcon }}"></i></button>
+<div style="position:relative;width:28px;height:28px;border-radius:8px;background:#16324F;display:grid;place-items:center;color:#8CBCEB;font-size:13px;flex:none"><i class="bi bi-diagram-3-fill"></i><span style="position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 1.5px #16324F"></span></div>
+<span style="font-size:15px;font-weight:600;color:#fff;flex:1">Monitoreo de Red SOA</span>
+<span style="width:44px;height:44px;display:grid;place-items:center;color:#B6C4D3;font-size:19px;position:relative"><i class="bi bi-bell"></i><span style="position:absolute;top:8px;right:7px;min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;border-radius:999px;background:#F59E0B;color:#0B1D2E;font-size:10px;font-weight:700;display:grid;place-items:center">{{ pendingCount }}</span></span>
+</div>
+<sc-if value="{{ v.menuOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:56px;left:0;right:0;bottom:0;background:rgba(11,29,46,.5);z-index:2" onClick="{{ v.onMenu }}"></div>
+<div style="position:absolute;top:56px;left:0;right:0;background:#0B1D2E;z-index:3;padding:8px 12px 16px;display:flex;flex-direction:column;gap:2px;border-radius:0 0 16px 16px">
+<div style="display:flex;align-items:center;gap:14px;height:48px;padding:0 14px;border-radius:10px;color:#B6C4D3;font-size:15px;font-weight:500"><i class="bi bi-grid-1x2" style="font-size:17px"></i>Dashboard</div>
+<div style="display:flex;align-items:center;gap:14px;height:48px;padding:0 14px;border-radius:10px;background:#16324F;color:#fff;font-size:15px;font-weight:500"><i class="bi bi-hdd-network" style="font-size:17px;color:#8CBCEB"></i>Dispositivos</div>
+<div style="display:flex;align-items:center;gap:14px;height:48px;padding:0 14px;border-radius:10px;color:#B6C4D3;font-size:15px;font-weight:500"><i class="bi bi-activity" style="font-size:17px"></i>Monitoreos</div>
+<div style="display:flex;align-items:center;gap:14px;height:48px;padding:0 14px;border-radius:10px;color:#B6C4D3;font-size:15px;font-weight:500"><i class="bi bi-bell" style="font-size:17px"></i>Alertas<span style="margin-left:auto;min-width:22px;height:22px;padding:0 7px;box-sizing:border-box;border-radius:999px;background:#F59E0B;color:#0B1D2E;font-size:11px;font-weight:700;display:grid;place-items:center">{{ pendingCount }}</span></div>
+</div>
+</sc-if>
+
+<div style="flex:1;overflow-y:auto;padding:20px 16px 32px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="display:flex;flex-direction:column;gap:2px"><h1 style="margin:0;font-size:22px;line-height:30px;font-weight:600">Dispositivos</h1><span style="font-size:13px;color:#5B6B80">{{ v.subtitle }}</span></div><button onClick="{{ v.onAdd }}" style="height:44px;padding:0 14px;border-radius:8px;border:none;background:#16324F;color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="bi bi-plus-lg"></i>Agregar</button></div>
+<div style="position:relative"><i class="bi bi-search" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#5B6B80;font-size:15px"></i><input value="{{ v.q }}" onChange="{{ v.onQ }}" placeholder="Buscar por nombre o IP" style="width:100%;box-sizing:border-box;height:44px;border-radius:8px;border:1px solid #CBD5E1;padding:0 12px 0 40px;font-size:15px;color:#1E293B;outline:none;background:#fff"></div>
+<div style="display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:0 16px">
+<sc-for list="{{ v.statusOpts }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.onClick }}" style="flex:none;height:44px;padding:0 14px;border-radius:999px;border:1px solid {{ o.chipBd }};background:{{ o.bg }};color:{{ o.fg }};font-size:13.5px;font-weight:500;display:inline-flex;align-items:center;gap:7px;cursor:pointer">{{ o.dotEl }}{{ o.label }}<span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12px;color:{{ o.nfg }}">{{ o.n }}</span></button></sc-for>
+</div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px">
+<div style="position:relative"><select value="{{ v.fType }}" onChange="{{ v.onType }}" style="width:100%;appearance:none;-webkit-appearance:none;height:44px;border:1px solid #CBD5E1;border-radius:8px;padding:0 34px 0 12px;font-size:14px;background:#fff;color:#1E293B;outline:none"><sc-for list="{{ typeOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.label }}</option></sc-for></select><i class="bi bi-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#5B6B80;pointer-events:none"></i></div>
+<sc-if value="{{ v.running }}" hint-placeholder-val="{{ false }}"><button disabled="" style="height:44px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;font-size:14px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:8px">{{ spinD }}{{ v.progText }}</button></sc-if>
+<sc-if value="{{ v.idle }}" hint-placeholder-val="{{ true }}"><button onClick="{{ v.onAll }}" style="height:44px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;font-size:14px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer"><i class="bi bi-broadcast"></i>Monitorear todos</button></sc-if>
+</div>
+<sc-if value="{{ v.running }}" hint-placeholder-val="{{ false }}"><div style="height:4px;border-radius:999px;background:#E2E8F0;overflow:hidden"><div style="width:{{ v.progPct }};height:100%;background:#2F6FB0;transition:width .3s"></div></div></sc-if>
+<sc-for list="{{ v.rows }}" as="r" hint-placeholder-count="6">
+<div style="background:#fff;border:1px solid {{ r.cardBd }};border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:12px"><span style="width:40px;height:40px;border-radius:10px;background:#F3F6F9;display:grid;place-items:center;color:#16324F;font-size:17px;flex:none"><i class="{{ r.icon }}"></i></span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12.5px;color:#5B6B80">{{ r.ip }}</span></div><span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:{{ r.tint }};color:{{ r.txt }};font-size:12px;font-weight:500;white-space:nowrap">{{ r.dotEl }}{{ r.label }}</span></div>
+<div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px;padding:10px 0;border-top:1px solid #EEF2F6;border-bottom:1px solid #EEF2F6">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-size:11px;color:#5B6B80">Ubicación</span><span style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.loc }}</span></div>
+<div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:11px;color:#5B6B80">Respuesta</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12.5px;color:{{ r.msColor }}">{{ r.msShort }}</span></div>
+<div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:11px;color:#5B6B80">Comprobación</span><span style="font-size:12.5px">{{ r.lastText }}</span></div>
+</div>
+<div style="display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px">
+<button onClick="{{ r.onMon }}" disabled="{{ r.monDis }}" style="height:44px;border-radius:8px;border:1px solid {{ r.monBd }};background:{{ r.monBg }};color:{{ r.monFgTxt }};font-size:13.5px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer">{{ r.monIcon }}Monitorear</button>
+<button onClick="{{ r.onEdit }}" disabled="{{ r.actDis }}" style="height:44px;border-radius:8px;border:1px solid {{ r.actBd }};background:#fff;color:{{ r.actFgTxt }};font-size:13.5px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer"><i class="bi bi-pencil"></i>Editar</button>
+<button onClick="{{ r.onDel }}" disabled="{{ r.actDis }}" style="height:44px;border-radius:8px;border:1px solid {{ r.actBd }};background:#fff;color:{{ r.delFgTxt }};font-size:13.5px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer"><i class="bi bi-trash3"></i>Eliminar</button>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ v.isEmpty }}" hint-placeholder-val="{{ false }}"><div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:36px 20px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center"><span style="font-size:15px;font-weight:600">Ningún dispositivo coincide</span><button onClick="{{ v.onClear }}" style="height:44px;padding:0 16px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;font-size:14px;font-weight:500;cursor:pointer">Limpiar filtros</button></div></sc-if>
+</div>
+
+<sc-if value="{{ v.hasModal }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;background:rgba(11,29,46,.5);z-index:5;display:flex;flex-direction:column;justify-content:flex-end">
+<div style="background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -12px 32px -8px rgba(11,29,46,.28);display:flex;flex-direction:column">
+<div style="display:flex;justify-content:center;padding-top:8px"><span style="width:36px;height:4px;border-radius:999px;background:#CBD5E1"></span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 8px 4px 20px"><span style="font-size:17px;font-weight:600">{{ v.mTitle }}</span><button onClick="{{ v.onClose }}" aria-label="Cerrar" style="width:44px;height:44px;border:none;background:transparent;color:#5B6B80;font-size:16px;cursor:pointer"><i class="bi bi-x-lg"></i></button></div>
+<div style="padding:8px 20px 20px;display:flex;flex-direction:column;gap:16px">
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13.5px;font-weight:500">Nombre</span><input value="{{ v.mName }}" onChange="{{ v.onMName }}" placeholder="Ej. Router principal" style="height:44px;box-sizing:border-box;border-radius:8px;border:1px solid {{ v.nameBd }};box-shadow:{{ v.nameSh }};padding:0 12px;font-size:15px;color:#1E293B;outline:none"><sc-if value="{{ v.nameErr }}" hint-placeholder-val="{{ false }}"><span style="font-size:12.5px;font-weight:500;color:#B91C1C">{{ v.nameErr }}</span></sc-if></label>
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13.5px;font-weight:500">Dirección IP</span><span style="position:relative;display:block"><input value="{{ v.mIp }}" onChange="{{ v.onMIp }}" inputmode="decimal" placeholder="192.168.1.25" style="width:100%;height:44px;box-sizing:border-box;border-radius:8px;border:1px solid {{ v.ipBd }};box-shadow:{{ v.ipSh }};padding:0 38px 0 12px;font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:14.5px;color:#1E293B;outline:none"><sc-if value="{{ v.ipErr }}" hint-placeholder-val="{{ false }}"><i class="bi bi-exclamation-circle-fill" style="position:absolute;right:13px;top:50%;transform:translateY(-50%);color:#EF4444;font-size:16px"></i></sc-if></span><sc-if value="{{ v.ipErr }}" hint-placeholder-val="{{ false }}"><span style="font-size:12.5px;font-weight:500;color:#B91C1C">{{ v.ipErr }}</span></sc-if><sc-if value="{{ v.ipOk }}" hint-placeholder-val="{{ true }}"><span style="font-size:12px;color:#5B6B80">Formato IPv4, p. ej. 192.168.1.25</span></sc-if></label>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13.5px;font-weight:500">Tipo</span><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"><sc-for list="{{ v.typeTiles }}" as="t" hint-placeholder-count="4"><button onClick="{{ t.onClick }}" style="height:48px;border-radius:8px;border:1px solid {{ t.bd }};box-shadow:{{ t.sh }};background:{{ t.bg }};color:{{ t.fg }};display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:500;cursor:pointer"><i class="{{ t.icon }}" style="font-size:16px"></i>{{ t.label }}</button></sc-for></div></div>
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13.5px;font-weight:500">Ubicación</span><input value="{{ v.mLoc }}" onChange="{{ v.onMLoc }}" placeholder="Ej. Laboratorio" style="height:44px;box-sizing:border-box;border-radius:8px;border:1px solid #CBD5E1;padding:0 12px;font-size:15px;color:#1E293B;outline:none"></label>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1.4fr;gap:8px;padding:12px 20px 28px;border-top:1px solid #EEF2F6"><button onClick="{{ v.onClose }}" style="height:48px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;font-size:15px;font-weight:500;cursor:pointer">Cancelar</button><button onClick="{{ v.onSave }}" style="height:48px;border-radius:8px;border:none;background:#16324F;color:#fff;font-size:15px;font-weight:500;cursor:pointer">{{ v.mSave }}</button></div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ v.hasDel }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;background:rgba(11,29,46,.5);z-index:5;display:flex;align-items:center;padding:0 20px">
+<div style="background:#fff;border-radius:12px;padding:22px 20px 18px;display:flex;flex-direction:column;gap:14px;width:100%"><span style="font-size:17px;font-weight:600">¿Eliminar dispositivo?</span><span style="font-size:14px;line-height:20px;color:#475569">Se eliminará <b style="color:#1E293B">{{ v.delName }}</b> y su historial de monitoreos. Esta acción no se puede deshacer.</span><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button onClick="{{ v.onCancelDel }}" style="height:48px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;font-size:15px;font-weight:500;cursor:pointer">Cancelar</button><button onClick="{{ v.onConfirmDel }}" style="height:48px;border-radius:8px;border:none;background:#DC2626;color:#fff;font-size:15px;font-weight:500;cursor:pointer">Eliminar</button></div></div>
+</div>
+</sc-if>
+<sc-if value="{{ v.hasToast }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:16px;right:16px;bottom:20px;z-index:6;background:#fff;border-radius:12px;border:1px solid #E2E8F0;box-shadow:0 20px 40px -8px rgba(11,29,46,.28);padding:14px 16px;display:flex;gap:12px;align-items:flex-start"><span style="width:32px;height:32px;border-radius:50%;background:{{ v.tBg }};color:{{ v.tFg }};display:grid;place-items:center;flex:none"><i class="{{ v.tIcon }}"></i></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">{{ v.tTitle }}</span><span style="font-size:13px;color:#5B6B80">{{ v.tText }}</span></div></div>
+</sc-if>
+</div>
+</div>
+</div>
+</sc-for></div></section>
+<section class="page" style="background:#DCE2E8;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;padding:14px 0 0;font-family:Inter,system-ui,sans-serif"><div class="dv-opt" id="3a"><div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Historial de comprobaciones · interactivo</div>
+<div class="dv-card" style="width:1440px">
+<div style="width:1440px;min-height:1320px;display:flex;background:#F3F6F9;font-family:Inter,system-ui,sans-serif;color:#1E293B">
+<dc-import name="Sidebar" active="monitoreos" alerts="{{ pendingCount }}" hint-size="248px,1320px" style="align-self:stretch;flex:none"></dc-import>
+<main style="flex:1;min-width:0;padding:28px 32px 40px;display:flex;flex-direction:column;gap:20px">
+<header style="display:flex;flex-direction:column;gap:4px"><h1 style="margin:0;font-size:22px;line-height:30px;font-weight:600">Monitoreos</h1><span style="font-size:14px;color:#5B6B80">Historial de comprobaciones con ping</span></header>
+
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);padding:16px 20px;display:grid;grid-template-columns:260px 200px 170px 170px 1fr;gap:16px;align-items:end">
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Dispositivo</span><span style="position:relative;display:block"><select value="{{ m.dev }}" onChange="{{ m.onDev }}" style="width:100%;appearance:none;-webkit-appearance:none;height:38px;border:1px solid #CBD5E1;border-radius:8px;padding:0 36px 0 12px;font-size:14px;background:#fff;color:#1E293B;cursor:pointer;outline:none"><sc-for list="{{ m.devOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.v }}">{{ o.label }}</option></sc-for></select><i class="bi bi-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#5B6B80;pointer-events:none"></i></span></label>
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Estado</span><span style="position:relative;display:block"><select value="{{ m.status }}" onChange="{{ m.onStatus }}" style="width:100%;appearance:none;-webkit-appearance:none;height:38px;border:1px solid #CBD5E1;border-radius:8px;padding:0 36px 0 12px;font-size:14px;background:#fff;color:#1E293B;cursor:pointer;outline:none"><option value="todos">Todos los resultados</option><option value="activo">Activo</option><option value="inactivo">Inactivo</option></select><i class="bi bi-chevron-down" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#5B6B80;pointer-events:none"></i></span></label>
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Desde</span><input type="date" value="{{ m.from }}" onChange="{{ m.onFrom }}" min="2026-09-20" max="2026-09-21" style="height:38px;box-sizing:border-box;border:1px solid #CBD5E1;border-radius:8px;padding:0 10px;font-size:14px;color:#1E293B;outline:none;background:#fff"></label>
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Hasta</span><input type="date" value="{{ m.to }}" onChange="{{ m.onTo }}" min="2026-09-20" max="2026-09-21" style="height:38px;box-sizing:border-box;border:1px solid #CBD5E1;border-radius:8px;padding:0 10px;font-size:14px;color:#1E293B;outline:none;background:#fff"></label>
+<div style="display:flex;justify-content:flex-end"><button onClick="{{ m.onClear }}" style="height:38px;padding:0 10px;border:none;background:transparent;color:#2F6FB0;font-size:13.5px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><i class="bi bi-arrow-counterclockwise"></i>Restablecer filtros</button></div>
+</div>
+
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);padding:20px 24px 16px;display:flex;flex-direction:column;gap:14px">
+<sc-if value="{{ m.hasChart }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;line-height:24px;font-weight:600">Tiempos de respuesta · {{ m.devName }}</span><span style="font-size:13px;color:#5B6B80"><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero">{{ m.devIp }}</span> · {{ m.chartSub }}</span></div>
+<div style="display:flex;gap:28px">
+<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end"><span style="font-size:12px;color:#5B6B80">Promedio</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:16px;font-weight:600">{{ m.avg }}</span></div>
+<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end"><span style="font-size:12px;color:#5B6B80">Máximo</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:16px;font-weight:600">{{ m.max }}</span></div>
+<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end"><span style="font-size:12px;color:#5B6B80">Disponibilidad</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:16px;font-weight:600;color:{{ m.availColor }}">{{ m.avail }}</span></div>
+</div>
+</div>
+{{ m.chart }}
+<div style="display:flex;gap:20px;font-size:12.5px;color:#475569"><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:14px;height:3px;border-radius:2px;background:#2F6FB0"></span>Tiempo de respuesta (ms)</span><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:50%;background:#EF4444"></span>Sin respuesta</span></div>
+</sc-if>
+<sc-if value="{{ m.noChart }}" hint-placeholder-val="{{ false }}">
+<div style="height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center"><span style="width:52px;height:52px;border-radius:50%;background:#EEF3F8;color:#16324F;display:grid;place-items:center;font-size:22px"><i class="bi bi-graph-up"></i></span><span style="font-size:15px;font-weight:600">Selecciona un dispositivo</span><span style="font-size:13px;color:#5B6B80">La gráfica muestra los tiempos de respuesta de un dispositivo a la vez.</span></div>
+</sc-if>
+</div>
+
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);overflow:hidden">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px"><span style="font-size:16px;font-weight:600">Historial</span><span style="font-size:13px;color:#5B6B80">{{ m.countText }}</span></div>
+<div style="display:grid;grid-template-columns:190px minmax(0,1.3fr) 160px 170px minmax(0,1fr);align-items:center;gap:16px;height:40px;padding:0 20px;background:#F8FAFC;border-top:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;font-size:11px;font-weight:600;letter-spacing:.06em;color:#5B6B80"><span>FECHA Y HORA</span><span>DISPOSITIVO</span><span>DIRECCIÓN IP</span><span>RESULTADO</span><span>TIEMPO DE RESPUESTA</span></div>
+<sc-for list="{{ m.rows }}" as="r" hint-placeholder-count="10">
+<div style="display:grid;grid-template-columns:190px minmax(0,1.3fr) 160px 170px minmax(0,1fr);align-items:center;gap:16px;height:52px;padding:0 20px;border-top:{{ r.bt }};font-size:14px">
+<span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px">{{ r.when }}</span>
+<span style="display:inline-flex;align-items:center;gap:10px;font-weight:500"><i class="{{ r.icon }}" style="color:#475569"></i>{{ r.dev }}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px;color:#475569">{{ r.ip }}</span>
+<span><span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:{{ r.tint }};color:{{ r.txt }};font-size:12px;font-weight:500"><span style="width:8px;height:8px;border-radius:50%;background:{{ r.dot }}"></span>{{ r.label }}</span></span>
+<span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:13px;color:{{ r.msColor }}">{{ r.msText }}</span>
+</div>
+</sc-for>
+<sc-if value="{{ m.isEmpty }}" hint-placeholder-val="{{ false }}"><div style="border-top:1px solid #EEF2F6;padding:40px;text-align:center;font-size:14px;color:#5B6B80">No hay comprobaciones con estos filtros.</div></sc-if>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-top:1px solid #EEF2F6"><span style="font-size:13px;color:#5B6B80">{{ m.pageText }}</span><div style="display:flex;gap:8px"><button onClick="{{ m.onPrev }}" disabled="{{ m.prevDis }}" style="height:32px;padding:0 12px;border-radius:6px;border:1px solid #CBD5E1;background:#fff;color:{{ m.prevFg }};font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><i class="bi bi-chevron-left"></i>Anterior</button><button onClick="{{ m.onNext }}" disabled="{{ m.nextDis }}" style="height:32px;padding:0 12px;border-radius:6px;border:1px solid #CBD5E1;background:#fff;color:{{ m.nextFg }};font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;cursor:pointer">Siguiente<i class="bi bi-chevron-right"></i></button></div></div>
+</div>
+</main>
+</div>
+</div>
+</div></section>
+<sc-for list="{{ alertVariants }}" as="a" hint-placeholder-count="2"><section class="page" style="background:#DCE2E8;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;padding:14px 0 0;font-family:Inter,system-ui,sans-serif">
+<div class="dv-opt" id="{{ a.id }}"><div class="dv-olabel"><a class="dv-oid" href="{{ a.href }}">{{ a.id }}</a>{{ a.label }}</div>
+<div class="dv-card" style="width:1440px">
+<div style="width:1440px;min-height:760px;display:flex;background:#F3F6F9;position:relative;font-family:Inter,system-ui,sans-serif;color:#1E293B">
+<dc-import name="Sidebar" active="alertas" alerts="{{ a.pending }}" hint-size="248px,760px" style="align-self:stretch;flex:none"></dc-import>
+<main style="flex:1;min-width:0;padding:28px 32px 40px;display:flex;flex-direction:column;gap:20px">
+<header style="display:flex;flex-direction:column;gap:4px"><h1 style="margin:0;font-size:22px;line-height:30px;font-weight:600">Alertas</h1><span style="font-size:14px;color:#5B6B80">Se generan cuando un dispositivo deja de responder al monitoreo</span></header>
+<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 2px rgba(11,29,46,.04);overflow:hidden">
+<div style="display:flex;gap:28px;padding:0 24px;border-bottom:1px solid #E2E8F0">
+<sc-for list="{{ a.tabs }}" as="t" hint-placeholder-count="2"><button onClick="{{ t.onClick }}" style="display:inline-flex;align-items:center;gap:8px;padding:16px 2px 14px;border:none;border-bottom:2px solid {{ t.bd }};margin-bottom:-1px;background:transparent;font-size:14px;font-weight:{{ t.fw }};color:{{ t.fg }};cursor:pointer">{{ t.label }}<span style="min-width:20px;height:20px;padding:0 6px;box-sizing:border-box;border-radius:999px;background:{{ t.nbg }};color:{{ t.nfg }};font-size:11px;font-weight:700;display:grid;place-items:center">{{ t.n }}</span></button></sc-for>
+</div>
+<sc-for list="{{ a.items }}" as="it" hint-placeholder-count="1">
+<div style="display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:16px;align-items:center;padding:18px 24px;border-top:{{ it.bt }}">
+<span style="width:40px;height:40px;border-radius:10px;background:{{ it.iconBg }};color:{{ it.iconFg }};display:grid;place-items:center;font-size:17px"><i class="bi bi-wifi-off"></i></span>
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-size:15px;font-weight:600">{{ it.dev }}</span><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero;font-size:12.5px;color:#5B6B80">{{ it.ip }}</span><span style="display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:6px;border:1px solid {{ it.typeBd }};color:{{ it.typeFg }};font-size:12px;font-weight:500"><i class="bi bi-wifi-off"></i>{{ it.type }}</span></div>
+<span style="font-size:14px;line-height:20px;color:#334155">{{ it.msg }}</span>
+<span style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:#5B6B80"><i class="bi bi-clock"></i><span style="font-family:'JetBrains Mono',monospace;font-variant-numeric:slashed-zero">{{ it.date }}</span>{{ it.attText }}</span>
+</div>
+<div style="display:flex;align-items:center;gap:14px">
+<sc-if value="{{ it.isPend }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:#FFFBEB;color:#B45309;font-size:12px;font-weight:500"><span style="width:8px;height:8px;border-radius:50%;background:#F59E0B"></span>Pendiente</span><button onClick="{{ it.onDone }}" style="height:38px;padding:0 14px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:8px;cursor:pointer" style-hover="background:#F3F6F9;border-color:#94A3B8"><i class="bi bi-check2"></i>Marcar como atendida</button></sc-if>
+<sc-if value="{{ it.isAtt }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 8px;border-radius:999px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:500"><i class="bi bi-check2"></i>Atendida</span></sc-if>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ a.isEmpty }}" hint-placeholder-val="{{ false }}">
+<div style="padding:64px 24px 72px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px"><span style="width:64px;height:64px;border-radius:50%;background:{{ a.eBg }};color:{{ a.eFg }};display:grid;place-items:center;font-size:30px;box-shadow:0 0 0 10px {{ a.eRing }}"><i class="{{ a.eIcon }}"></i></span><span style="font-size:18px;font-weight:600;margin-top:12px">{{ a.eTitle }}</span><span style="font-size:14px;line-height:20px;color:#5B6B80;max-width:380px;text-wrap:pretty">{{ a.eText }}</span><sc-if value="{{ a.eHasBtn }}" hint-placeholder-val="{{ false }}"><button onClick="{{ a.onSeeAtt }}" style="margin-top:8px;height:38px;padding:0 16px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;font-size:14px;font-weight:500;cursor:pointer">Ver atendidas</button></sc-if></div>
+</sc-if>
+</div>
+</main>
+<sc-if value="{{ a.hasToast }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;top:24px;right:32px;width:340px;z-index:6;background:#fff;border-radius:12px;border:1px solid #E2E8F0;box-shadow:0 20px 40px -8px rgba(11,29,46,.28);padding:14px 16px;display:flex;gap:12px;align-items:flex-start"><span style="width:32px;height:32px;border-radius:50%;background:{{ a.tBg }};color:{{ a.tFg }};display:grid;place-items:center;flex:none"><i class="{{ a.tIcon }}"></i></span><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">{{ a.tTitle }}</span><span style="font-size:13px;color:#5B6B80">{{ a.tText }}</span></div><span onClick="{{ closeToast }}" style="cursor:pointer;color:#94A3B8;font-size:13px"><i class="bi bi-x-lg"></i></span></div>
+</sc-if>
+</div>
+</div>
+</div>
+</section></sc-for>
+<sc-for list="{{ loginVariants }}" as="l" hint-placeholder-count="2"><section class="page" style="background:#DCE2E8;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;padding:14px 0 0;font-family:Inter,system-ui,sans-serif">
+<div class="dv-opt" id="{{ l.id }}"><div class="dv-olabel"><a class="dv-oid" href="{{ l.href }}">{{ l.id }}</a>{{ l.label }}</div>
+<div class="dv-card" style="width:1440px">
+<div style="width:1440px;height:860px;background-color:#0B1D2E;background-image:radial-gradient(rgba(182,196,211,.09) 1px,transparent 1px);background-size:24px 24px;display:flex;align-items:center;justify-content:center;font-family:Inter,system-ui,sans-serif;color:#1E293B">
+<form onSubmit="{{ l.onSubmit }}" style="width:400px;background:#fff;border-radius:12px;box-shadow:0 20px 40px -8px rgba(0,0,0,.4);padding:36px 32px 32px;display:flex;flex-direction:column;gap:20px;box-sizing:border-box">
+<div style="display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center">
+<div style="position:relative;width:52px;height:52px;border-radius:14px;background:#0B1D2E;display:grid;place-items:center;color:#8CBCEB;font-size:24px"><i class="bi bi-diagram-3-fill"></i><span style="position:absolute;top:9px;right:9px;width:9px;height:9px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 2px #0B1D2E"></span></div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:22px;line-height:30px;font-weight:600;letter-spacing:-.01em">Monitoreo de Red SOA</span><span style="font-size:14px;color:#5B6B80">Inicia sesión para administrar la red</span></div>
+</div>
+<sc-if value="{{ l.error }}" hint-placeholder-val="{{ false }}"><div role="alert" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C;font-size:13.5px;font-weight:500"><i class="bi bi-exclamation-circle-fill" style="font-size:15px"></i>Usuario o contraseña incorrectos</div></sc-if>
+<sc-if value="{{ l.ok }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:#F0FDF4;border:1px solid #BBF7D0;color:#15803D;font-size:13.5px;font-weight:500"><i class="bi bi-check-circle-fill" style="font-size:15px"></i>Sesión iniciada. Abriendo el dashboard…</div></sc-if>
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Usuario</span><span style="position:relative;display:block"><i class="bi bi-person" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#5B6B80;font-size:16px"></i><input value="{{ l.user }}" onChange="{{ l.onUser }}" autocomplete="username" placeholder="Tu usuario" style="width:100%;height:44px;box-sizing:border-box;border-radius:8px;border:1px solid {{ l.bd }};padding:0 12px 0 38px;font-size:15px;color:#1E293B;outline:none" style-focus="border-color:#2F6FB0;box-shadow:0 0 0 3px rgba(47,111,176,.18)"></span></label>
+<label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:500">Contraseña</span><span style="position:relative;display:block"><i class="bi bi-lock" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#5B6B80;font-size:16px"></i><input type="{{ l.passType }}" value="{{ l.pass }}" onChange="{{ l.onPass }}" autocomplete="current-password" placeholder="Tu contraseña" style="width:100%;height:44px;box-sizing:border-box;border-radius:8px;border:1px solid {{ l.bd }};padding:0 44px 0 38px;font-size:15px;color:#1E293B;outline:none" style-focus="border-color:#2F6FB0;box-shadow:0 0 0 3px rgba(47,111,176,.18)"><button type="button" onClick="{{ l.onEye }}" aria-label="Mostrar contraseña" style="position:absolute;right:2px;top:2px;width:40px;height:40px;border:none;background:transparent;color:#5B6B80;font-size:16px;cursor:pointer"><i class="{{ l.eyeIcon }}"></i></button></span></label>
+<sc-if value="{{ l.busy }}" hint-placeholder-val="{{ false }}"><button type="button" disabled="" style="height:44px;border-radius:8px;border:none;background:#16324F;color:#fff;font-size:15px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:8px">{{ spinW }}Entrando…</button></sc-if>
+<sc-if value="{{ l.notBusy }}" hint-placeholder-val="{{ true }}"><button type="submit" style="height:44px;border-radius:8px;border:none;background:#16324F;color:#fff;font-size:15px;font-weight:500;cursor:pointer" style-hover="background:#0B1D2E">Iniciar sesión</button></sc-if>
+</form>
+</div>
+</div>
+</div>
+</section></sc-for>
+</doc-page>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;pingMs&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:900,&quot;min&quot;:300,&quot;max&quot;:2000,&quot;step&quot;:100,&quot;unit&quot;:&quot;ms&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Monitoreo&quot;}}">
+class Component extends DCLogic {
+  static ST = {
+    activo: { label: 'Activo', dot: '#22C55E', text: '#15803D', bg: '#F0FDF4' },
+    inactivo: { label: 'Inactivo', dot: '#EF4444', text: '#B91C1C', bg: '#FEF2F2' },
+    desconocido: { label: 'Sin monitorear', dot: '#94A3B8', text: '#475569', bg: '#F1F5F9' },
+    monitoreando: { label: 'Monitoreando…', dot: '#2F6FB0', text: '#1E4F80', bg: '#EFF6FF' }
+  };
+  static ICON = { Computadora: 'bi bi-pc-display', Router: 'bi bi-router', Servidor: 'bi bi-hdd-rack', Impresora: 'bi bi-printer' };
+  static TYPES = ['Computadora', 'Servidor', 'Impresora', 'Router'];
+  static DEV = [
+    { id: 1, name: 'Mi PC', ip: '127.0.0.1', type: 'Computadora', loc: 'Laboratorio', status: 'activo', ms: 0.32, last: '10:05:12' },
+    { id: 2, name: 'Router principal', ip: '192.168.1.1', type: 'Router', loc: 'Sala de servidores', status: 'activo', ms: 1.8, last: '10:05:10' },
+    { id: 3, name: 'Servidor principal', ip: '192.168.1.10', type: 'Servidor', loc: 'Sala de servidores', status: 'inactivo', ms: null, last: '10:05:08' },
+    { id: 4, name: 'Servidor de respaldo', ip: '192.168.1.11', type: 'Servidor', loc: 'Sala de servidores', status: 'desconocido', ms: null, last: null },
+    { id: 5, name: 'Impresora Laboratorio', ip: '192.168.1.20', type: 'Impresora', loc: 'Laboratorio', status: 'activo', ms: 4.1, last: '10:05:05' },
+    { id: 6, name: 'PC Recepción', ip: '192.168.1.35', type: 'Computadora', loc: 'Recepción', status: 'activo', ms: 2.5, last: '10:05:03' }
+  ];
+  static BASE = { '127.0.0.1': 0.32, '192.168.1.1': 1.8, '192.168.1.10': null, '192.168.1.11': 0.95, '192.168.1.20': 4.1, '192.168.1.35': 2.5 };
+  static msg(n) { return `El dispositivo ${n} no respondió al monitoreo.`; }
+  static ALERTS = [
+    { id: 1, dev: 'Servidor principal', ip: '192.168.1.10', type: 'Sin respuesta', date: '21/09/2026 10:05', status: 'pendiente' },
+    { id: 2, dev: 'PC Recepción', ip: '192.168.1.35', type: 'Sin respuesta', date: '20/09/2026 17:48', status: 'atendida', att: '20/09/2026 18:02' },
+    { id: 3, dev: 'Impresora Laboratorio', ip: '192.168.1.20', type: 'Sin respuesta', date: '19/09/2026 14:30', status: 'atendida', att: '19/09/2026 14:41' },
+    { id: 4, dev: 'Router principal', ip: '192.168.1.1', type: 'Sin respuesta', date: '18/09/2026 08:12', status: 'atendida', att: '18/09/2026 08:20' }
+  ];
+  static genHist() {
+    let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const devs = [['Mi PC', '127.0.0.1', 'Computadora', 0.32], ['Router principal', '192.168.1.1', 'Router', 1.8], ['Servidor principal', '192.168.1.10', 'Servidor', 0.9], ['Impresora Laboratorio', '192.168.1.20', 'Impresora', 4.1], ['PC Recepción', '192.168.1.35', 'Computadora', 2.5]];
+    const days = [['2026-09-20', 16 * 60, 18 * 60], ['2026-09-21', 8 * 60, 10 * 60 + 5]];
+    const out = [];
+    days.forEach(([date, a, b]) => {
+      for (let t = a; t <= b; t += 5) devs.forEach(([dev, ip, type, base], k) => {
+        const fail = (dev === 'Servidor principal' && date === '2026-09-21' && t >= 10 * 60 + 5) || (dev === 'PC Recepción' && date === '2026-09-20' && t >= 17 * 60 + 45 && t <= 17 * 60 + 55);
+        let ms = null;
+        if (!fail) { let v = base * (0.82 + rnd() * 0.4); if (dev === 'Impresora Laboratorio' && rnd() < 0.1) v *= 2.1; if (dev === 'Servidor principal' && t >= 9 * 60 + 40 && date === '2026-09-21') v *= 1.6 + (t - 580) / 25; ms = +v.toFixed(base < 1 ? 2 : 1); }
+        out.push({ date, t, dev, ip, type, ms, k, key: `${date}-${String(t).padStart(4, '0')}-${k}` });
+      });
+    });
+    return out.sort((x, y) => x.key < y.key ? 1 : -1);
+  }
+  static HIST = Component.genHist();
+
+  state = {
+    devices: Component.DEV.map(d => ({ ...d })), q: '', fStatus: 'todos', fType: 'todos',
+    running: false, current: -1, done: 0, rowMon: null, modal: null, del: null, toast: null, menuOpen: false,
+    mDev: 'Servidor principal', mStatus: 'todos', mFrom: '2026-09-21', mTo: '2026-09-21', mPage: 0, mHover: null,
+    alerts: Component.ALERTS.map(a => ({ ...a })), tab: 'pendientes',
+    lUser: '', lPass: '', lError: false, lShow: false, lBusy: false, lOk: false
+  };
+
+  componentWillUnmount() { clearTimeout(this.t); clearTimeout(this.tt); clearTimeout(this.lt); }
+  p2(n) { return String(n).padStart(2, '0'); }
+  now() { const d = new Date(), p = this.p2; return { d: `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`, t: `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}` }; }
+  fmt(ms) { return ms < 1 ? ms.toFixed(2) : ms.toFixed(1); }
+  dot(c, pulse, s = 8) {
+    const h = React.createElement;
+    if (!pulse) return h('span', { style: { width: s, height: s, borderRadius: '50%', background: c, flex: 'none', display: 'inline-block' } });
+    return h('span', { style: { position: 'relative', width: s, height: s, flex: 'none', display: 'inline-block' } },
+      h('span', { style: { position: 'absolute', inset: 0, borderRadius: '50%', background: c, animation: 'somPulse 1.2s ease-out infinite' } }),
+      h('span', { style: { position: 'absolute', inset: 0, borderRadius: '50%', background: c } }));
+  }
+  spin(c, track) { return React.createElement('span', { style: { width: 14, height: 14, boxSizing: 'border-box', borderRadius: '50%', border: `2px solid ${track}`, borderTopColor: c, animation: 'somSpin .7s linear infinite', display: 'inline-block', flex: 'none' } }); }
+  ico(cls) { return React.createElement('i', { className: cls }); }
+  showToast(t) { clearTimeout(this.tt); this.setState({ toast: t }); this.tt = setTimeout(() => this.setState({ toast: null }), 4500); }
+  ping(d) { const b = Component.BASE[d.ip]; const base = b === undefined ? 1 + Math.random() * 2 : b; if (base === null) return null; return +(base * (0.88 + Math.random() * 0.24)).toFixed(base < 1 ? 2 : 1); }
+  applyResult(st, id, ms) {
+    const d = st.devices.find(x => x.id === id); const n = this.now();
+    const devices = st.devices.map(x => x.id === id ? { ...x, status: ms == null ? 'inactivo' : 'activo', ms, last: n.t } : x);
+    let alerts = st.alerts;
+    if (ms == null && !alerts.some(a => a.dev === d.name && a.status === 'pendiente')) alerts = [{ id: Date.now(), dev: d.name, ip: d.ip, type: 'Sin respuesta', date: `${n.d} ${n.t.slice(0, 5)}`, status: 'pendiente' }, ...alerts];
+    return { devices, alerts };
+  }
+  monitorOne = id => {
+    if (this.state.running || this.state.rowMon != null) return;
+    this.setState({ rowMon: id });
+    this.t = setTimeout(() => {
+      const d = this.state.devices.find(x => x.id === id); if (!d) return this.setState({ rowMon: null });
+      const ms = this.ping(d);
+      this.setState(st => ({ rowMon: null, ...this.applyResult(st, id, ms) }));
+      this.showToast(ms == null ? { kind: 'err', title: `${d.name} no respondió`, text: 'Se generó una alerta pendiente.' } : { kind: 'ok', title: `${d.name} respondió`, text: `Tiempo de respuesta: ${this.fmt(ms)} ms.` });
+    }, this.props.pingMs ?? 900);
+  };
+  monitorAll = () => {
+    if (this.state.running || this.state.rowMon != null) return;
+    const ids = this.state.devices.map(d => d.id);
+    this.setState({ running: true, current: 0, done: 0, toast: null });
+    const step = i => {
+      if (i >= ids.length) {
+        this.setState({ running: false, current: -1 });
+        const act = this.state.devices.filter(d => d.status === 'activo').length;
+        return this.showToast({ kind: 'ok', title: 'Monitoreo completado', text: `${act} de ${ids.length} dispositivos responden.` });
+      }
+      this.setState({ current: i });
+      this.t = setTimeout(() => {
+        const d = this.state.devices.find(x => x.id === ids[i]);
+        const ms = d ? this.ping(d) : null;
+        this.setState(st => ({ done: i + 1, ...(d ? this.applyResult(st, d.id, ms) : {}) }));
+        step(i + 1);
+      }, this.props.pingMs ?? 900);
+    };
+    step(0);
+  };
+  openAdd = () => this.setState({ modal: { mode: 'add', name: '', ip: '', type: 'Computadora', loc: '', errors: {} } });
+  openEdit = id => { const d = this.state.devices.find(x => x.id === id); this.setState({ modal: { mode: 'edit', id, name: d.name, ip: d.ip, type: d.type, loc: d.loc, errors: {} } }); };
+  setField = k => e => { const v = e.target.value; this.setState(s => ({ modal: { ...s.modal, [k]: v, errors: { ...s.modal.errors, [k]: null } } })); };
+  save = () => {
+    const m = this.state.modal, errors = {}, name = m.name.trim(), ip = m.ip.trim();
+    const oct = '(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)';
+    const valid = new RegExp(`^${oct}(\\.${oct}){3}$`).test(ip);
+    if (!name) errors.name = 'El nombre es obligatorio';
+    if (!ip) errors.ip = 'La dirección IP es obligatoria';
+    else if (!valid) errors.ip = 'Dirección IP no válida';
+    else if (this.state.devices.some(d => d.ip === ip && d.id !== m.id)) errors.ip = 'Ya existe un dispositivo con esta IP';
+    if (errors.name || errors.ip) return this.setState({ modal: { ...m, errors } });
+    const loc = m.loc.trim() || 'Sin ubicación';
+    if (m.mode === 'add') {
+      this.setState(s => ({ modal: null, devices: [...s.devices, { id: Date.now(), name, ip, type: m.type, loc, status: 'desconocido', ms: null, last: null }] }));
+      this.showToast({ kind: 'info', title: 'Dispositivo agregado', text: `${name} se registró correctamente.` });
+    } else {
+      this.setState(s => ({ modal: null, devices: s.devices.map(d => d.id === m.id ? { ...d, name, ip, type: m.type, loc } : d) }));
+      this.showToast({ kind: 'info', title: 'Cambios guardados', text: `${name} se actualizó correctamente.` });
+    }
+  };
+  confirmDel = () => {
+    const d = this.state.devices.find(x => x.id === this.state.del);
+    this.setState(s => ({ del: null, devices: s.devices.filter(x => x.id !== s.del) }));
+    if (d) this.showToast({ kind: 'err', title: 'Dispositivo eliminado', text: `${d.name} y su historial se eliminaron.` });
+  };
+  markDone = id => {
+    const n = this.now(); const a = this.state.alerts.find(x => x.id === id);
+    this.setState(s => ({ alerts: s.alerts.map(x => x.id === id ? { ...x, status: 'atendida', att: `${n.d} ${n.t.slice(0, 5)}` } : x) }));
+    this.showToast({ kind: 'ok', title: 'Alerta atendida', text: `La alerta de ${a.dev} pasó a Atendidas.` });
+  };
+  login = e => {
+    e.preventDefault();
+    if (this.state.lBusy) return;
+    if (this.state.lUser.trim() === 'admin' && this.state.lPass === 'admin123') {
+      this.setState({ lError: false, lBusy: true });
+      this.lt = setTimeout(() => { this.setState({ lBusy: false, lOk: true }); this.lt = setTimeout(() => this.setState({ lOk: false, lPass: '' }), 2500); }, 1100);
+    } else this.setState({ lError: true, lOk: false });
+  };
+
+  toastVals(t) {
+    const K = { ok: ['#F0FDF4', '#15803D', 'bi bi-check-lg'], err: ['#FEF2F2', '#B91C1C', 'bi bi-exclamation-lg'], info: ['#EEF3F8', '#16324F', 'bi bi-info-lg'] };
+    const k = t ? K[t.kind] : K.info;
+    return { hasToast: !!t, tBg: k[0], tFg: k[1], tIcon: k[2], tTitle: t ? t.title : '', tText: t ? t.text : '' };
+  }
+
+  devView(st, live) {
+    const ST = Component.ST, noop = () => {}, L = f => live ? f : noop;
+    const q = st.q.trim().toLowerCase();
+    const cnt = k => k === 'todos' ? st.devices.length : st.devices.filter(d => d.status === k).length;
+    const list = st.devices.filter(d => (!q || d.name.toLowerCase().includes(q) || d.ip.includes(q)) && (st.fStatus === 'todos' || d.status === st.fStatus) && (st.fType === 'todos' || d.type === st.fType));
+    const lock = st.running || st.rowMon != null;
+    const rows = list.map((d, i) => {
+      const idx = st.devices.indexOf(d);
+      const mon = (st.running && st.current === idx) || st.rowMon === d.id;
+      const s = ST[mon ? 'monitoreando' : d.status];
+      return {
+        ...d, icon: Component.ICON[d.type], label: s.label, txt: s.text, tint: s.bg, dotEl: this.dot(s.dot, mon),
+        msText: mon ? 'Enviando ping…' : d.ms != null ? `${this.fmt(d.ms)} ms` : d.status === 'inactivo' ? 'Sin respuesta' : '—',
+        msShort: mon ? 'ping…' : d.ms != null ? `${this.fmt(d.ms)} ms` : d.status === 'inactivo' ? 'Sin resp.' : '—',
+        msColor: mon ? '#5B6B80' : d.status === 'inactivo' ? '#B91C1C' : d.ms == null ? '#94A3B8' : '#1E293B',
+        lastText: d.last ? `Hoy, ${d.last.slice(0, 5)}` : 'Nunca',
+        bt: i === 0 ? 'none' : '1px solid #EEF2F6', rowBg: mon ? '#FAFCFF' : '#FFFFFF', cardBd: mon ? '#93C5FD' : d.status === 'inactivo' ? '#FECACA' : '#E2E8F0',
+        monIcon: mon ? this.spin('#2F6FB0', '#BFDBFE') : this.ico('bi bi-broadcast'),
+        monBd: mon ? '#BFDBFE' : lock ? '#EEF2F6' : '#E2E8F0', monBg: mon ? '#EFF6FF' : '#FFFFFF',
+        monFg: lock && !mon ? '#CBD5E1' : '#475569', monFgTxt: mon ? '#1E4F80' : lock ? '#94A3B8' : '#1E293B',
+        actBd: mon ? '#EEF2F6' : '#E2E8F0', actFg: mon ? '#CBD5E1' : '#475569', actFgTxt: mon ? '#94A3B8' : '#1E293B', delFgTxt: mon ? '#94A3B8' : '#B91C1C',
+        monDis: lock, actDis: mon,
+        onMon: L(() => this.monitorOne(d.id)), onEdit: L(() => this.openEdit(d.id)), onDel: L(() => this.setState({ del: d.id }))
+      };
+    });
+    const statusOpts = [['todos', 'Todos'], ['activo', 'Activos'], ['inactivo', 'Inactivos'], ['desconocido', 'Sin monitorear']].map(([k, label], i) => {
+      const on = st.fStatus === k;
+      return { k, label, n: cnt(k), bl: i ? '1px solid #CBD5E1' : 'none', bg: on ? '#16324F' : '#FFFFFF', fg: on ? '#FFFFFF' : '#475569', nfg: on ? '#B6C4D3' : '#5B6B80', chipBd: on ? '#16324F' : '#CBD5E1', dotEl: k === 'todos' ? null : this.dot(ST[k].dot, false), onClick: L(() => this.setState({ fStatus: k })) };
+    });
+    const m = st.modal || { mode: 'add', name: '', ip: '', type: 'Computadora', loc: '', errors: {} };
+    const er = m.errors || {};
+    const errBd = '#EF4444', errSh = '0 0 0 3px rgba(239,68,68,.12)';
+    const cur = st.devices[st.current] || {};
+    const steps = st.devices.map((d, i) => {
+      const done = i < st.done, c = st.running && i === st.current, bad = done && d.status === 'inactivo';
+      return { name: d.name, ms: done && d.ms != null ? `${this.fmt(d.ms)} ms` : '', bg: c ? '#EFF6FF' : bad ? '#FEF2F2' : done ? '#F0FDF4' : '#F3F6F9', fg: c ? '#1E4F80' : bad ? '#B91C1C' : done ? '#15803D' : '#5B6B80', lead: c ? this.dot('#2F6FB0', true, 6) : React.createElement('i', { className: bad ? 'bi bi-x-lg' : done ? 'bi bi-check2' : 'bi bi-circle', style: { fontSize: done ? 12 : 8 } }) };
+    });
+    const delD = st.devices.find(x => x.id === st.del) || {};
+    const total = st.devices.length;
+    return {
+      rows, statusOpts, steps, q: st.q, fType: st.fType, isEmpty: rows.length === 0,
+      subtitle: `${total} dispositivos registrados`, footer: `Mostrando ${rows.length} de ${total} dispositivos`,
+      hasFilters: !!q || st.fStatus !== 'todos' || st.fType !== 'todos',
+      running: st.running, idle: !st.running, btnLabel: `Monitoreando ${Math.min(st.done + 1, total)} de ${total}…`,
+      curName: cur.name, curIp: cur.ip, progText: `${st.done} de ${total}`, progPct: `${total ? st.done / total * 100 : 0}%`,
+      onQ: L(e => this.setState({ q: e.target.value })), onType: L(e => this.setState({ fType: e.target.value })), onClear: L(() => this.setState({ q: '', fStatus: 'todos', fType: 'todos' })),
+      onAll: L(this.monitorAll), onAdd: L(this.openAdd),
+      hasModal: !!st.modal, mTitle: m.mode === 'add' ? 'Agregar dispositivo' : 'Editar dispositivo', mSub: m.mode === 'add' ? 'Registra un equipo de la red para monitorearlo.' : `Actualiza los datos de ${m.name || 'este dispositivo'}.`, mSave: m.mode === 'add' ? 'Agregar dispositivo' : 'Guardar cambios',
+      mName: m.name, mIp: m.ip, mLoc: m.loc, nameErr: er.name || '', ipErr: er.ip || '', ipOk: !er.ip,
+      nameBd: er.name ? errBd : '#CBD5E1', nameSh: er.name ? errSh : 'none', ipBd: er.ip ? errBd : '#CBD5E1', ipSh: er.ip ? errSh : 'none',
+      typeTiles: Component.TYPES.map(t => { const on = m.type === t; return { label: t, icon: Component.ICON[t], bd: on ? '#2F6FB0' : '#CBD5E1', sh: on ? '0 0 0 1px #2F6FB0' : 'none', bg: on ? '#EFF6FF' : '#FFFFFF', fg: on ? '#16324F' : '#475569', onClick: L(() => this.setState(s => ({ modal: { ...s.modal, type: t } }))) }; }),
+      onMName: L(this.setField('name')), onMIp: L(this.setField('ip')), onMLoc: L(this.setField('loc')), onClose: L(() => this.setState({ modal: null })), onSave: L(this.save),
+      hasDel: st.del != null, delName: delD.name, delIp: delD.ip, onCancelDel: L(() => this.setState({ del: null })), onConfirmDel: L(this.confirmDel),
+      ...this.toastVals(st.toast),
+      menuOpen: st.menuOpen, menuIcon: st.menuOpen ? 'bi bi-x-lg' : 'bi bi-list', onMenu: L(() => this.setState(s => ({ menuOpen: !s.menuOpen })))
+    };
+  }
+
+  niceStep(x) { const e = Math.pow(10, Math.floor(Math.log10(x))), f = x / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; }
+  chart(pts, w, hgt) {
+    const h = React.createElement, MONO = "'JetBrains Mono', ui-monospace, monospace", NUM = { fontVariantNumeric: 'slashed-zero' };
+    const n = pts.length, L = 44, R = 12, T = 12, B = 28, iw = w - L - R, ih = hgt - T - B;
+    const vals = pts.filter(p => p.ms != null).map(p => p.ms);
+    const step = this.niceStep(Math.max(0.5, ...vals) * 1.15 / 4), yMax = step * 4;
+    const X = i => L + i * iw / Math.max(1, n - 1), Y = v => T + ih - v / yMax * ih;
+    const hi = this.state.mHover != null && this.state.mHover < n ? this.state.mHover : null;
+    const kids = [];
+    for (let g = 0; g <= 4; g++) {
+      const v = step * g;
+      kids.push(h('line', { key: 'g' + g, x1: L, x2: w - R, y1: Y(v), y2: Y(v), stroke: g ? '#EEF2F6' : '#E2E8F0', strokeDasharray: g ? '3 4' : null }));
+      kids.push(h('text', { key: 'y' + g, x: L - 8, y: Y(v) + 4, textAnchor: 'end', fontSize: 11, fill: '#5B6B80', fontFamily: MONO, style: NUM }, +v.toFixed(2)));
+    }
+    pts.forEach((p, i) => { if (i % 4 && i !== n - 1) return; if (i !== n - 1 && n - 1 - i < 3) return; kids.push(h('text', { key: 'x' + i, x: X(i), y: hgt - 8, textAnchor: i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle', fontSize: 11, fill: hi === i ? '#1E293B' : '#5B6B80', fontFamily: MONO, style: NUM }, p.label)); });
+    let runs = [], cur = [];
+    pts.forEach((p, i) => { if (p.ms == null) { if (cur.length) runs.push(cur); cur = []; } else cur.push([X(i), Y(p.ms)]); });
+    if (cur.length) runs.push(cur);
+    runs.forEach((r, k) => {
+      const t = 0.18; let d = `M${r[0]}`;
+      for (let i = 0; i < r.length - 1; i++) { const p0 = r[i - 1] || r[i], p1 = r[i], p2 = r[i + 1], p3 = r[i + 2] || p2; d += ` C${[p1[0] + (p2[0] - p0[0]) * t, p1[1] + (p2[1] - p0[1]) * t]} ${[p2[0] - (p3[0] - p1[0]) * t, p2[1] - (p3[1] - p1[1]) * t]} ${p2}`; }
+      kids.push(h('path', { key: 'a' + k, d: `${d} L${r[r.length - 1][0]},${Y(0)} L${r[0][0]},${Y(0)} Z`, fill: 'rgba(47,111,176,.07)' }));
+      kids.push(h('path', { key: 'l' + k, d, fill: 'none', stroke: '#2F6FB0', strokeWidth: 2, strokeLinejoin: 'round', strokeLinecap: 'round' }));
+      if (r.length === 1) kids.push(h('circle', { key: 'solo' + k, cx: r[0][0], cy: r[0][1], r: 3, fill: '#2F6FB0' }));
+    });
+    pts.forEach((p, i) => { if (p.ms == null) kids.push(h('circle', { key: 'f' + i, cx: X(i), cy: Y(0), r: 5, fill: '#EF4444', stroke: '#fff', strokeWidth: 2 })); });
+    if (hi != null) {
+      const p = pts[hi], gx = X(hi);
+      kids.push(h('line', { key: 'guide', x1: gx, x2: gx, y1: T, y2: T + ih, stroke: '#94A3B8', strokeDasharray: '3 3' }));
+      if (p.ms != null) kids.push(h('circle', { key: 'hc', cx: gx, cy: Y(p.ms), r: 4.5, fill: '#fff', stroke: '#2F6FB0', strokeWidth: 2 }));
+      const bw = 150, bh = 54; let bx = gx + 12; if (bx + bw > w - R) bx = gx - 12 - bw;
+      kids.push(h('g', { key: 'tt', pointerEvents: 'none' },
+        h('rect', { x: bx, y: T, width: bw, height: bh, rx: 8, fill: '#0B1D2E' }),
+        h('text', { x: bx + 12, y: T + 20, fontSize: 11, fill: '#8FA3B8', fontFamily: MONO, style: NUM }, `${p.dayLabel} · ${p.label}`),
+        h('text', { x: bx + 12, y: T + 40, fontSize: 13, fill: p.ms == null ? '#FCA5A5' : '#FFFFFF', fontFamily: MONO, fontWeight: 500, style: NUM }, p.ms == null ? 'Sin respuesta' : `${this.fmt(p.ms)} ms`)));
+    } else {
+      const li = n - 1; if (pts[li] && pts[li].ms != null) kids.push(h('circle', { key: 'last', cx: X(li), cy: Y(pts[li].ms), r: 3.5, fill: '#fff', stroke: '#2F6FB0', strokeWidth: 2 }));
+    }
+    kids.push(h('rect', {
+      key: 'hit', x: 0, y: 0, width: w, height: hgt, fill: 'transparent',
+      onMouseMove: e => { const r = e.currentTarget.ownerSVGElement.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width * w; const i = Math.max(0, Math.min(n - 1, Math.round((x - L) / (iw / Math.max(1, n - 1))))); if (this.state.mHover !== i) this.setState({ mHover: i }); },
+      onMouseLeave: () => this.setState({ mHover: null })
+    }));
+    return h('svg', { viewBox: `0 0 ${w} ${hgt}`, style: { width: '100%', height: 'auto', display: 'block', overflow: 'visible' } }, kids);
+  }
+
+  monView() {
+    const st = this.state, H = Component.HIST;
+    const dd = s => { const [y, m, d] = s.split('-'); return `${d}/${m}/${y}`; };
+    const hm = t => `${this.p2(Math.floor(t / 60))}:${this.p2(t % 60)}`;
+    const from = st.mFrom <= st.mTo ? st.mFrom : st.mTo, to = st.mFrom <= st.mTo ? st.mTo : st.mFrom;
+    const inRange = r => r.date >= from && r.date <= to;
+    const rowsAll = H.filter(r => inRange(r) && (st.mDev === 'todos' || r.dev === st.mDev) && (st.mStatus === 'todos' || (st.mStatus === 'activo') === (r.ms != null)));
+    const pages = Math.max(1, Math.ceil(rowsAll.length / 10)), page = Math.min(st.mPage, pages - 1);
+    const rows = rowsAll.slice(page * 10, page * 10 + 10).map((r, i) => {
+      const ok = r.ms != null, s = Component.ST[ok ? 'activo' : 'inactivo'];
+      return { when: `${dd(r.date)} ${hm(r.t)}`, dev: r.dev, ip: r.ip, icon: Component.ICON[r.type], label: s.label, tint: s.bg, txt: s.text, dot: s.dot, msText: ok ? `${this.fmt(r.ms)} ms` : 'Sin respuesta', msColor: ok ? '#1E293B' : '#B91C1C', bt: i ? '1px solid #EEF2F6' : 'none' };
+    });
+    const hasChart = st.mDev !== 'todos';
+    let chart = null, avg = '—', max = '—', avail = '—', availColor = '#1E293B', devIp = '', chartSub = '';
+    if (hasChart) {
+      const all = H.filter(r => inRange(r) && r.dev === st.mDev).slice().reverse();
+      const pts = all.slice(-24).map(r => ({ ms: r.ms, label: hm(r.t), dayLabel: dd(r.date).slice(0, 5) }));
+      const ok = all.filter(r => r.ms != null).map(r => r.ms);
+      if (ok.length) { avg = `${this.fmt(ok.reduce((a, b) => a + b, 0) / ok.length)} ms`; max = `${this.fmt(Math.max(...ok))} ms`; }
+      const pct = all.length ? ok.length / all.length * 100 : 0;
+      avail = `${pct.toFixed(1)} %`; availColor = pct >= 99 ? '#15803D' : pct >= 95 ? '#B45309' : '#B91C1C';
+      devIp = (all[0] || {}).ip || '';
+      chartSub = `últimas ${pts.length} comprobaciones del rango`;
+      chart = pts.length ? this.chart(pts, 1078, 250) : null;
+    }
+    const noop = () => {};
+    return {
+      dev: st.mDev, status: st.mStatus, from: st.mFrom, to: st.mTo,
+      devOpts: [{ v: 'todos', label: 'Todos los dispositivos' }, ...['Mi PC', 'Router principal', 'Servidor principal', 'Servidor de respaldo', 'Impresora Laboratorio', 'PC Recepción'].map(n => ({ v: n, label: n }))],
+      onDev: e => this.setState({ mDev: e.target.value, mPage: 0, mHover: null }), onStatus: e => this.setState({ mStatus: e.target.value, mPage: 0 }),
+      onFrom: e => this.setState({ mFrom: e.target.value || '2026-09-20', mPage: 0 }), onTo: e => this.setState({ mTo: e.target.value || '2026-09-21', mPage: 0 }),
+      onClear: () => this.setState({ mDev: 'Servidor principal', mStatus: 'todos', mFrom: '2026-09-21', mTo: '2026-09-21', mPage: 0 }),
+      hasChart: hasChart && !!chart, noChart: !hasChart || !chart, chart, devName: st.mDev, devIp, chartSub, avg, max, avail, availColor,
+      rows, isEmpty: rows.length === 0, countText: `${rowsAll.length} comprobaciones`,
+      pageText: rowsAll.length ? `Mostrando ${page * 10 + 1}–${page * 10 + rows.length} de ${rowsAll.length} · página ${page + 1} de ${pages}` : 'Sin resultados',
+      onPrev: page > 0 ? () => this.setState({ mPage: page - 1 }) : noop, onNext: page < pages - 1 ? () => this.setState({ mPage: page + 1 }) : noop,
+      prevDis: page === 0, nextDis: page >= pages - 1, prevFg: page === 0 ? '#94A3B8' : '#1E293B', nextFg: page >= pages - 1 ? '#94A3B8' : '#1E293B'
+    };
+  }
+
+  alertView(alerts, tab, toast, live) {
+    const noop = () => {}, L = f => live ? f : noop;
+    const pend = alerts.filter(a => a.status === 'pendiente'), att = alerts.filter(a => a.status === 'atendida');
+    const tabs = [['pendientes', 'Pendientes', pend.length], ['atendidas', 'Atendidas', att.length]].map(([k, label, n]) => {
+      const on = tab === k;
+      return { label, n, bd: on ? '#16324F' : 'transparent', fg: on ? '#1E293B' : '#5B6B80', fw: on ? 600 : 500, nbg: k === 'pendientes' && n ? '#FEF3C7' : '#F1F5F9', nfg: k === 'pendientes' && n ? '#B45309' : '#475569', onClick: L(() => this.setState({ tab: k })) };
+    });
+    const src = tab === 'pendientes' ? pend : att;
+    const items = src.map((a, i) => {
+      const p = a.status === 'pendiente';
+      return { ...a, msg: Component.msg(a.dev), bt: i ? '1px solid #EEF2F6' : 'none', isPend: p, isAtt: !p, iconBg: p ? '#FEF2F2' : '#F1F5F9', iconFg: p ? '#B91C1C' : '#5B6B80', typeBd: p ? '#FECACA' : '#E2E8F0', typeFg: p ? '#B91C1C' : '#475569', attText: a.att ? ` · Atendida el ${a.att}` : '', onDone: L(() => this.markDone(a.id)) };
+    });
+    const e = tab === 'pendientes'
+      ? { eIcon: 'bi bi-check2-circle', eBg: '#F0FDF4', eFg: '#15803D', eRing: '#F7FEF9', eTitle: 'Toda la red responde', eText: 'No hay alertas pendientes. Cuando un dispositivo deje de responder, aparecerá aquí.', eHasBtn: att.length > 0 }
+      : { eIcon: 'bi bi-inbox', eBg: '#EEF3F8', eFg: '#16324F', eRing: '#F6F9FB', eTitle: 'Aún no hay alertas atendidas', eText: 'Las alertas que marques como atendidas se guardan aquí.', eHasBtn: false };
+    return { tabs, items, isEmpty: items.length === 0, pending: pend.length, ...e, onSeeAtt: L(() => this.setState({ tab: 'atendidas' })), ...this.toastVals(toast) };
+  }
+
+  renderVals() {
+    const s = this.state, base = Component.DEV.map(d => ({ ...d }));
+    const clean = { devices: base, q: '', fStatus: 'todos', fType: 'todos', running: false, current: -1, done: 0, rowMon: null, modal: null, del: null, toast: null, menuOpen: false };
+    const progDevs = base.map((d, i) => i < 2 ? { ...d, ms: [0.31, 1.9][i], last: '10:12:04' } : d);
+    const dErr = { ...clean, modal: { mode: 'add', name: 'Servidor de archivos', ip: '192.168.1.300', type: 'Servidor', loc: 'Sala de servidores', errors: { ip: 'Dirección IP no válida' } } };
+    const pendingCount = s.alerts.filter(a => a.status === 'pendiente').length;
+    const allAtt = Component.ALERTS.map(a => a.status === 'pendiente' ? { ...a, status: 'atendida', att: '21/09/2026 10:14' } : a);
+    const lv = (st, live, id, label) => ({
+      id, href: `#${id}`, label, user: st.lUser, pass: st.lPass, error: st.lError, ok: st.lOk, busy: st.lBusy, notBusy: !st.lBusy,
+      bd: st.lError ? '#EF4444' : '#CBD5E1', passType: st.lShow ? 'text' : 'password', eyeIcon: st.lShow ? 'bi bi-eye-slash' : 'bi bi-eye',
+      onSubmit: live ? this.login : e => e.preventDefault(), onUser: live ? e => this.setState({ lUser: e.target.value, lError: false }) : () => {}, onPass: live ? e => this.setState({ lPass: e.target.value, lError: false }) : () => {},
+      onEye: live ? () => this.setState(x => ({ lShow: !x.lShow })) : () => {}
+    });
+    return {
+      pendingCount, closeToast: () => this.setState({ toast: null }),
+      spinW: this.spin('#FFFFFF', 'rgba(255,255,255,.35)'), spinD: this.spin('#1E293B', '#CBD5E1'), pulseA: this.dot('#2F6FB0', true),
+      typeOpts: [{ v: 'todos', label: 'Todos los tipos' }, ...Component.TYPES.map(t => ({ v: t, label: t }))],
+      dispVariants: [
+        { id: '2a', href: '#2a', label: 'Lista de dispositivos · interactiva', ...this.devView(s, true) },
+        { id: '2b', href: '#2b', label: 'Modal agregar · «Dirección IP no válida»', ...this.devView(dErr, false) },
+        { id: '2c', href: '#2c', label: 'Modal de confirmación para eliminar', ...this.devView({ ...clean, del: 4 }, false) },
+        { id: '2d', href: '#2d', label: '«Monitorear todos» en progreso · fila monitoreando', ...this.devView({ ...clean, devices: progDevs, running: true, current: 2, done: 2 }, false) }
+      ],
+      mobVariants: [
+        { id: '2e', href: '#2e', label: 'Celular 390 px · interactivo', ...this.devView(s, true) },
+        { id: '2f', href: '#2f', label: 'Celular · agregar con IP no válida', ...this.devView(dErr, false) }
+      ],
+      m: this.monView(),
+      alertVariants: [
+        { id: '4a', href: '#4a', label: 'Pendientes · interactivo', ...this.alertView(s.alerts, s.tab, s.toast, true) },
+        { id: '4b', href: '#4b', label: 'Sin alertas pendientes · estado vacío positivo', ...this.alertView(allAtt, 'pendientes', null, false) }
+      ],
+      loginVariants: [
+        lv(s, true, '5a', 'Inicio de sesión · interactivo (admin / admin123)'),
+        lv({ lUser: 'admin', lPass: 'lab2025', lError: true, lShow: false, lBusy: false, lOk: false }, false, '5b', 'Error · «Usuario o contraseña incorrectos»')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
