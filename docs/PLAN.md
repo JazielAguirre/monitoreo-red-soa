@@ -129,7 +129,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] Monitorear Mi PC (`127.0.0.1`) → 201, `activo` con tiempo. El dispositivo queda actualizado con el mismo tiempo y fecha que el monitoreo.
 - [x] Monitorear la Impresora (`192.0.2.20`) → `inactivo`, `alerta_creada: true`. Una segunda vez → `alerta_creada: false`.
 - [x] Dispositivo inexistente → 404.
-- [x] Si Alertas o Dispositivos no responde (se simula con una URL incorrecta en la configuración de la prueba) → 502, y el monitoreo queda guardado.
+- [x] Si Alertas o Dispositivos no responde (se simula con el archivo de fallo simulado, ver "Pruebas automáticas") → 502, y el monitoreo queda guardado.
 - [x] `GET /monitoreo` respeta cada filtro; `desde` posterior a `hasta` → 400; la paginación da `total` y `total_paginas` correctos.
 - [x] El `resumen` ignora el filtro de estado y la paginación, y coincide con un cálculo manual en SQL.
 - [x] `GET /monitoreo/recientes` devuelve cada lista en orden cronológico ascendente y respeta `limite`.
