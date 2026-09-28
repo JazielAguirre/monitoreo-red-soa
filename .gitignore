@@ -14,3 +14,6 @@ desktop.ini
 # Logs
 *.log
 logs/
+
+# Archivo temporal de las pruebas (fallo simulado entre servicios)
+pruebas/.fallo-simulado.json

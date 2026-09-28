@@ -32,3 +32,6 @@ const DB_COLACION = 'utf8mb4_unicode_ci';
 
 // Valor de la cabecera X-Servicio-Clave para peticiones entre servicios.
 const CLAVE_SERVICIO = 'clave-desarrollo-cambiar';
+
+// Tiempo máximo de espera (segundos) de una petición entre servicios (comun/http.php).
+const TIEMPO_ESPERA_SERVICIOS = 3;
