@@ -104,8 +104,11 @@ Todas las tablas: InnoDB, `utf8mb4`, `utf8mb4_unicode_ci`. Cada tabla pertenece 
 | `fecha` | DATETIME | NOT NULL |
 | `atendida` | TINYINT(1) | NOT NULL, DEFAULT 0 |
 | `fecha_atendida` | DATETIME | NULL |
+| `dispositivo_pendiente` | INT UNSIGNED | Columna generada VIRTUAL: `IF(atendida = 0, dispositivo_id, NULL)`. UNIQUE. Interna: no viaja en el objeto `alerta` |
 
-Índices: `(dispositivo_id, atendida)` y `(atendida, fecha)`.
+Índices: `(dispositivo_id, atendida)`, `(atendida, fecha)` y UNIQUE `(dispositivo_pendiente)`.
+
+**Una sola alerta pendiente por dispositivo, garantizado por la base de datos:** `dispositivo_pendiente` solo tiene valor mientras la alerta está pendiente, y su índice único rechaza una segunda pendiente (error 1062) aunque dos `POST /alertas` lleguen al mismo tiempo. `UNIQUE` admite varios `NULL`, así que las alertas atendidas no chocan entre sí. Probado en MariaDB 10.4 (la del XAMPP).
 
 ### `usuarios` (autenticación, Fase 7)
 
@@ -226,7 +229,15 @@ Actualiza `estado`, `ultimo_tiempo_ms` (con el valor de `tiempo_respuesta_ms`) y
 
 Lista las alertas de la más reciente a la más antigua.
 
-Filtros opcionales: `atendida` (`0` o `1`), `dispositivo` (id) y `limite` (1–100, 50 por defecto).
+Filtros opcionales: `atendida` (`0` o `1`), `dispositivo` (id) y `limite` (1–100, 50 por defecto). Un filtro vacío equivale a no filtrar. Un `dispositivo` sin alertas (o que no existe) devuelve `[]`: Alertas no consulta la tabla `dispositivos`. Orden: `fecha` descendente y, a igual fecha, `id` descendente.
+
+Un filtro inválido responde **400** con `error` "Filtros no válidos" y el mensaje en `campos`:
+
+| Filtro | Mensaje en `campos` |
+|---|---|
+| `atendida` | "El filtro atendida debe ser 0 o 1" |
+| `dispositivo` | "Id de dispositivo no válido" |
+| `limite` | "El límite debe ser un número entre 1 y 100" |
 
 **200:** `data` es un arreglo de objetos `alerta`.
 
@@ -244,17 +255,25 @@ Lo usa el Servicio de Monitoreo cuando un dispositivo no responde.
 { "dispositivo_id": 3, "tipo": "sin_respuesta", "mensaje": "El dispositivo Servidor principal no respondió al monitoreo." }
 ```
 
-**La regla contra alertas repetidas vive aquí:** si el dispositivo ya tiene una alerta pendiente, no se crea otra.
+**La regla contra alertas repetidas vive aquí:** si el dispositivo ya tiene una alerta pendiente, no se crea otra (el `mensaje` de la petición se ignora y se devuelve la existente). También se cumple con dos `POST` simultáneos, gracias al índice único de `dispositivo_pendiente` (ver el modelo de datos).
+
+`fecha` la genera el servicio. Se recortan los espacios de `mensaje`.
+
+| Campo | Regla | Mensaje en `campos` |
+|---|---|---|
+| `dispositivo_id` | Obligatorio, entero positivo (`"5"` como texto no vale) | "Id de dispositivo no válido" |
+| `tipo` | `sin_respuesta` | "Tipo de alerta no válido" |
+| `mensaje` | Obligatorio, 1–255 caracteres | "El mensaje es obligatorio" / "Máximo 255 caracteres" |
 
 - **201:** `data` = `{ "alerta": { }, "creada": true }`.
 - **200:** `data` = `{ "alerta": { }, "creada": false }`, con la alerta pendiente que ya existía.
-- **400** si faltan datos. **404** si el dispositivo no existe (lo detecta la llave foránea).
+- **400** con `error` "Revisa los datos de la alerta" y `campos`. **404** "El dispositivo no existe" (lo detecta la llave foránea).
 
 ### `PATCH /alertas/{id}/atender` [Interfaz]
 
-Marca la alerta como atendida y guarda `fecha_atendida`. Si ya estaba atendida, responde 200 sin cambiarla.
+Marca la alerta como atendida y guarda `fecha_atendida` (la genera el servicio). Si ya estaba atendida, responde 200 sin cambiarla: conserva su `fecha_atendida` original. No necesita cuerpo; si llega uno, se ignora.
 
-**200:** la alerta actualizada. **404** si no existe.
+**200:** la alerta actualizada. **404:** "La alerta no existe".
 
 ---
 

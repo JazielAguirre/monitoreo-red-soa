@@ -20,6 +20,7 @@ require_once __DIR__ . '/../servicios/comun/db.php';
 
 $GLOBALS['pruebas_correctas'] = 0;
 $GLOBALS['pruebas_fallidas'] = [];
+$GLOBALS['pruebas_avisos'] = [];
 
 // ---------------------------------------------------------------- Base de datos
 
@@ -106,6 +107,72 @@ function peticion(string $metodo, string $ruta, array|string|null $cuerpo = null
     }
 
     $cabeceras = leerCabeceras($http_response_header);
+
+    return [
+        'codigo' => $cabeceras['codigo'],
+        'cabeceras' => $cabeceras['lista'],
+        'texto' => $texto,
+        'json' => json_decode($texto, true),
+    ];
+}
+
+/**
+ * Envía varias peticiones al mismo tiempo (curl_multi) y devuelve sus respuestas
+ * en el mismo orden, con la forma de peticion(). Requiere la extensión curl:
+ * compruébala antes con curlDisponible().
+ * Cada petición es [método, ruta, cuerpo].
+ */
+function peticionesSimultaneas(array $peticiones): array
+{
+    $multi = curl_multi_init();
+    $manejadores = [];
+
+    foreach ($peticiones as $i => [$metodo, $ruta, $cuerpo]) {
+        $manejador = curl_init(URL_SERVICIOS . $ruta);
+        curl_setopt_array($manejador, [
+            CURLOPT_CUSTOMREQUEST => $metodo,
+            CURLOPT_POSTFIELDS => is_array($cuerpo) ? json_encode($cuerpo, JSON_UNESCAPED_UNICODE) : ($cuerpo ?? ''),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Accept: application/json', 'Expect:'],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER => true,
+            CURLOPT_TIMEOUT => 10,
+        ]);
+        curl_multi_add_handle($multi, $manejador);
+        $manejadores[$i] = $manejador;
+    }
+
+    do {
+        $estado = curl_multi_exec($multi, $activas);
+        if ($activas > 0) {
+            curl_multi_select($multi, 1.0);
+        }
+    } while ($activas > 0 && $estado === CURLM_OK);
+
+    $respuestas = [];
+    foreach ($manejadores as $i => $manejador) {
+        $respuestas[$i] = respuestaDeCurl($manejador, (string) curl_multi_getcontent($manejador));
+        curl_multi_remove_handle($multi, $manejador);
+        curl_close($manejador);
+    }
+    curl_multi_close($multi);
+
+    return $respuestas;
+}
+
+function curlDisponible(): bool
+{
+    return function_exists('curl_multi_init');
+}
+
+/**
+ * Convierte la respuesta cruda de curl (cabeceras + cuerpo) a la forma de peticion().
+ */
+function respuestaDeCurl(CurlHandle $manejador, string $crudo): array
+{
+    $tamanoCabeceras = (int) curl_getinfo($manejador, CURLINFO_HEADER_SIZE);
+    $lineas = array_values(array_filter(explode("\r\n", substr($crudo, 0, $tamanoCabeceras))));
+    $texto = substr($crudo, $tamanoCabeceras);
+    $cabeceras = leerCabeceras($lineas);
 
     return [
         'codigo' => $cabeceras['codigo'],
@@ -224,6 +291,16 @@ function exportar(mixed $valor): string
     return json_encode($valor, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION);
 }
 
+/**
+ * Registra un aviso (por ejemplo, una prueba omitida): se muestra en el
+ * resumen, pero no cuenta como fallo.
+ */
+function avisar(string $mensaje): void
+{
+    $GLOBALS['pruebas_avisos'][] = $mensaje;
+    echo "  ! $mensaje\n";
+}
+
 function seccion(string $titulo): void
 {
     echo "\n$titulo\n";
@@ -242,6 +319,10 @@ function terminarPruebas(): never
 
     foreach ($fallidas as $descripcion) {
         echo "  \u{2717} $descripcion\n";
+    }
+
+    foreach ($GLOBALS['pruebas_avisos'] as $aviso) {
+        echo "  ! Aviso: $aviso\n";
     }
 
     exit($fallidas === [] ? 0 : 1);
