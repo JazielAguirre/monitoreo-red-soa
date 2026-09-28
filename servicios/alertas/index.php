@@ -3,39 +3,28 @@
  * Servicio de Alertas: alertas generadas cuando un dispositivo no responde.
  * Dueño de la tabla alertas.
  * Punto de entrada: todas las rutas del servicio llegan aquí por .htaccess.
- * Fase 0: solo responde con el servicio, el método y los segmentos de la ruta.
  */
 
 declare(strict_types=1);
 
 require_once __DIR__ . '/../comun/respuesta.php';
+require_once __DIR__ . '/../comun/peticion.php';
+require_once __DIR__ . '/../comun/enrutador.php';
+require_once __DIR__ . '/endpoints.php';
 
 const NOMBRE_SERVICIO = 'alertas';
 
-/**
- * Devuelve los segmentos de la ruta que siguen a la carpeta del servicio.
- * Ejemplo: /monitoreo-red-soa/servicios/alertas/5 → ["5"]
- */
-function obtenerSegmentosRuta(): array
-{
-    $ruta = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-    $base = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+const RUTAS_ALERTAS = [
+    ['GET', '', 'listarAlertas'],
+    ['POST', '', 'crearAlerta'],
+    ['GET', 'conteo', 'contarAlertasPorEstado'],
+    ['PATCH', '{id}/atender', 'atenderAlerta'],
+];
 
-    if (str_starts_with($ruta, $base)) {
-        $ruta = substr($ruta, strlen($base));
-    }
-
-    $segmentos = array_filter(explode('/', $ruta), fn(string $s): bool => $s !== '');
-
-    return array_values(array_map('rawurldecode', $segmentos));
-}
+configurarErrores();
 
 try {
-    responder([
-        'servicio' => NOMBRE_SERVICIO,
-        'metodo' => $_SERVER['REQUEST_METHOD'] ?? 'GET',
-        'ruta' => obtenerSegmentosRuta(),
-    ]);
+    despachar(RUTAS_ALERTAS, obtenerMetodo(), obtenerSegmentosRuta());
 } catch (Throwable $e) {
     error_log('[' . NOMBRE_SERVICIO . '] ' . $e);
     responderError('Error interno del servidor', 500);

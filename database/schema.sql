@@ -56,9 +56,14 @@ CREATE TABLE alertas (
     fecha           DATETIME     NOT NULL,
     atendida        TINYINT(1)   NOT NULL DEFAULT 0,
     fecha_atendida  DATETIME     NULL,
+    -- Solo tiene valor mientras la alerta está pendiente. Con el índice único,
+    -- un dispositivo no puede tener dos alertas pendientes, aunque lleguen dos
+    -- POST /alertas al mismo tiempo (UNIQUE admite varios NULL: las atendidas).
+    dispositivo_pendiente INT UNSIGNED AS (IF(atendida = 0, dispositivo_id, NULL)) VIRTUAL,
     PRIMARY KEY (id),
     INDEX idx_alertas_dispositivo_atendida (dispositivo_id, atendida),
     INDEX idx_alertas_atendida_fecha (atendida, fecha),
+    CONSTRAINT uq_alertas_dispositivo_pendiente UNIQUE (dispositivo_pendiente),
     CONSTRAINT fk_alertas_dispositivo FOREIGN KEY (dispositivo_id)
         REFERENCES dispositivos (id) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
