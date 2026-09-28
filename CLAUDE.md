@@ -166,12 +166,14 @@ Estado actual
 
 Actualiza esta sección al cerrar cada fase.
 
-Fase actual: 2 (ver docs/PLAN.md)
+Fase actual: 3 — Servicio de Alertas (ver docs/PLAN.md)
 Completado:
 - Fase 0 — Preparación y prueba de ping: estructura del proyecto, comun/config.php y comun/respuesta.php, puntos de entrada de dispositivos, alertas y monitoreo con reescritura de URLs, esqueletos HTML, librerías en web/vendor/, repositorio git, .htaccess que solo expone web/ y los servicios, y servicios/monitoreo/ping.php probado a través de Apache (127.0.0.1 y la puerta de enlace activos, 192.0.2.1 inactivo en ~1 s, entradas inválidas → 400 sin ejecutar comandos).
 - Fase 1 — Base de datos: database/schema.sql con las 4 tablas de docs/API.md (FK con ON DELETE CASCADE, índices, utf8mb4_unicode_ci), database/seed.sql (6 dispositivos, 56 monitoreos, 1 alerta pendiente y 3 atendidas, usuario admin) y comun/db.php (PDO con EMULATE_PREPARES en false y colación utf8mb4_unicode_ci). Verificado: carga desde cero repetible, coherencia de ultimo_* con el último monitoreo, UNIQUE, FK y cascada (con ROLLBACK).
+- Fase 2 — Servicio de Dispositivos: los 6 endpoints de docs/API.md; infraestructura en comun/ (peticion.php, enrutador.php con 404/405 y cabecera Allow, configurarErrores()); pruebas/ayudas.php y pruebas/dispositivos.php (186 comprobaciones). Con MySQL apagado, los 6 endpoints responden 500 en JSON sin detalles (prueba manual).
 Pendientes o decisiones abiertas:
 - GET /servicios/monitoreo/prueba es temporal: eliminarlo en la Fase 4 junto con atenderPruebaPing().
-- Con EMULATE_PREPARES en false, PDO ya devuelve INT como int, pero DECIMAL sigue como texto y TINYINT como int (1): cada servicio convierte a número y booleano antes de responder.
+- Con EMULATE_PREPARES en false, PDO ya devuelve INT como int, pero DECIMAL sigue como texto y TINYINT como int (1): cada servicio convierte a número y booleano antes de responder (Dispositivos lo hace en formatearDispositivo()).
+- alertas/index.php y monitoreo/index.php todavía tienen su propia obtenerSegmentosRuta() de la Fase 0: al implementarlos, pasar a comun/peticion.php y comun/enrutador.php como Dispositivos.
 - Las fechas del seed son fijas (última ronda: 2026-09-27 09:45); en la demo se refrescan con "Monitorear todos".
 - Los .htaccess de los servicios usan RewriteOptions AllowNoSlash junto con DirectorySlash Off; sin él, las URLs sin barra final dan 403/404.
