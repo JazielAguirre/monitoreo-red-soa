@@ -6,6 +6,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../comun/peticion.php';
+
 const TIPOS_DISPOSITIVO = ['computadora', 'servidor', 'impresora', 'router'];
 const ESTADOS_DISPOSITIVO = ['activo', 'inactivo', 'desconocido'];
 const ESTADOS_MONITOREO = ['activo', 'inactivo'];
@@ -86,21 +88,6 @@ function textoRecortado(array $cuerpo, string $campo): ?string
     return is_string($valor) ? trim($valor) : null;
 }
 
-/**
- * Devuelve el filtro recortado, o null si falta o está vacío.
- * Un filtro que no es texto (por ejemplo estado[]=x) se devuelve tal cual para que falle.
- */
-function filtroOpcional(array $consulta, string $campo): mixed
-{
-    $valor = $consulta[$campo] ?? null;
-
-    if (is_string($valor)) {
-        $valor = trim($valor);
-        return $valor === '' ? null : $valor;
-    }
-
-    return $valor;
-}
 
 /**
  * Mensaje de error de un texto obligatorio de 1 a 100 caracteres, o null si es válido.

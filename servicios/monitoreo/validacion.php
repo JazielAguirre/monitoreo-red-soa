@@ -7,6 +7,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../comun/enrutador.php';
+require_once __DIR__ . '/../comun/peticion.php';
 
 const ESTADOS_MONITOREO = ['activo', 'inactivo'];
 const POR_PAGINA_POR_DEFECTO = 10;
@@ -90,20 +91,4 @@ function esFechaDia(mixed $valor): bool
     $fecha = DateTimeImmutable::createFromFormat('!Y-m-d', $valor);
 
     return $fecha !== false && $fecha->format('Y-m-d') === $valor;
-}
-
-/**
- * Devuelve el filtro recortado, o null si falta o está vacío.
- * Un filtro que no es texto (por ejemplo estado[]=x) se devuelve tal cual para que falle.
- */
-function filtroOpcional(array $consulta, string $campo): mixed
-{
-    $valor = $consulta[$campo] ?? null;
-
-    if (is_string($valor)) {
-        $valor = trim($valor);
-        return $valor === '' ? null : $valor;
-    }
-
-    return $valor;
 }

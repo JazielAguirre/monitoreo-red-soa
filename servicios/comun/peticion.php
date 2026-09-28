@@ -1,6 +1,6 @@
 <?php
 /**
- * Lectura de la petición HTTP: método, segmentos de la ruta y cuerpo JSON.
+ * Lectura de la petición HTTP: método, segmentos de la ruta, parámetros de la URL y cuerpo JSON.
  * Solo infraestructura; las reglas de cada servicio viven en su carpeta.
  */
 
@@ -53,4 +53,21 @@ function leerCuerpoJson(): array
     }
 
     return json_decode($texto, true, 512, JSON_THROW_ON_ERROR);
+}
+
+/**
+ * Devuelve un parámetro de la URL ($_GET) recortado, o null si falta o está vacío
+ * (un filtro vacío equivale a no filtrar). Si no es texto (por ejemplo
+ * estado[]=x), se devuelve tal cual para que la validación del servicio lo rechace.
+ */
+function filtroOpcional(array $consulta, string $campo): mixed
+{
+    $valor = $consulta[$campo] ?? null;
+
+    if (is_string($valor)) {
+        $valor = trim($valor);
+        return $valor === '' ? null : $valor;
+    }
+
+    return $valor;
 }
