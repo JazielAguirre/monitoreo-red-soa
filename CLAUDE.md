@@ -28,6 +28,9 @@ sudo /opt/lampp/lampp startmysql
 /opt/lampp/bin/mysql -u root < database/schema.sql
 /opt/lampp/bin/mysql -u root monitoreo_red_soa < database/seed.sql
 
+# Pruebas automáticas de un servicio (recargan la base de datos al empezar)
+/opt/lampp/bin/php pruebas/dispositivos.php
+
 # Revisar la sintaxis de un archivo PHP (con el PHP de XAMPP, el mismo que usa Apache)
 /opt/lampp/bin/php -l servicios/dispositivos/index.php
 
@@ -42,8 +45,8 @@ Interfaz web (web/)  →  HTTP + JSON  →  Servicios (servicios/)  →  MySQL
 database/        schema.sql (recrea la BD completa), seed.sql (datos de prueba)
 docs/            PLAN.md (fases del proyecto), API.md (contrato de endpoints), diseno/ (referencia visual)
 servicios/
-├── comun/       config.php, db.php, respuesta.php, http.php, auth.php (.htaccess: Require all denied)
-├── dispositivos/  index.php + .htaccess   → dueño de la tabla dispositivos
+├── comun/       config.php, db.php, respuesta.php, peticion.php, enrutador.php, http.php, auth.php (.htaccess: Require all denied)
+├── dispositivos/  index.php + .htaccess, endpoints.php, validacion.php, datos.php → dueño de la tabla dispositivos
 ├── alertas/       index.php + .htaccess   → dueño de la tabla alertas
 ├── monitoreo/     index.php + .htaccess + ping.php → dueño de la tabla monitoreos
 └── auth/          index.php               → dueño de la tabla usuarios
@@ -52,6 +55,7 @@ web/
 ├── js/          api.js (único punto de acceso a la API) + un archivo por página
 ├── vendor/      bootstrap, bootstrap-icons, chart.js, fuentes Inter y JetBrains Mono
 └── *.html       login, index (dashboard), dispositivos, monitoreos, alertas, componentes
+pruebas/         ayudas.php + un script por servicio (dispositivos.php, ...). Solo línea de comandos; no accesible por HTTP
 Reglas SOA (no negociables)
 Cada servicio solo lee y escribe sus propias tablas.
 Si un servicio necesita datos o acciones de otro, los pide por HTTP usando servicios/comun/http.php. Nunca hace require del código de otro servicio ni consultas SQL a tablas ajenas.
@@ -59,6 +63,7 @@ Ejemplo: Monitoreo obtiene la IP con GET /dispositivos/{id}, actualiza el estado
 La interfaz nunca accede a la base de datos: todo pasa por web/js/api.js.
 comun/ contiene solo infraestructura (conexión, respuestas, cliente HTTP, autenticación). Nunca lógica de negocio.
 Las URLs base y la clave interna viven en comun/config.php. Nada hardcodeado en los servicios.
+Patrón de un servicio (lo fija Dispositivos): index.php declara las rutas y llama a despachar() de comun/enrutador.php dentro de try/catch; endpoints.php tiene una función por endpoint; validacion.php las reglas; datos.php todo el SQL y la conversión de tipos. comun/peticion.php lee método, ruta y cuerpo JSON.
 Por HTTP, cada servicio solo ejecuta su index.php: su .htaccess envía ahí todas las rutas, incluidos los archivos que existen (por ejemplo ping.php). No agregues RewriteCond %{REQUEST_FILENAME} !-f.
 Contrato de la API
 
@@ -161,12 +166,14 @@ Estado actual
 
 Actualiza esta sección al cerrar cada fase.
 
-Fase actual: 2 (ver docs/PLAN.md)
+Fase actual: 3 — Servicio de Alertas (ver docs/PLAN.md)
 Completado:
 - Fase 0 — Preparación y prueba de ping: estructura del proyecto, comun/config.php y comun/respuesta.php, puntos de entrada de dispositivos, alertas y monitoreo con reescritura de URLs, esqueletos HTML, librerías en web/vendor/, repositorio git, .htaccess que solo expone web/ y los servicios, y servicios/monitoreo/ping.php probado a través de Apache (127.0.0.1 y la puerta de enlace activos, 192.0.2.1 inactivo en ~1 s, entradas inválidas → 400 sin ejecutar comandos).
 - Fase 1 — Base de datos: database/schema.sql con las 4 tablas de docs/API.md (FK con ON DELETE CASCADE, índices, utf8mb4_unicode_ci), database/seed.sql (6 dispositivos, 56 monitoreos, 1 alerta pendiente y 3 atendidas, usuario admin) y comun/db.php (PDO con EMULATE_PREPARES en false y colación utf8mb4_unicode_ci). Verificado: carga desde cero repetible, coherencia de ultimo_* con el último monitoreo, UNIQUE, FK y cascada (con ROLLBACK).
+- Fase 2 — Servicio de Dispositivos: los 6 endpoints de docs/API.md; infraestructura en comun/ (peticion.php, enrutador.php con 404/405 y cabecera Allow, configurarErrores()); pruebas/ayudas.php y pruebas/dispositivos.php (186 comprobaciones). Con MySQL apagado, los 6 endpoints responden 500 en JSON sin detalles (prueba manual).
 Pendientes o decisiones abiertas:
 - GET /servicios/monitoreo/prueba es temporal: eliminarlo en la Fase 4 junto con atenderPruebaPing().
-- Con EMULATE_PREPARES en false, PDO ya devuelve INT como int, pero DECIMAL sigue como texto y TINYINT como int (1): cada servicio convierte a número y booleano antes de responder.
+- Con EMULATE_PREPARES en false, PDO ya devuelve INT como int, pero DECIMAL sigue como texto y TINYINT como int (1): cada servicio convierte a número y booleano antes de responder (Dispositivos lo hace en formatearDispositivo()).
+- alertas/index.php y monitoreo/index.php todavía tienen su propia obtenerSegmentosRuta() de la Fase 0: al implementarlos, pasar a comun/peticion.php y comun/enrutador.php como Dispositivos.
 - Las fechas del seed son fijas (última ronda: 2026-09-27 09:45); en la demo se refrescan con "Monitorear todos".
 - Los .htaccess de los servicios usan RewriteOptions AllowNoSlash junto con DirectorySlash Off; sin él, las URLs sin barra final dan 403/404.

@@ -22,7 +22,7 @@ Después de la Fase 1, el backend y el frontend pueden avanzar en paralelo. La F
 |---|---|---|---|
 | 0 | Preparación y prueba de ping | Todo el equipo | ✅ Completa |
 | 1 | Base de datos y contrato | Integrante 1 | ✅ Completa |
-| 2 | Servicio de Dispositivos | Integrante 2 | Pendiente |
+| 2 | Servicio de Dispositivos | Integrante 2 | ✅ Completa |
 | 3 | Servicio de Alertas | Integrante 4 | Pendiente |
 | 4 | Servicio de Monitoreo | Integrante 3 | Pendiente |
 | 5 | Sistema de diseño | Integrante 4 | Pendiente |
@@ -59,7 +59,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] `servicios/comun/db.php` con conexión PDO.
 - [x] Sistema de diseño de referencia en `docs/diseno/` y JetBrains Mono en `web/vendor/`.
 
-## Fase 2 · Servicio de Dispositivos
+## Fase 2 · Servicio de Dispositivos ✅
 
 **Objetivo:** el primer servicio completo, que fija el patrón que copiarán los demás.
 
@@ -72,17 +72,17 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 **Listo cuando:**
 
-- [ ] Los 6 endpoints responden exactamente como dice `API.md`, con los tipos correctos en JSON (números, `null`).
-- [ ] Cada regla de validación devuelve 400 con su mensaje en `campos`; los espacios al inicio y al final se recortan.
-- [ ] IP duplicada → 409 con `campos.ip`, tanto al crear como al editar.
-- [ ] Id inexistente → 404; ruta desconocida → 404; método no permitido → 405. Siempre en JSON.
-- [ ] Cuerpo que no es JSON válido → 400.
-- [ ] `PUT` que cambia la IP deja el dispositivo en `desconocido`, con `ultimo_*` en `null`; `PUT` sin cambiar la IP conserva el estado.
-- [ ] `DELETE` borra el dispositivo, y sus monitoreos y alertas desaparecen por la cascada.
-- [ ] `PATCH /estado` aplica sus reglas: `activo` exige tiempo ≥ 0, `inactivo` exige `null`, la fecha es obligatoria.
-- [ ] Los acentos llegan intactos de ida y vuelta ("Recepción").
-- [ ] Con MySQL apagado, cualquier endpoint responde 500 en JSON sin mostrar detalles internos. Esta prueba es manual.
-- [ ] `pruebas/dispositivos.php` cubre todos los puntos anteriores, excepto el de MySQL apagado, y pasa completo.
+- [x] Los 6 endpoints responden exactamente como dice `API.md`, con los tipos correctos en JSON (números, `null`).
+- [x] Cada regla de validación devuelve 400 con su mensaje en `campos`; los espacios al inicio y al final se recortan.
+- [x] IP duplicada → 409 con `campos.ip`, tanto al crear como al editar.
+- [x] Id inexistente → 404; ruta desconocida → 404; método no permitido → 405. Siempre en JSON.
+- [x] Cuerpo que no es JSON válido → 400.
+- [x] `PUT` que cambia la IP deja el dispositivo en `desconocido`, con `ultimo_*` en `null`; `PUT` sin cambiar la IP conserva el estado.
+- [x] `DELETE` borra el dispositivo, y sus monitoreos y alertas desaparecen por la cascada.
+- [x] `PATCH /estado` aplica sus reglas: `activo` exige tiempo ≥ 0, `inactivo` exige `null`, la fecha es obligatoria.
+- [x] Los acentos llegan intactos de ida y vuelta ("Recepción").
+- [x] Con MySQL apagado, cualquier endpoint responde 500 en JSON sin mostrar detalles internos. Esta prueba es manual.
+- [x] `pruebas/dispositivos.php` cubre todos los puntos anteriores, excepto el de MySQL apagado, y pasa completo.
 
 ## Fase 3 · Servicio de Alertas
 

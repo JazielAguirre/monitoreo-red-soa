@@ -43,6 +43,16 @@ Este documento es la fuente de verdad de la comunicación entre la interfaz y lo
 
 **Tiempos de respuesta:** en milisegundos, con hasta 2 decimales (`0.32`, `52.2`). `null` cuando el dispositivo no respondió.
 
+**Errores comunes a todos los servicios** (los genera la infraestructura de `comun/`):
+
+| Caso | Código | `error` |
+|---|---|---|
+| El cuerpo está vacío o no es JSON válido | 400 | "El cuerpo de la petición no es JSON válido" |
+| El cuerpo es JSON pero no un objeto (`[1,2]`, `"texto"`, `null`) | 400 | "El cuerpo de la petición debe ser un objeto JSON" |
+| La ruta no existe (incluye un `{id}` que no es un entero positivo) | 404 | "La ruta no existe" |
+| La ruta existe pero no acepta ese método | 405 | "Método no permitido", con la cabecera `Allow` que indica los métodos aceptados |
+| Error inesperado o base de datos no disponible | 500 | "Error interno del servidor" |
+
 **Acceso:** cada endpoint está marcado como **[Interfaz]** (lo llama el navegador) o **[Interno]** (solo lo llaman otros servicios). Antes de la Fase 7 todos están abiertos. Desde la Fase 7:
 
 - Los endpoints [Interfaz] aceptan sesión activa o la cabecera `X-Servicio-Clave` válida.
@@ -131,7 +141,9 @@ Todas las tablas: InnoDB, `utf8mb4`, `utf8mb4_unicode_ci`. Cada tabla pertenece 
 
 ### Validaciones (POST y PUT)
 
-Se recortan los espacios al inicio y al final antes de validar.
+Se recortan los espacios al inicio y al final antes de validar. Si hay varios campos inválidos, `campos` los trae todos, y `error` es "Revisa los datos del formulario".
+
+**Solo se toman `nombre`, `ip`, `tipo` y `ubicacion`.** Si el cuerpo trae `id`, `estado`, `ultimo_tiempo_ms`, `ultima_comprobacion` o `fecha_registro`, se ignoran sin error: el estado solo cambia con `PATCH /dispositivos/{id}/estado`.
 
 | Campo | Regla | Mensaje en `campos` |
 |---|---|---|
@@ -145,7 +157,7 @@ Se recortan los espacios al inicio y al final antes de validar.
 
 Lista los dispositivos ordenados por `nombre`.
 
-Filtros opcionales: `estado` (`activo`, `inactivo`, `desconocido`) y `tipo`. Un valor no permitido responde 400. La interfaz normalmente pide la lista completa y filtra en el navegador, porque también necesita los contadores de cada filtro.
+Filtros opcionales: `estado` (`activo`, `inactivo`, `desconocido`) y `tipo`. Un valor no permitido responde 400 con `error` "Filtros no válidos" y el mensaje en `campos` ("Estado no válido" / "Tipo de dispositivo no válido"). Un filtro vacío (`?estado=`) equivale a no filtrar. La interfaz normalmente pide la lista completa y filtra en el navegador, porque también necesita los contadores de cada filtro.
 
 **200:** `data` es un arreglo de objetos `dispositivo`.
 
@@ -181,9 +193,16 @@ Lo usa el Servicio de Monitoreo después de cada ping.
 { "estado": "activo", "tiempo_respuesta_ms": 0.32, "fecha": "2026-09-21 10:05:12" }
 ```
 
-Reglas: `estado` es `activo` o `inactivo`. Con `activo`, `tiempo_respuesta_ms` es un número ≥ 0; con `inactivo`, es `null`. `fecha` es obligatoria y tiene el formato de fecha acordado.
+Actualiza `estado`, `ultimo_tiempo_ms` (con el valor de `tiempo_respuesta_ms`) y `ultima_comprobacion` (con el valor de `fecha`).
 
-**200:** el dispositivo actualizado. **400** o **404**.
+| Campo | Regla | Mensaje en `campos` |
+|---|---|---|
+| `estado` | `activo` o `inactivo` | "Estado no válido" |
+| `tiempo_respuesta_ms` | Con `activo`: número entero o decimal, de 0 a 99999.99 (`2` y `2.5` son válidos, porque el ping de Windows da enteros). Se rechazan texto, booleanos y `null` | "El tiempo de respuesta debe ser un número mayor o igual a 0" |
+| `tiempo_respuesta_ms` | Con `inactivo`: `null` (si falta, cuenta como `null`) | "Con estado inactivo, el tiempo de respuesta debe ser null" |
+| `fecha` | Obligatoria, `YYYY-MM-DD HH:MM:SS` y una fecha que exista | "Fecha no válida, usa el formato YYYY-MM-DD HH:MM:SS" |
+
+**200:** el dispositivo actualizado. **400** con `campos`, o **404**.
 
 ---
 
