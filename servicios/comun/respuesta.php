@@ -7,6 +7,25 @@
 declare(strict_types=1);
 
 /**
+ * Evita que un aviso de PHP se imprima como texto y rompa el JSON: no muestra
+ * errores (el php.ini de XAMPP para Windows trae display_errors=On) y convierte
+ * los warnings en excepciones, que el punto de entrada responde como 500.
+ */
+function configurarErrores(): void
+{
+    ini_set('display_errors', '0');
+    ini_set('log_errors', '1');
+
+    set_error_handler(function (int $nivel, string $mensaje, string $archivo, int $linea): bool {
+        if (!(error_reporting() & $nivel)) {
+            return false;
+        }
+
+        throw new ErrorException($mensaje, 0, $nivel, $archivo, $linea);
+    });
+}
+
+/**
  * Envía una respuesta exitosa: { "ok": true, "data": ... } y termina.
  */
 function responder(mixed $datos, int $codigo = 200): never

@@ -28,6 +28,9 @@ sudo /opt/lampp/lampp startmysql
 /opt/lampp/bin/mysql -u root < database/schema.sql
 /opt/lampp/bin/mysql -u root monitoreo_red_soa < database/seed.sql
 
+# Pruebas automáticas de un servicio (recargan la base de datos al empezar)
+/opt/lampp/bin/php pruebas/dispositivos.php
+
 # Revisar la sintaxis de un archivo PHP (con el PHP de XAMPP, el mismo que usa Apache)
 /opt/lampp/bin/php -l servicios/dispositivos/index.php
 
@@ -42,8 +45,8 @@ Interfaz web (web/)  →  HTTP + JSON  →  Servicios (servicios/)  →  MySQL
 database/        schema.sql (recrea la BD completa), seed.sql (datos de prueba)
 docs/            PLAN.md (fases del proyecto), API.md (contrato de endpoints), diseno/ (referencia visual)
 servicios/
-├── comun/       config.php, db.php, respuesta.php, http.php, auth.php (.htaccess: Require all denied)
-├── dispositivos/  index.php + .htaccess   → dueño de la tabla dispositivos
+├── comun/       config.php, db.php, respuesta.php, peticion.php, enrutador.php, http.php, auth.php (.htaccess: Require all denied)
+├── dispositivos/  index.php + .htaccess, endpoints.php, validacion.php, datos.php → dueño de la tabla dispositivos
 ├── alertas/       index.php + .htaccess   → dueño de la tabla alertas
 ├── monitoreo/     index.php + .htaccess + ping.php → dueño de la tabla monitoreos
 └── auth/          index.php               → dueño de la tabla usuarios
@@ -52,6 +55,7 @@ web/
 ├── js/          api.js (único punto de acceso a la API) + un archivo por página
 ├── vendor/      bootstrap, bootstrap-icons, chart.js, fuentes Inter y JetBrains Mono
 └── *.html       login, index (dashboard), dispositivos, monitoreos, alertas, componentes
+pruebas/         ayudas.php + un script por servicio (dispositivos.php, ...). Solo línea de comandos; no accesible por HTTP
 Reglas SOA (no negociables)
 Cada servicio solo lee y escribe sus propias tablas.
 Si un servicio necesita datos o acciones de otro, los pide por HTTP usando servicios/comun/http.php. Nunca hace require del código de otro servicio ni consultas SQL a tablas ajenas.
@@ -59,6 +63,7 @@ Ejemplo: Monitoreo obtiene la IP con GET /dispositivos/{id}, actualiza el estado
 La interfaz nunca accede a la base de datos: todo pasa por web/js/api.js.
 comun/ contiene solo infraestructura (conexión, respuestas, cliente HTTP, autenticación). Nunca lógica de negocio.
 Las URLs base y la clave interna viven en comun/config.php. Nada hardcodeado en los servicios.
+Patrón de un servicio (lo fija Dispositivos): index.php declara las rutas y llama a despachar() de comun/enrutador.php dentro de try/catch; endpoints.php tiene una función por endpoint; validacion.php las reglas; datos.php todo el SQL y la conversión de tipos. comun/peticion.php lee método, ruta y cuerpo JSON.
 Por HTTP, cada servicio solo ejecuta su index.php: su .htaccess envía ahí todas las rutas, incluidos los archivos que existen (por ejemplo ping.php). No agregues RewriteCond %{REQUEST_FILENAME} !-f.
 Contrato de la API
 
