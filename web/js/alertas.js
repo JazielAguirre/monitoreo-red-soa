@@ -1,4 +1,7 @@
 /*
- * Página de alertas: listar alertas y marcarlas como atendidas.
- * Se implementa en la fase de la interfaz de alertas.
+ * Pantalla Alertas. Se construye en el subpaso 6.6 de la Fase 6.
  */
+
+import { montarEstructura } from './modulos/estructura.js';
+
+montarEstructura();

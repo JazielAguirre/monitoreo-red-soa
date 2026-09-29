@@ -6,6 +6,7 @@
 
 import { mostrarNotificacion } from './modulos/notificaciones.js';
 import { crearError, mostrarBloque } from './modulos/vistas.js';
+import { actualizarContadorAlertas, llenarBarraLateral, llenarEncabezadoMovil } from './modulos/estructura.js';
 
 const NOTIFICACIONES_DE_EJEMPLO = {
     exito: { tipo: 'exito', titulo: 'Monitoreo completado', texto: '4 de 6 dispositivos responden.' },
@@ -34,4 +35,20 @@ document.querySelectorAll('[data-notificacion]').forEach((boton) => {
 const contenedorError = document.getElementById('demo-error');
 if (contenedorError) {
     mostrarErrorDeEjemplo(contenedorError);
+}
+
+const barraDemo = document.getElementById('demo-barra-lateral');
+const encabezadoDemo = document.getElementById('demo-encabezado-movil');
+if (barraDemo && encabezadoDemo) {
+    llenarBarraLateral(barraDemo, 'index');
+    llenarEncabezadoMovil(encabezadoDemo, 'index');
+    // El menú se muestra abierto, como en 1d, sin mover el foco (no debe desplazar la página).
+    const marco = encabezadoDemo.parentElement;
+    marco.querySelector('.menu-movil').hidden = false;
+    marco.querySelector('.menu-movil__fondo').hidden = false;
+    const boton = encabezadoDemo.querySelector('.encabezado-movil__boton');
+    boton.setAttribute('aria-expanded', 'true');
+    boton.setAttribute('aria-label', 'Cerrar el menú');
+    boton.firstElementChild.className = 'bi bi-x-lg';
+    actualizarContadorAlertas();
 }

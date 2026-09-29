@@ -1,4 +1,7 @@
 /*
- * Página de dispositivos: listar, registrar, editar y eliminar dispositivos.
- * Se implementa en la fase de la interfaz de dispositivos.
+ * Pantalla Dispositivos. Se construye en el subpaso 6.3 de la Fase 6.
  */
+
+import { montarEstructura } from './modulos/estructura.js';
+
+montarEstructura();

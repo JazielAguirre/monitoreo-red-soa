@@ -1,4 +1,7 @@
 /*
- * Dashboard: resumen de dispositivos, estados, alertas pendientes y gráficas.
- * Se implementa en la fase del dashboard.
+ * Pantalla Dashboard. Se construye en el subpaso 6.4 de la Fase 6.
  */
+
+import { montarEstructura } from './modulos/estructura.js';
+
+montarEstructura();

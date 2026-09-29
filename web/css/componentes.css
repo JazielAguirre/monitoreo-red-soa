@@ -616,6 +616,42 @@
     border-bottom: 0;
 }
 
+/* ============================================================ 16 Estructura */
+
+.marcos-estructura {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.marco-barra {
+    overflow: hidden;
+    border-radius: var(--radio-lg);
+}
+
+.marco-barra .barra-lateral {
+    position: static;
+    height: 600px;
+}
+
+/* transform hace que el menú (position: fixed) quede dentro del marco. */
+.marco-movil {
+    position: relative;
+    width: 390px;
+    max-width: 100%;
+    height: 600px;
+    overflow: hidden;
+    background-color: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: 20px;
+    transform: translateZ(0);
+}
+
+.marco-movil .encabezado-movil {
+    display: flex;
+}
+
 /* ============================================================ Pantallas medianas y celular */
 
 @media (max-width: 1199.98px) {

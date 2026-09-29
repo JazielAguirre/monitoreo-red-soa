@@ -28,6 +28,10 @@ echo "Recargando la base de datos (schema.sql + seed.sql)...\n";
 recargarBaseDeDatos();
 
 $navegador = new Navegador($ejecutable);
+$carpetaCapturas = rtrim(sys_get_temp_dir(), '/\\') . DIRECTORY_SEPARATOR . 'monitoreo-capturas';
+if (!is_dir($carpetaCapturas)) {
+    mkdir($carpetaCapturas, 0700, true);
+}
 echo "Chrome de pruebas: perfil temporal y puerto propio ({$navegador->puerto()}).\n";
 
 /**
@@ -38,6 +42,23 @@ function abrirPagina(Navegador $navegador, string $pagina, string $base = URL_IN
     $navegador->erroresJs = [];
     $navegador->dialogos = [];
     $navegador->abrir("$base/$pagina");
+}
+
+/**
+ * Guarda una captura de página completa en la carpeta de capturas.
+ */
+function capturar(Navegador $navegador, string $nombre): void
+{
+    global $carpetaCapturas;
+    $navegador->captura($carpetaCapturas . DIRECTORY_SEPARATOR . "$nombre.png");
+}
+
+/**
+ * Espera a que la estructura común esté montada y el contador de alertas cargado.
+ */
+function esperarEstructura(Navegador $navegador): bool
+{
+    return $navegador->esperarHasta("document.querySelector('#barra-lateral .nav-lateral__enlace') && document.querySelector('.js-contador-alertas')?.textContent !== ''", 10);
 }
 
 /**
@@ -178,5 +199,81 @@ JS);
 comprobarIgual(['rol' => 'alert', 'texto' => '<script>x</script>', 'boton' => 'Reintentar', 'reintentos' => 1, 'scripts' => 0], $r['error'] ?? null, 'bloque de error: role="alert", mensaje como texto y "Reintentar" llama de nuevo a la carga');
 comprobarIgual(['titulo' => 'Ningún dispositivo coincide', 'boton' => 'Limpiar filtros'], $r['vacio'] ?? null, 'bloque vacío con su acción');
 
+// =====================================================================
+seccion('6.2 · Estructura común: barra lateral, encabezado móvil y contador de alertas');
+
+$navegador->tamano(1440, 900);
+$paginas = ['index' => 'Dashboard', 'dispositivos' => 'Dispositivos', 'monitoreos' => 'Monitoreos', 'alertas' => 'Alertas'];
+foreach ($paginas as $pagina => $texto) {
+    abrirPagina($navegador, "$pagina.html");
+    comprobar(esperarEstructura($navegador), "$pagina.html: la estructura se monta");
+    $r = $navegador->evaluar(<<<'JS'
+        ({
+            enlaces: [...document.querySelectorAll('#barra-lateral .nav-lateral__enlace')].map((a) => a.textContent.trim().replace(/\d+$/, '')),
+            activo: document.querySelector('#barra-lateral [aria-current="page"]')?.textContent.trim().replace(/\d+$/, ''),
+            menu: document.querySelector('#barra-lateral .nav-lateral__titulo')?.textContent,
+            usuario: document.querySelector('#barra-lateral .usuario-barra__nombre')?.textContent,
+            contador: document.querySelector('#barra-lateral .js-contador-alertas').textContent,
+            contadorVisible: !document.querySelector('#barra-lateral .js-contador-alertas').hidden,
+            anchoBarra: Math.round(document.getElementById('barra-lateral').getBoundingClientRect().width),
+            encabezadoMovil: getComputedStyle(document.getElementById('encabezado-movil')).display,
+        })
+    JS);
+    comprobarIgual(
+        [['Dashboard', 'Dispositivos', 'Monitoreos', 'Alertas'], $texto, 'MENÚ', 'Administrador', '1', true, 248, 'none'],
+        campos($r, ['enlaces', 'activo', 'menu', 'usuario', 'contador', 'contadorVisible', 'anchoBarra', 'encabezadoMovil']),
+        "  4 enlaces, «{$texto}» activo, MENÚ, usuario, contador = 1 pendiente (seed), barra de 248 px, sin encabezado móvil"
+    );
+    comprobarIgual([], $navegador->erroresJs, "  $pagina.html sin errores de JavaScript");
+}
+capturar($navegador, 'estructura-1440');
+
+$navegador->tecla('Tab');
+comprobarIgual('saltar-contenido', $navegador->evaluar('document.activeElement.className'), 'el primer Tab lleva a «Saltar al contenido»');
+
+$navegador->evaluar("document.querySelector('.usuario-barra__salir').click()");
+comprobar($navegador->esperarHasta("document.querySelector('.toast .notificacion__titulo')?.textContent === 'Cerrar sesión'", 3), '«Salir» avisa que el cierre de sesión llega en la Fase 7');
+
+$navegador->tamano(390, 844, true);
+abrirPagina($navegador, 'dispositivos.html');
+esperarEstructura($navegador);
+$r = $navegador->evaluar(<<<'JS'
+    ({
+        barra: getComputedStyle(document.getElementById('barra-lateral')).display,
+        encabezado: getComputedStyle(document.getElementById('encabezado-movil')).display,
+        alto: Math.round(document.getElementById('encabezado-movil').getBoundingClientRect().height),
+        campana: document.querySelector('#encabezado-movil .js-contador-alertas').textContent,
+        menuOculto: document.getElementById('menu-movil').hidden,
+        desborde: document.documentElement.scrollWidth > innerWidth,
+    })
+JS);
+comprobarIgual(['none', 'flex', 56, '1', true, false], campos($r, ['barra', 'encabezado', 'alto', 'campana', 'menuOculto', 'desborde']), 'a 390 px: sin barra lateral, encabezado de 56 px, campana con contador, menú cerrado, sin desplazamiento horizontal');
+
+$navegador->evaluar("document.querySelector('#encabezado-movil .encabezado-movil__boton').click()");
+$r = $navegador->evaluar("({ abierto: !document.getElementById('menu-movil').hidden, expandido: document.querySelector('#encabezado-movil button').getAttribute('aria-expanded'), foco: document.activeElement.textContent.trim(), activo: document.querySelector('#menu-movil [aria-current=\"page\"]')?.textContent.trim() })");
+comprobarIgual(['abierto' => true, 'expandido' => 'true', 'foco' => 'Dashboard', 'activo' => 'Dispositivos'], $r, '☰ abre el menú (aria-expanded, foco en el primer enlace, Dispositivos activo)');
+capturar($navegador, 'estructura-390-menu');
+$navegador->tecla('Escape');
+$r = $navegador->evaluar("({ cerrado: document.getElementById('menu-movil').hidden, foco: document.activeElement.getAttribute('aria-controls') })");
+comprobarIgual(['cerrado' => true, 'foco' => 'menu-movil'], $r, 'Escape cierra el menú y devuelve el foco al botón ☰');
+$navegador->evaluar("document.querySelector('#encabezado-movil .encabezado-movil__boton').click(); document.querySelector('.menu-movil__fondo').click()");
+comprobarIgual(true, $navegador->evaluar("document.getElementById('menu-movil').hidden"), 'tocar el fondo también lo cierra');
+capturar($navegador, 'estructura-390');
+
+$navegador->tamano(1440, 900);
+$navegador->interceptar('alertas/conteo', ['codigo' => 200, 'cuerpo' => '{"ok":true,"data":{"pendientes":0,"atendidas":4}}']);
+abrirPagina($navegador, 'index.html');
+$navegador->esperarHasta("document.querySelector('.js-contador-alertas')?.textContent === '0'", 5);
+comprobarIgual(true, $navegador->evaluar("[...document.querySelectorAll('.js-contador-alertas')].every((c) => c.hidden)"), 'con 0 pendientes, los contadores se ocultan');
+$navegador->interceptar('alertas/conteo', ['fallar' => true]);
+abrirPagina($navegador, 'index.html');
+$navegador->esperarHasta("document.querySelector('#barra-lateral .nav-lateral__enlace')", 5);
+$navegador->procesarEventos(0.5);
+comprobar($navegador->evaluar("[...document.querySelectorAll('.js-contador-alertas')].every((c) => c.hidden)") === true
+    && count(array_filter($navegador->erroresJs, fn($e) => !str_contains($e, 'Failed to load resource'))) === 0,
+    'si el conteo falla, los contadores se ocultan sin romper la página', json_encode($navegador->erroresJs));
+$navegador->quitarIntercepciones();
+
 $navegador->cerrar();
+echo "\nCapturas: $carpetaCapturas\n";
 terminarPruebas();

@@ -9,12 +9,25 @@
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/app.css">
 </head>
-<body>
-    <h1>Dashboard</h1>
+<body data-pagina="index">
+<a class="saltar-contenido" href="#contenido">Saltar al contenido</a>
+<div class="app">
+    <aside class="barra-lateral" id="barra-lateral"></aside>
+    <header class="encabezado-movil" id="encabezado-movil"></header>
 
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="vendor/chart.js/chart.umd.min.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/index.js"></script>
+    <main class="contenido" id="contenido" tabindex="-1">
+        <div class="encabezado-pagina">
+            <div class="encabezado-pagina__textos">
+                <h1 class="encabezado-pagina__titulo">Dashboard</h1>
+                <p class="encabezado-pagina__subtitulo">Estado general de la red del laboratorio</p>
+            </div>
+        </div>
+        <p class="texto-secundario">Esta pantalla se construye en el subpaso 6.4.</p>
+    </main>
+</div>
+
+<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="vendor/chart.js/chart.umd.min.js"></script>
+<script type="module" src="js/index.js"></script>
 </body>
 </html>

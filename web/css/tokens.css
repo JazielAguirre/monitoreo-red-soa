@@ -133,11 +133,14 @@
     --color-foco-campo: rgba(47, 111, 176, 0.18);       /* Anillo de foco de campos */
     --color-error-anillo: rgba(239, 68, 68, 0.12);      /* Anillo del campo con error */
     --color-hover-barra: rgba(255, 255, 255, 0.06);     /* Hover de la barra lateral */
+    --color-borde-barra: rgba(255, 255, 255, 0.08);     /* Divisor del usuario en la barra lateral */
+    --color-borde-barra-fuerte: rgba(255, 255, 255, 0.14); /* Borde del botón Salir en el menú móvil */
     --color-giro-pista-claro: rgba(255, 255, 255, 0.35); /* Pista del spinner sobre fondo oscuro */
     --sombra-1: 0 1px 2px rgba(11, 29, 46, 0.05);       /* Tarjetas */
     --sombra-2: 0 4px 12px -2px rgba(11, 29, 46, 0.10); /* Hover, menú desplegable */
     --sombra-3: 0 20px 40px -8px rgba(11, 29, 46, 0.28); /* Modal */
     --sombra-notificacion: 0 12px 28px -8px rgba(11, 29, 46, 0.18);
+    --sombra-menu-movil: 0 20px 40px -8px rgba(11, 29, 46, 0.4);
 
     /* -------------------------------------------------------- Tipografía */
     --fuente-interfaz: 'Inter', system-ui, sans-serif;
@@ -179,6 +182,8 @@
     --alto-encabezado-tabla: 40px;
     --alto-item-navegacion: 40px;
     --ancho-notificacion: 340px;
+    --ancho-barra-lateral: 248px;
+    --alto-encabezado-movil: 56px;
     --ancho-modal: 420px;
     --tamano-punto: 8px;
     --tamano-punto-sm: 6px;
