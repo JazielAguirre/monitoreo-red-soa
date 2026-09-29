@@ -8,7 +8,7 @@ import { mostrarNotificacion } from './modulos/notificaciones.js';
 import { crearError, mostrarBloque } from './modulos/vistas.js';
 import { actualizarContadorAlertas, llenarBarraLateral, llenarEncabezadoMovil } from './modulos/estructura.js';
 import { crearProgreso } from './modulos/monitorear-todos.js';
-import { crearGraficaLineas, estiloSerie } from './modulos/graficas.js';
+import { crearGraficaArea, crearGraficaLineas, estiloSerie } from './modulos/graficas.js';
 
 const NOTIFICACIONES_DE_EJEMPLO = {
     exito: { tipo: 'exito', titulo: 'Monitoreo completado', texto: '4 de 6 dispositivos responden.' },
@@ -96,4 +96,13 @@ if (lienzoDemo && window.Chart) {
     }));
     const etiquetas = ['09:20', '09:25', '09:30', '09:35', '09:40', '09:45', '09:50', '09:55', '10:00', '10:05'];
     crearGraficaLineas(lienzoDemo, { etiquetas, series });
+}
+
+// Gráfica de un dispositivo como en 3a: cuatro comprobaciones sin respuesta al final.
+const lienzoArea = document.getElementById('demo-grafica-area');
+if (lienzoArea && window.Chart) {
+    const tiempos = [0.8, 1.2, 0.9, 2.4, 1.0, 0.95, null, null, null, null];
+    crearGraficaArea(lienzoArea, {
+        puntos: tiempos.map((ms, i) => ({ etiqueta: `09:${String(i * 5).padStart(2, '0')}`, ms })),
+    });
 }

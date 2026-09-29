@@ -2877,6 +2877,212 @@ a.encabezado-movil__boton:hover {
     }
 }
 
+/* ============================================================ Monitoreos (3a) */
+
+.contenido--monitoreos {
+    gap: 20px;
+}
+
+.filtros-historial {
+    display: grid;
+    grid-template-columns: 260px 200px 170px 170px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+    padding: 16px 20px;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-1);
+}
+
+.filtros-historial .form-label {
+    display: block;
+}
+
+.filtros-historial input[type="date"] {
+    padding: 0 10px;
+}
+
+.filtros-historial__acciones {
+    display: flex;
+    justify-content: flex-end;
+    align-self: end;
+}
+
+.filtros-historial__acciones .btn-link {
+    --bs-btn-padding-x: 10px;
+    --bs-btn-font-size: 13.5px;
+}
+
+.resumen-monitoreo {
+    display: flex;
+    gap: 28px;
+    margin: 0;
+}
+
+.resumen-monitoreo > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.resumen-monitoreo dt {
+    font-size: var(--texto-pequeno-tamano);
+    font-weight: 400;
+    color: var(--color-texto-2);
+}
+
+.resumen-monitoreo dd {
+    margin: 0;
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: var(--texto-titulo-tarjeta-tamano);
+    font-weight: 600;
+}
+
+.texto-activo {
+    color: var(--color-activo-texto);
+}
+
+.texto-alerta {
+    color: var(--color-alerta-texto);
+}
+
+.leyenda-grafica__linea--acento {
+    --color-serie: var(--color-acento);
+}
+
+.leyenda-grafica__punto {
+    width: 9px;
+    height: 9px;
+    background-color: var(--color-inactivo);
+    border-radius: 50%;
+}
+
+.leyenda-grafica--historial[hidden] {
+    display: none;
+}
+
+.panel-historial__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.panel-historial .table > thead > tr > th {
+    border-top: 0;
+}
+
+.panel-historial .table > tbody > tr > td {
+    height: 52px;
+}
+
+.tabla-historial .table {
+    min-width: 760px;
+}
+
+.tabla-tipo--nombre {
+    gap: 10px;
+    font-weight: 500;
+    color: var(--color-texto);
+}
+
+.tabla-tipo--nombre > .bi {
+    color: var(--color-desconocido-texto);
+}
+
+.texto-tenue-ip {
+    color: var(--color-desconocido-texto);
+}
+
+.actualizando {
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+}
+
+.paginacion {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 12px 20px;
+    font-size: var(--texto-secundario-tamano);
+    color: var(--color-texto-2);
+    border-top: 1px solid var(--color-borde-suave);
+}
+
+.paginacion[hidden] {
+    display: none;
+}
+
+.paginacion__botones {
+    display: flex;
+    gap: 8px;
+}
+
+@media (max-width: 1199.98px) {
+    .filtros-historial {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filtros-historial__acciones {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .contenido--monitoreos {
+        gap: 16px;
+    }
+
+    .filtros-historial {
+        gap: 12px;
+        padding: 16px;
+    }
+
+    /* Dispositivo y Estado a todo el ancho; Desde y Hasta juntos en una fila. */
+    .filtros-historial__campo:nth-child(-n + 2) {
+        grid-column: 1 / -1;
+    }
+
+    .filtros-historial .form-control,
+    .filtros-historial .form-select {
+        height: var(--alto-control-tactil);
+    }
+
+    .resumen-monitoreo {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .resumen-monitoreo > div {
+        align-items: flex-start;
+    }
+
+    .panel-historial__cabecera {
+        padding: 14px 16px;
+    }
+
+    .paginacion {
+        padding: 12px 16px;
+    }
+
+    .paginacion__botones {
+        width: 100%;
+    }
+
+    .paginacion__botones > .btn {
+        flex: 1;
+        height: var(--alto-control-tactil);
+    }
+}
+
 /* ============================================================ Movimiento reducido */
 
 /* El pulso y el esqueleto quedan fijos; el spinner gira más lento, porque es lo

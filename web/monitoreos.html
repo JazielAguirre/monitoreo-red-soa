@@ -15,14 +15,94 @@
     <aside class="barra-lateral" id="barra-lateral"></aside>
     <header class="encabezado-movil" id="encabezado-movil"></header>
 
-    <main class="contenido" id="contenido" tabindex="-1">
+    <main class="contenido contenido--monitoreos" id="contenido" tabindex="-1">
         <div class="encabezado-pagina">
             <div class="encabezado-pagina__textos">
                 <h1 class="encabezado-pagina__titulo">Monitoreos</h1>
                 <p class="encabezado-pagina__subtitulo">Historial de comprobaciones con ping</p>
             </div>
         </div>
-        <p class="texto-secundario">Esta pantalla se construye en el subpaso 6.5.</p>
+
+        <form class="filtros-historial" id="filtros" novalidate>
+            <div class="filtros-historial__campo">
+                <label class="form-label" for="filtro-dispositivo">Dispositivo</label>
+                <div class="campo-icono">
+                    <select class="form-select" id="filtro-dispositivo" name="dispositivo">
+                        <option value="">Todos los dispositivos</option>
+                    </select>
+                    <i class="bi bi-chevron-down campo-icono__fin" aria-hidden="true"></i>
+                </div>
+            </div>
+            <div class="filtros-historial__campo">
+                <label class="form-label" for="filtro-estado">Estado</label>
+                <div class="campo-icono">
+                    <select class="form-select" id="filtro-estado" name="estado">
+                        <option value="">Todos los resultados</option>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                    </select>
+                    <i class="bi bi-chevron-down campo-icono__fin" aria-hidden="true"></i>
+                </div>
+            </div>
+            <div class="filtros-historial__campo">
+                <label class="form-label" for="filtro-desde">Desde</label>
+                <input class="form-control" id="filtro-desde" name="desde" type="date" aria-describedby="error-desde">
+                <div class="invalid-feedback" id="error-desde" hidden></div>
+            </div>
+            <div class="filtros-historial__campo">
+                <label class="form-label" for="filtro-hasta">Hasta</label>
+                <input class="form-control" id="filtro-hasta" name="hasta" type="date" aria-describedby="error-hasta">
+                <div class="invalid-feedback" id="error-hasta" hidden></div>
+            </div>
+            <div class="filtros-historial__acciones">
+                <button type="button" class="btn btn-link" id="restablecer-filtros"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Restablecer filtros</button>
+            </div>
+        </form>
+
+        <section class="panel panel--grafica panel--grafica-historial" aria-labelledby="titulo-grafica">
+            <div class="panel__cabecera panel__cabecera--grafica">
+                <div>
+                    <h2 class="panel__titulo" id="titulo-grafica">Tiempos de respuesta</h2>
+                    <p class="panel__subtitulo" id="subtitulo-grafica">&nbsp;</p>
+                </div>
+                <dl class="resumen-monitoreo" id="resumen" aria-label="Resumen del rango">
+                    <div><dt>Promedio</dt><dd id="resumen-promedio">—</dd></div>
+                    <div><dt>Máximo</dt><dd id="resumen-maximo">—</dd></div>
+                    <div><dt>Disponibilidad</dt><dd id="resumen-disponibilidad">—</dd></div>
+                </dl>
+            </div>
+            <div id="panel-grafica" aria-busy="true">
+                <div class="grafica grafica--esqueleto" aria-hidden="true"><span class="esqueleto esqueleto--suave"></span></div>
+                <span class="visually-hidden">Cargando…</span>
+            </div>
+            <ul class="leyenda-grafica leyenda-grafica--historial" id="leyenda-historial" hidden>
+                <li class="leyenda-grafica__item"><span class="leyenda-grafica__linea leyenda-grafica__linea--acento"></span>Tiempo de respuesta (ms)</li>
+                <li class="leyenda-grafica__item"><span class="leyenda-grafica__punto"></span>Sin respuesta</li>
+            </ul>
+        </section>
+
+        <section class="tabla-tarjeta panel-historial" aria-labelledby="titulo-historial">
+            <div class="panel-historial__cabecera">
+                <h2 class="panel__titulo" id="titulo-historial">Historial</h2>
+                <span class="texto-secundario" id="conteo-historial" aria-live="polite"></span>
+            </div>
+            <div id="contenido-historial" aria-busy="true">
+                <div class="esqueleto-lista" aria-hidden="true">
+                    <div class="esqueleto-tabla__encabezado"></div>
+                    <div class="esqueleto-tabla__fila"><span class="esqueleto esqueleto--suave"></span><span class="esqueleto" style="width: 60%"></span><span class="esqueleto esqueleto--suave esqueleto--pastilla"></span><span class="esqueleto esqueleto--suave"></span></div>
+                    <div class="esqueleto-tabla__fila"><span class="esqueleto esqueleto--suave"></span><span class="esqueleto" style="width: 50%"></span><span class="esqueleto esqueleto--suave esqueleto--pastilla"></span><span class="esqueleto esqueleto--suave"></span></div>
+                    <div class="esqueleto-tabla__fila"><span class="esqueleto esqueleto--suave"></span><span class="esqueleto" style="width: 70%"></span><span class="esqueleto esqueleto--suave esqueleto--pastilla"></span><span class="esqueleto esqueleto--suave"></span></div>
+                </div>
+                <span class="visually-hidden">Cargando el historial…</span>
+            </div>
+            <nav class="paginacion" id="paginacion" aria-label="Páginas del historial" hidden>
+                <span id="texto-paginacion"></span>
+                <div class="paginacion__botones">
+                    <button type="button" class="btn btn-secondary btn-sm" id="pagina-anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i>Anterior</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="pagina-siguiente">Siguiente<i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+                </div>
+            </nav>
+        </section>
     </main>
 </div>
 

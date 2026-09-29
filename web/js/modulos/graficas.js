@@ -134,7 +134,7 @@ export function crearGraficaArea(canvas, { puntos, compacta = false }) {
                     fill: 'origin',
                     borderWidth: 2,
                     tension: 0.4,
-            cubicInterpolationMode: 'monotone', // sin curvas por debajo de 0 ms
+                    cubicInterpolationMode: 'monotone', // sin curvas por debajo de 0 ms
                     spanGaps: false,
                     pointRadius: 0,
                     pointHoverRadius: 4,

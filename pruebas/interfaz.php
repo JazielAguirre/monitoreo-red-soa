@@ -793,6 +793,274 @@ comprobarIgual(['tarjeta' => true, 'inactivos' => XSS . ', Servidor principal', 
 $navegador->procesarEventos(0.5);
 comprobarIgual([], $navegador->dialogos, '  no se ejecutó ningún alert()');
 
+// =====================================================================
+seccion('6.5 · Monitoreos: rango inicial, tabla y paginación');
+
+/**
+ * Espera a que Monitoreos termine de cargar la tabla y la gráfica.
+ */
+function esperarMonitoreos(Navegador $navegador): bool
+{
+    $listo = $navegador->esperarHasta("!document.getElementById('contenido-historial').hasAttribute('aria-busy') && !document.getElementById('contenido-historial').classList.contains('actualizando') && !document.getElementById('panel-grafica').hasAttribute('aria-busy')", 12);
+    $navegador->procesarEventos(0.3);
+    return $listo;
+}
+
+/**
+ * Filas visibles del historial: [fecha, dispositivo, IP, resultado, tiempo].
+ */
+function filasHistorial(Navegador $navegador): array
+{
+    return $navegador->evaluar("[...document.querySelectorAll('.tabla-historial tbody tr')].map((tr) => [...tr.children].map((td) => td.textContent))") ?? [];
+}
+
+/**
+ * Estado visible de la página: filtros, URL, conteo, paginación, resumen y gráfica.
+ */
+function estadoMonitoreos(Navegador $navegador): array
+{
+    return $navegador->evaluar(<<<'JS'
+        (() => {
+            const $ = (id) => document.getElementById(id);
+            return {
+                filtros: [$('filtro-dispositivo').value, $('filtro-estado').value, $('filtro-desde').value, $('filtro-hasta').value],
+                url: location.search,
+                conteo: $('conteo-historial').textContent,
+                paginacion: $('paginacion').hidden ? null : [$('texto-paginacion').textContent, $('pagina-anterior').disabled, $('pagina-siguiente').disabled],
+                resumen: ['promedio', 'maximo', 'disponibilidad'].map((c) => $(`resumen-${c}`).textContent),
+                claseDisponibilidad: $('resumen-disponibilidad').className,
+                grafica: !!document.querySelector('#panel-grafica canvas'),
+                vacioGrafica: document.querySelector('#panel-grafica .estado-vacio__titulo')?.textContent ?? null,
+                leyenda: !$('leyenda-historial').hidden,
+                titulo: $('titulo-grafica').textContent,
+                subtitulo: $('subtitulo-grafica').textContent,
+                vacio: document.querySelector('#contenido-historial .estado-vacio__titulo')?.textContent ?? null,
+                error: document.querySelector('#contenido-historial .vista-error__titulo')?.textContent ?? null,
+            };
+        })()
+    JS) ?? [];
+}
+
+recargarBaseDeDatos();
+$navegador->tamano(1440, 900);
+$navegador->interceptar('servicios/monitoreo?', ['retener' => true]);
+abrirPagina($navegador, 'monitoreos.html');
+$navegador->esperarHasta("document.getElementById('filtro-dispositivo').options.length > 1", 8);
+comprobarIgual(['true', 3, 'true'], [
+    $navegador->evaluar("document.getElementById('contenido-historial').getAttribute('aria-busy')"),
+    $navegador->evaluar("document.querySelectorAll('#contenido-historial .esqueleto-tabla__fila').length"),
+    $navegador->evaluar("document.getElementById('panel-grafica').getAttribute('aria-busy')"),
+], 'mientras carga: esqueleto en la tabla y en la gráfica');
+$navegador->liberar('servicios/monitoreo?');
+$navegador->quitarIntercepciones();
+comprobar(esperarMonitoreos($navegador), 'la tabla y la gráfica terminan de cargar');
+
+$desdeInicial = date('Y-m-d', strtotime('-6 days'));
+$hoyCampo = date('Y-m-d');
+$totalInicial = (int) valorBd("SELECT COUNT(*) FROM monitoreos WHERE fecha >= '$desdeInicial 00:00:00' AND fecha <= '$hoyCampo 23:59:59'");
+$r = estadoMonitoreos($navegador);
+comprobarIgual([['', '', $desdeInicial, $hoyCampo], ''], campos($r, ['filtros', 'url']), "rango inicial: los últimos 7 días ($desdeInicial a $hoyCampo), sin parámetros en la URL");
+comprobarIgual($totalInicial === 1 ? '1 comprobación' : "$totalInicial comprobaciones", $r['conteo'] ?? null, '  el conteo coincide con la base de datos para ese rango');
+comprobarIgual([false, 'Elige un dispositivo para ver su gráfica', false, 'Tiempos de respuesta'], campos($r, ['grafica', 'vacioGrafica', 'leyenda', 'titulo']), 'sin dispositivo elegido, la gráfica pide elegir uno y no muestra leyenda');
+comprobarIgual([], $navegador->erroresJs, 'Monitoreos sin errores de JavaScript');
+
+// Con un rango fijo, los datos del seed no dependen del día en que se ejecuten las pruebas.
+abrirPagina($navegador, 'monitoreos.html?desde=2026-09-22&hasta=2026-09-29');
+esperarMonitoreos($navegador);
+$r = estadoMonitoreos($navegador);
+comprobarIgual(['56 comprobaciones', ['Mostrando 1–10 de 56 · página 1 de 6', true, false]], campos($r, ['conteo', 'paginacion']), 'desde y hasta se leen de la URL: 56 comprobaciones en 6 páginas de 10; «Anterior» deshabilitado en la primera');
+comprobarIgual([['4.99 ms', '54.7 ms', '87.5 %'], 'texto-error'], campos($r, ['resumen', 'claseDisponibilidad']), 'resumen del rango: promedio, máximo y disponibilidad (roja por debajo de 95 %)');
+$filas = filasHistorial($navegador);
+comprobarIgual(10, count($filas), '  10 filas por página');
+comprobarIgual(['27/09/2026 09:45', 'Impresora Laboratorio', '192.0.2.20', 'Activo', '2.75 ms'], $filas[0] ?? null, '  la primera fila es la más reciente, con nombre, IP, resultado y tiempo');
+comprobarIgual(['27/09/2026 09:45', 'Servidor principal', '192.0.2.10', 'Inactivo', 'Sin respuesta'], $filas[1] ?? null, '  una comprobación sin respuesta dice «Sin respuesta»');
+comprobarIgual('texto-mono fw-normal texto-error', $navegador->evaluar("document.querySelectorAll('.tabla-historial tbody tr')[1].children[4].firstElementChild.className"), '  … en rojo');
+
+clic($navegador, '#pagina-siguiente');
+esperarMonitoreos($navegador);
+$r = estadoMonitoreos($navegador);
+$hastaEnUrl = $hoyCampo === '2026-09-29' ? '' : '&hasta=2026-09-29'; // hoy es el valor por defecto y no se escribe
+comprobarIgual(["?desde=2026-09-22$hastaEnUrl&pagina=2", ['Mostrando 11–20 de 56 · página 2 de 6', false, false]], campos($r, ['url', 'paginacion']), '«Siguiente» pasa a la página 2 y la guarda en la URL');
+clic($navegador, '#pagina-anterior');
+esperarMonitoreos($navegador);
+comprobarIgual(['Mostrando 1–10 de 56 · página 1 de 6', true, false], estadoMonitoreos($navegador)['paginacion'] ?? null, '«Anterior» vuelve a la página 1');
+
+abrirPagina($navegador, 'monitoreos.html?desde=2026-09-22&hasta=2026-09-29&pagina=6');
+esperarMonitoreos($navegador);
+comprobarIgual([['Mostrando 51–56 de 56 · página 6 de 6', false, true], 6], [estadoMonitoreos($navegador)['paginacion'] ?? null, count(filasHistorial($navegador))], 'la página se lee de la URL; en la última, «Siguiente» deshabilitado y 6 filas');
+
+abrirPagina($navegador, 'monitoreos.html?desde=2026-09-22&hasta=2026-09-29&pagina=40');
+esperarMonitoreos($navegador);
+comprobarIgual('Mostrando 51–56 de 56 · página 6 de 6', estadoMonitoreos($navegador)['paginacion'][0] ?? null, 'una página que ya no existe lleva a la última');
+
+abrirPagina($navegador, 'monitoreos.html?dispositivo=abc&estado=roto&desde=ayer&pagina=-3');
+esperarMonitoreos($navegador);
+comprobarIgual([['', '', $desdeInicial, $hoyCampo], ''], campos(estadoMonitoreos($navegador), ['filtros', 'url']), 'parámetros no válidos en la URL se ignoran y se limpian');
+abrirPagina($navegador, 'monitoreos.html?dispositivo=999');
+esperarMonitoreos($navegador);
+comprobarIgual(['', ''], [$navegador->evaluar("document.getElementById('filtro-dispositivo').value"), $navegador->evaluar('location.search')], 'un dispositivo que no existe se ignora');
+
+// =====================================================================
+seccion('6.5 · Monitoreos: un dispositivo, su gráfica y el resumen');
+
+abrirPagina($navegador, 'monitoreos.html?desde=2026-09-22&hasta=2026-09-29&pagina=3');
+esperarMonitoreos($navegador);
+escribir($navegador, '#filtro-dispositivo', '4');
+esperarMonitoreos($navegador);
+$r = estadoMonitoreos($navegador);
+comprobarIgual("?dispositivo=4&desde=2026-09-22$hastaEnUrl", $r['url'] ?? null, 'elegir un dispositivo lo guarda en la URL y vuelve a la página 1');
+comprobarIgual(['12 comprobaciones', ['Mostrando 1–10 de 12 · página 1 de 2', true, false]], campos($r, ['conteo', 'paginacion']), '  la tabla muestra solo sus comprobaciones');
+comprobarIgual([['1.19 ms', '2.4 ms', '58.3 %'], 'texto-error'], campos($r, ['resumen', 'claseDisponibilidad']), '  resumen del dispositivo');
+comprobarIgual([true, true, 'Tiempos de respuesta · Servidor principal', '192.0.2.10 · últimas 12 comprobaciones del rango'], campos($r, ['grafica', 'leyenda', 'titulo', 'subtitulo']), '  gráfica con su título, IP, número de comprobaciones y leyenda');
+$g = $navegador->evaluar(<<<'JS'
+    (() => {
+        const c = Chart.getChart(document.querySelector('#panel-grafica canvas'));
+        const token = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+        return {
+            etiquetas: [c.data.labels[0], c.data.labels.at(-1)],
+            tiempos: c.data.datasets[0].data,
+            sinRespuesta: c.data.datasets[1].data.filter((v) => v !== null).length,
+            colores: [c.data.datasets[0].borderColor, c.data.datasets[1].pointBackgroundColor],
+            tokens: [token('--color-acento'), token('--color-inactivo')],
+            etiquetaAccesible: document.querySelector('#panel-grafica canvas').getAttribute('aria-label'),
+            animacion: c.options.animation !== false,
+        };
+    })()
+JS);
+comprobarIgual(['22/09 08:15', '27/09 09:45'], $g['etiquetas'] ?? null, '  la gráfica va de la más antigua a la más reciente; con varios días, la etiqueta lleva la fecha');
+comprobarIgual([null, 0.92, 0.85, 1.2, 0.92, 2.4, 1.05, 0.98, null, null, null, null], $g['tiempos'] ?? null, '  los tiempos en ms; sin respuesta, un hueco en la línea…');
+comprobarIgual(5, $g['sinRespuesta'] ?? null, '  … y un punto rojo sobre el eje');
+comprobarIgual($g['tokens'] ?? 'x', $g['colores'] ?? null, '  colores de los tokens --color-acento y --color-inactivo');
+comprobarIgual('Tiempos de respuesta de Servidor principal en sus últimas 12 comprobaciones', $g['etiquetaAccesible'] ?? null, '  la gráfica tiene una descripción accesible');
+comprobarIgual(true, $g['animacion'] ?? null, '  con animación cuando no se pide movimiento reducido');
+
+escribir($navegador, '#filtro-estado', 'inactivo');
+esperarMonitoreos($navegador);
+$filas = filasHistorial($navegador);
+comprobarIgual([5, ['Inactivo'], "?dispositivo=4&estado=inactivo&desde=2026-09-22$hastaEnUrl"], [count($filas), array_values(array_unique(array_column($filas, 3))), $navegador->evaluar('location.search')], 'filtrar por estado «Inactivo»: solo sus 5 comprobaciones sin respuesta, y el estado en la URL');
+escribir($navegador, '#filtro-estado', '');
+
+abrirPagina($navegador, 'monitoreos.html?dispositivo=1&desde=2026-09-22&hasta=2026-09-29');
+esperarMonitoreos($navegador);
+$r = estadoMonitoreos($navegador);
+comprobarIgual([['0.07 ms', '0.2 ms', '100 %'], 'texto-activo'], campos($r, ['resumen', 'claseDisponibilidad']), 'disponibilidad de 99 % o más, en verde (Mi PC)');
+comprobarIgual(['Tiempos de respuesta · Mi PC', '127.0.0.1 · últimas 10 comprobaciones del rango'], campos($r, ['titulo', 'subtitulo']), '  un solo día: 10 comprobaciones');
+comprobarIgual(['09:00', '09:45'], $navegador->evaluar("(() => { const c = Chart.getChart(document.querySelector('#panel-grafica canvas')); return [c.data.labels[0], c.data.labels.at(-1)]; })()"), '  con un solo día, la etiqueta es solo la hora');
+
+$resumenAmbar = json_encode(['ok' => true, 'data' => ['items' => [], 'total' => 0, 'pagina' => 1, 'por_pagina' => 10, 'total_paginas' => 0, 'resumen' => ['promedio_ms' => 1.5, 'maximo_ms' => 3.1, 'disponibilidad' => 96.4]]]);
+$navegador->interceptar('servicios/monitoreo?', ['codigo' => 200, 'cuerpo' => $resumenAmbar]);
+abrirPagina($navegador, 'monitoreos.html?dispositivo=1');
+esperarMonitoreos($navegador);
+$r = estadoMonitoreos($navegador);
+comprobarIgual([['1.5 ms', '3.1 ms', '96.4 %'], 'texto-alerta'], campos($r, ['resumen', 'claseDisponibilidad']), 'disponibilidad entre 95 % y 99 %, en ámbar');
+comprobarIgual(['Sin comprobaciones en el rango', false], campos($r, ['vacioGrafica', 'leyenda']), 'un dispositivo sin comprobaciones en el rango: la gráfica lo dice, sin leyenda');
+$navegador->quitarIntercepciones();
+
+$navegador->movimientoReducido(true);
+abrirPagina($navegador, 'monitoreos.html?dispositivo=4&desde=2026-09-22&hasta=2026-09-29');
+esperarMonitoreos($navegador);
+comprobarIgual(false, $navegador->evaluar("Chart.getChart(document.querySelector('#panel-grafica canvas')).options.animation"), 'con prefers-reduced-motion, la gráfica no anima');
+$navegador->movimientoReducido(false);
+abrirPagina($navegador, 'monitoreos.html?dispositivo=4');
+esperarMonitoreos($navegador);
+capturar($navegador, 'monitoreos-1440');
+
+// =====================================================================
+seccion('6.5 · Monitoreos: fechas no válidas, restablecer, vacíos y errores');
+
+abrirPagina($navegador, 'monitoreos.html?dispositivo=4&estado=inactivo&desde=2026-09-22&hasta=2026-09-29');
+esperarMonitoreos($navegador);
+escribir($navegador, '#filtro-desde', '2026-09-29');
+esperarMonitoreos($navegador);
+escribir($navegador, '#filtro-hasta', '2026-09-23');
+esperarMonitoreos($navegador);
+$r = $navegador->evaluar(<<<'JS'
+    ({
+        mensaje: document.getElementById('error-hasta').hidden ? null : document.getElementById('error-hasta').textContent,
+        invalido: [document.getElementById('filtro-hasta').classList.contains('is-invalid'), document.getElementById('filtro-hasta').getAttribute('aria-invalid')],
+        desdeValido: document.getElementById('filtro-desde').classList.contains('is-invalid'),
+        visible: getComputedStyle(document.getElementById('error-hasta')).display,
+        bloque: document.querySelector('#contenido-historial .estado-vacio__titulo')?.textContent,
+        accion: document.querySelector('#contenido-historial .estado-vacio button')?.textContent.trim(),
+        paginacion: document.getElementById('paginacion').hidden,
+        grafica: [document.querySelector('#panel-grafica .estado-vacio__titulo')?.textContent, document.querySelectorAll('#panel-grafica button').length, document.getElementById('titulo-grafica').textContent],
+    })
+JS);
+comprobarIgual(['mensaje' => 'La fecha final debe ser igual o posterior a la inicial', 'invalido' => [true, 'true'], 'desdeValido' => false, 'visible' => 'block', 'bloque' => 'Revisa los filtros', 'accion' => 'Restablecer filtros', 'paginacion' => true, 'grafica' => ['Sin gráfica con estos filtros', 0, 'Tiempos de respuesta · Servidor principal']], $r, '«Hasta» antes de «Desde»: el mensaje de la API aparece bajo «Hasta», la tabla pide revisar los filtros y la gráfica no ofrece «Reintentar»');
+capturar($navegador, 'monitoreos-fechas');
+
+clic($navegador, '#restablecer-filtros');
+esperarMonitoreos($navegador);
+$r = estadoMonitoreos($navegador);
+comprobarIgual([['', '', $desdeInicial, $hoyCampo], '', false], [$r['filtros'] ?? null, $r['url'] ?? null, $navegador->evaluar("document.getElementById('filtro-hasta').classList.contains('is-invalid')")], '«Restablecer filtros» vuelve a los últimos 7 días, limpia la URL y el error');
+
+abrirPagina($navegador, 'monitoreos.html?desde=2026-09-28&hasta=2026-09-28');
+esperarMonitoreos($navegador);
+$r = estadoMonitoreos($navegador);
+comprobarIgual(['Ninguna comprobación coincide', 'Restablecer filtros', '0 comprobaciones', null, ['—', '—', '—']], [...campos($r, ['vacio']), $navegador->evaluar("document.querySelector('#contenido-historial .estado-vacio button')?.textContent.trim()"), ...campos($r, ['conteo', 'paginacion', 'resumen'])], 'filtros sin resultados: «Ninguna comprobación coincide» con «Restablecer filtros», sin paginación y resumen «—»');
+clic($navegador, '#contenido-historial .estado-vacio button');
+esperarMonitoreos($navegador);
+comprobarIgual('', $navegador->evaluar('location.search'), '  su botón restablece los filtros');
+
+$vacio = json_encode(['ok' => true, 'data' => ['items' => [], 'total' => 0, 'pagina' => 1, 'por_pagina' => 10, 'total_paginas' => 0, 'resumen' => ['promedio_ms' => null, 'maximo_ms' => null, 'disponibilidad' => null]]]);
+$navegador->interceptar('servicios/monitoreo?', ['codigo' => 200, 'cuerpo' => $vacio]);
+abrirPagina($navegador, 'monitoreos.html');
+esperarMonitoreos($navegador);
+comprobarIgual(['Aún no hay comprobaciones en los últimos 7 días', 'index.html'], [estadoMonitoreos($navegador)['vacio'] ?? null, $navegador->evaluar("document.querySelector('#contenido-historial .estado-vacio a')?.getAttribute('href')")], 'sin comprobaciones y sin filtros: otro vacío, que lleva al Dashboard');
+$navegador->quitarIntercepciones();
+
+$navegador->interceptar('servicios/monitoreo?', ['fallar' => true]);
+abrirPagina($navegador, 'monitoreos.html?dispositivo=4');
+esperarMonitoreos($navegador);
+$r = estadoMonitoreos($navegador);
+comprobarIgual('Tiempos de respuesta · Servidor principal', $navegador->evaluar("document.getElementById('titulo-grafica').textContent"), '  la gráfica con error conserva el nombre del dispositivo');
+comprobarIgual(['No se pudo cargar el historial', 'No se pudo cargar la gráfica', 'Reintentar', 'alert', true], [$r['error'] ?? null, $navegador->evaluar("document.querySelector('#panel-grafica .vista-error__titulo')?.textContent"), $navegador->evaluar("document.querySelector('#contenido-historial .vista-error button')?.textContent.trim()"), $navegador->evaluar("document.querySelector('#contenido-historial .vista-error')?.getAttribute('role')"), $navegador->evaluar("!!document.querySelector('#barra-lateral .nav-lateral__enlace')")], 'sin conexión: error en la tabla y en la gráfica, con «Reintentar» (la estructura sigue visible)');
+capturar($navegador, 'monitoreos-error');
+$navegador->quitarIntercepciones();
+clic($navegador, '#contenido-historial .vista-error button');
+esperarMonitoreos($navegador);
+comprobarIgual([true, 'Tiempos de respuesta · Servidor principal'], campos(estadoMonitoreos($navegador), ['grafica', 'titulo']), '«Reintentar», con el servicio de vuelta, carga la tabla y la gráfica');
+
+$navegador->interceptar('servicios/dispositivos', ['codigo' => 500, 'cuerpo' => '{"ok":false,"error":"Error interno del servidor"}']);
+abrirPagina($navegador, 'monitoreos.html?desde=2026-09-22&hasta=2026-09-29');
+esperarMonitoreos($navegador);
+comprobarIgual(['Dispositivo 5', 10], [filasHistorial($navegador)[0][1] ?? null, count(filasHistorial($navegador))], 'si Dispositivos falla, el historial se ve igual (con «Dispositivo N» en lugar del nombre)');
+$navegador->quitarIntercepciones();
+
+// =====================================================================
+seccion('6.5 · Monitoreos en celular (390 px) y seguridad');
+
+$navegador->tamano(390, 844, true);
+abrirPagina($navegador, 'monitoreos.html?dispositivo=4');
+esperarMonitoreos($navegador);
+$r = $navegador->evaluar(<<<'JS'
+    (() => {
+        const caja = (id) => document.getElementById(id).getBoundingClientRect();
+        const tabla = document.querySelector('.tabla-historial');
+        return {
+            desbordePagina: document.documentElement.scrollWidth > innerWidth,
+            tablaSeDesplaza: tabla.scrollWidth > tabla.clientWidth,
+            fechasJuntas: caja('filtro-desde').top === caja('filtro-hasta').top,
+            dispositivoAncho: Math.round(caja('filtro-dispositivo').width) === Math.round(caja('filtro-estado').width),
+            altoControl: Math.round(caja('filtro-dispositivo').height),
+            grafica: Math.round(document.querySelector('.grafica').getBoundingClientRect().height),
+        };
+    })()
+JS);
+comprobarIgual(['desbordePagina' => false, 'tablaSeDesplaza' => true, 'fechasJuntas' => true, 'dispositivoAncho' => true, 'altoControl' => 44, 'grafica' => 190], $r, 'a 390 px: filtros apilados (Desde y Hasta juntos), controles de 44 px, la tabla se desplaza dentro de su tarjeta y la página no');
+capturar($navegador, 'monitoreos-390');
+
+$navegador->tamano(1440, 900);
+peticion('POST', '/dispositivos', ['nombre' => XSS, 'ip' => '192.0.2.99', 'tipo' => 'servidor', 'ubicacion' => 'Laboratorio']);
+$idXss = (int) valorBd("SELECT id FROM dispositivos WHERE ip = '192.0.2.99'");
+peticion('POST', "/monitoreo/$idXss");
+abrirPagina($navegador, "monitoreos.html?dispositivo=$idXss");
+esperarMonitoreos($navegador);
+$r = $navegador->evaluar("({ opcion: document.querySelector('#filtro-dispositivo option[value=\"$idXss\"]').textContent, fila: document.querySelector('.tabla-historial tbody tr').children[1].textContent, titulo: document.getElementById('titulo-grafica').textContent, etiqueta: document.querySelector('#panel-grafica canvas')?.getAttribute('aria-label'), imagenes: document.querySelectorAll('#contenido img').length })");
+comprobarIgual(['opcion' => XSS, 'fila' => XSS, 'titulo' => 'Tiempos de respuesta · ' . XSS, 'etiqueta' => 'Tiempos de respuesta de ' . XSS . ' en sus últimas 1 comprobaciones', 'imagenes' => 0], $r, 'Monitoreos: el nombre con HTML se muestra como texto en el filtro, la tabla y la gráfica, sin crear <img>');
+$navegador->procesarEventos(0.5);
+comprobarIgual([], $navegador->dialogos, '  no se ejecutó ningún alert()');
+
 $navegador->cerrar();
 echo "\nCapturas: $carpetaCapturas\n";
 terminarPruebas();

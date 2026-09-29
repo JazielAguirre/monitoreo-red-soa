@@ -941,6 +941,90 @@
             <div class="grafica"><canvas id="demo-grafica" role="img" aria-label="Gráfica de ejemplo con cinco series"></canvas></div>
         </div>
     </section>
+    <!-- ============================================================ 26 Filtros de historial (Monitoreos) -->
+    <section class="seccion" aria-labelledby="s26">
+        <h2 class="seccion__titulo" id="s26">
+            <span class="seccion__numero">26</span><span class="seccion__nombre">Filtros del historial</span>
+            <span class="seccion__nota">Monitoreos · se guardan en la URL · el error de fechas viene de la API y se muestra bajo el campo</span>
+        </h2>
+        <form class="filtros-historial" novalidate>
+            <div class="filtros-historial__campo">
+                <label class="form-label" for="demo-historial-dispositivo">Dispositivo</label>
+                <div class="campo-icono">
+                    <select class="form-select" id="demo-historial-dispositivo"><option>Todos los dispositivos</option><option selected>Servidor principal</option></select>
+                    <i class="bi bi-chevron-down campo-icono__fin" aria-hidden="true"></i>
+                </div>
+            </div>
+            <div class="filtros-historial__campo">
+                <label class="form-label" for="demo-historial-estado">Estado</label>
+                <div class="campo-icono">
+                    <select class="form-select" id="demo-historial-estado"><option>Todos los resultados</option><option>Activo</option><option>Inactivo</option></select>
+                    <i class="bi bi-chevron-down campo-icono__fin" aria-hidden="true"></i>
+                </div>
+            </div>
+            <div class="filtros-historial__campo">
+                <label class="form-label" for="demo-historial-desde">Desde</label>
+                <input class="form-control" id="demo-historial-desde" type="date" value="2026-09-27">
+            </div>
+            <div class="filtros-historial__campo">
+                <label class="form-label" for="demo-historial-hasta">Hasta</label>
+                <input class="form-control is-invalid" id="demo-historial-hasta" type="date" value="2026-09-20" aria-invalid="true" aria-describedby="demo-historial-error">
+                <div class="invalid-feedback" id="demo-historial-error">La fecha final debe ser igual o posterior a la inicial</div>
+            </div>
+            <div class="filtros-historial__acciones">
+                <button type="button" class="btn btn-link"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Restablecer filtros</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- ============================================================ 27 Gráfica y resumen de un dispositivo (Monitoreos) -->
+    <section class="seccion" aria-labelledby="s27">
+        <h2 class="seccion__titulo" id="s27">
+            <span class="seccion__numero">27</span><span class="seccion__nombre">Gráfica de un dispositivo y resumen</span>
+            <span class="seccion__nota">Monitoreos · área con puntos rojos en las comprobaciones sin respuesta · disponibilidad verde ≥ 99 %, ámbar ≥ 95 %, roja debajo</span>
+        </h2>
+        <div class="panel panel--grafica panel--grafica-historial">
+            <div class="panel__cabecera panel__cabecera--grafica">
+                <div><p class="panel__titulo" role="presentation">Tiempos de respuesta · Servidor principal</p><p class="panel__subtitulo"><span class="mono">192.168.1.10</span> · últimas 10 comprobaciones del rango</p></div>
+                <dl class="resumen-monitoreo">
+                    <div><dt>Promedio</dt><dd>1.23 ms</dd></div>
+                    <div><dt>Máximo</dt><dd>2.4 ms</dd></div>
+                    <div><dt>Disponibilidad</dt><dd class="texto-error">60 %</dd></div>
+                </dl>
+            </div>
+            <div class="grafica"><canvas id="demo-grafica-area" role="img" aria-label="Gráfica de ejemplo de un dispositivo con cuatro comprobaciones sin respuesta"></canvas></div>
+            <ul class="leyenda-grafica leyenda-grafica--historial">
+                <li class="leyenda-grafica__item"><span class="leyenda-grafica__linea leyenda-grafica__linea--acento"></span>Tiempo de respuesta (ms)</li>
+                <li class="leyenda-grafica__item"><span class="leyenda-grafica__punto"></span>Sin respuesta</li>
+            </ul>
+        </div>
+        <h3 class="texto-secundario fw-semibold text-body mt-4 mb-3">Variantes de la disponibilidad</h3>
+        <div class="panel">
+            <dl class="resumen-monitoreo">
+                <div><dt>Disponibilidad</dt><dd class="texto-activo">100 %</dd></div>
+                <div><dt>Disponibilidad</dt><dd class="texto-alerta">96.4 %</dd></div>
+                <div><dt>Disponibilidad</dt><dd class="texto-error">60 %</dd></div>
+                <div><dt>Sin datos</dt><dd>—</dd></div>
+            </dl>
+        </div>
+    </section>
+
+    <!-- ============================================================ 28 Paginación (Monitoreos) -->
+    <section class="seccion" aria-labelledby="s28">
+        <h2 class="seccion__titulo" id="s28">
+            <span class="seccion__numero">28</span><span class="seccion__nombre">Paginación del historial</span>
+            <span class="seccion__nota">Monitoreos · 10 por página · "Anterior" deshabilitado en la primera página y "Siguiente" en la última</span>
+        </h2>
+        <div class="tabla-tarjeta">
+            <nav class="paginacion" aria-label="Paginación de ejemplo">
+                <span>Mostrando 1–10 de 26 · página 1 de 3</span>
+                <div class="paginacion__botones">
+                    <button type="button" class="btn btn-secondary btn-sm" disabled><i class="bi bi-chevron-left" aria-hidden="true"></i>Anterior</button>
+                    <button type="button" class="btn btn-secondary btn-sm">Siguiente<i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+                </div>
+            </nav>
+        </div>
+    </section>
 </main>
 
 <!-- Modal real (se abre con "Abrir el modal real"). -->
