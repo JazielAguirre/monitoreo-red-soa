@@ -25,7 +25,7 @@ Después de la Fase 1, el backend y el frontend pueden avanzar en paralelo. La F
 | 2 | Servicio de Dispositivos | Integrante 2 | ✅ Completa |
 | 3 | Servicio de Alertas | Integrante 4 | ✅ Completa |
 | 4 | Servicio de Monitoreo | Integrante 3 | ✅ Completa |
-| 5 | Sistema de diseño | Integrante 4 | Pendiente |
+| 5 | Sistema de diseño | Integrante 4 | ✅ Completa |
 | 6 | Pantallas | Integrante 4 | Pendiente |
 | 7 | Inicio de sesión | Todo el equipo | Pendiente |
 | 8 | Integración, pruebas y demo | Todo el equipo | Pendiente |
@@ -137,7 +137,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] `/monitoreo/prueba` ya no existe (404).
 - [x] `pruebas/monitoreo.php` pasa completo, y las pruebas de las Fases 2 y 3 siguen pasando.
 
-## Fase 5 · Sistema de diseño
+## Fase 5 · Sistema de diseño ✅
 
 **Objetivo:** los tokens y componentes del diseño aprobado, listos para armar pantallas.
 
@@ -149,12 +149,12 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 **Listo cuando:**
 
-- [ ] `componentes.html` muestra cada componente y estado del sistema de diseño, y se ve igual que la referencia cuando se comparan lado a lado.
-- [ ] Ningún archivo fuera de `tokens.css` tiene colores hexadecimales (se revisa con `grep`).
-- [ ] Las fuentes cargan desde `web/vendor/`, sin peticiones a internet (se revisa en la pestaña Red del navegador).
-- [ ] El punto pulsa al monitorear y queda fijo con `prefers-reduced-motion`.
-- [ ] Se ve bien a 1440 px y a 390 px.
-- [ ] El equipo aprueba el resultado.
+- [x] `componentes.html` muestra cada componente y estado del sistema de diseño, y se ve igual que la referencia cuando se comparan lado a lado.
+- [x] Ningún archivo fuera de `tokens.css` tiene colores hexadecimales (se revisa con `grep`).
+- [x] Las fuentes cargan desde `web/vendor/`, sin peticiones a internet (se revisa en la pestaña Red del navegador).
+- [x] El punto pulsa al monitorear y queda fijo con `prefers-reduced-motion`.
+- [x] Se ve bien a 1440 px y a 390 px.
+- [x] El equipo aprueba el resultado.
 
 ## Fase 6 · Pantallas
 

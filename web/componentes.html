@@ -8,11 +8,665 @@
     <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/componentes.css">
 </head>
 <body>
-    <h1>Componentes</h1>
+<main class="muestra">
 
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="vendor/chart.js/chart.umd.min.js"></script>
+    <header class="muestra-cabecera">
+        <span class="muestra-logo" aria-hidden="true"><i class="bi bi-diagram-3-fill"></i></span>
+        <div>
+            <h1 class="texto-display">Sistema de diseño</h1>
+            <p>Monitoreo de Red SOA · v1.0 · Bootstrap 5, Bootstrap Icons, Chart.js</p>
+        </div>
+    </header>
+
+    <!-- ============================================================ 01 Colores -->
+    <section class="seccion" aria-labelledby="s01">
+        <h2 class="seccion__titulo" id="s01">
+            <span class="seccion__numero">01</span><span class="seccion__nombre">Colores</span>
+            <span class="seccion__nota">Variables CSS de la paleta base</span>
+        </h2>
+
+        <div class="rejilla rejilla--6">
+            <div class="muestra-color"><div class="muestra-color__franja" style="--muestra: var(--color-base)"></div>
+                <div class="muestra-color__texto"><span class="muestra-color__nombre">--color-base</span><span class="muestra-color__valor">#0B1D2E</span><span class="muestra-color__uso">Barra lateral, login</span></div></div>
+            <div class="muestra-color"><div class="muestra-color__franja" style="--muestra: var(--color-base-2)"></div>
+                <div class="muestra-color__texto"><span class="muestra-color__nombre">--color-base-2</span><span class="muestra-color__valor">#16324F</span><span class="muestra-color__uso">Botón primario, ítem activo</span></div></div>
+            <div class="muestra-color"><div class="muestra-color__franja muestra-color__franja--clara" style="--muestra: var(--color-fondo)"></div>
+                <div class="muestra-color__texto"><span class="muestra-color__nombre">--color-fondo</span><span class="muestra-color__valor">#F3F6F9</span><span class="muestra-color__uso">Área de contenido</span></div></div>
+            <div class="muestra-color"><div class="muestra-color__franja muestra-color__franja--clara" style="--muestra: var(--color-superficie)"></div>
+                <div class="muestra-color__texto"><span class="muestra-color__nombre">--color-superficie</span><span class="muestra-color__valor">#FFFFFF</span><span class="muestra-color__uso">Tarjetas, modales</span></div></div>
+            <div class="muestra-color"><div class="muestra-color__franja" style="--muestra: var(--color-texto)"></div>
+                <div class="muestra-color__texto"><span class="muestra-color__nombre">--color-texto</span><span class="muestra-color__valor">#1E293B</span><span class="muestra-color__uso">Texto principal</span></div></div>
+            <div class="muestra-color"><div class="muestra-color__franja" style="--muestra: var(--color-texto-2)"></div>
+                <div class="muestra-color__texto"><span class="muestra-color__nombre">--color-texto-2</span><span class="muestra-color__valor">#5B6B80</span><span class="muestra-color__uso">Texto secundario</span></div></div>
+        </div>
+
+        <div class="rejilla rejilla--4">
+            <div class="muestra-color"><div class="muestra-color__franja muestra-color__franja--estado" style="--muestra: var(--color-activo)"></div>
+                <div class="muestra-color__texto"><span class="muestra-color__cabecera"><span class="muestra-color__nombre">--color-activo</span><span class="muestra-color__valor">#22C55E</span></span>
+                    <span class="muestra-color__variantes" style="--muestra-texto: var(--color-activo-texto); --muestra-fondo: var(--color-activo-fondo); --muestra-borde: var(--color-activo-borde)"><span class="variante variante--texto">-texto #15803D</span><span class="variante variante--fondo">-fondo #F0FDF4</span></span></div></div>
+            <div class="muestra-color"><div class="muestra-color__franja muestra-color__franja--estado" style="--muestra: var(--color-inactivo)"></div>
+                <div class="muestra-color__texto"><span class="muestra-color__cabecera"><span class="muestra-color__nombre">--color-inactivo</span><span class="muestra-color__valor">#EF4444</span></span>
+                    <span class="muestra-color__variantes" style="--muestra-texto: var(--color-inactivo-texto); --muestra-fondo: var(--color-inactivo-fondo); --muestra-borde: var(--color-inactivo-borde)"><span class="variante variante--texto">-texto #B91C1C</span><span class="variante variante--fondo">-fondo #FEF2F2</span></span></div></div>
+            <div class="muestra-color"><div class="muestra-color__franja muestra-color__franja--estado" style="--muestra: var(--color-alerta)"></div>
+                <div class="muestra-color__texto"><span class="muestra-color__cabecera"><span class="muestra-color__nombre">--color-alerta</span><span class="muestra-color__valor">#F59E0B</span></span>
+                    <span class="muestra-color__variantes" style="--muestra-texto: var(--color-alerta-texto); --muestra-fondo: var(--color-alerta-fondo); --muestra-borde: var(--color-alerta-suave)"><span class="variante variante--texto">-texto #B45309</span><span class="variante variante--fondo">-fondo #FFFBEB</span></span></div></div>
+            <div class="muestra-color"><div class="muestra-color__franja muestra-color__franja--estado" style="--muestra: var(--color-desconocido)"></div>
+                <div class="muestra-color__texto"><span class="muestra-color__cabecera"><span class="muestra-color__nombre">--color-desconocido</span><span class="muestra-color__valor">#94A3B8</span></span>
+                    <span class="muestra-color__variantes" style="--muestra-texto: var(--color-desconocido-texto); --muestra-fondo: var(--color-desconocido-fondo); --muestra-borde: var(--color-borde)"><span class="variante variante--texto">-texto #475569</span><span class="variante variante--fondo">-fondo #F1F5F9</span></span></div></div>
+        </div>
+
+        <div class="rejilla rejilla--4">
+            <div class="muestra-complementaria"><span class="muestra-complementaria__color" style="--muestra: var(--color-acento)"></span><span><strong>--color-acento · #2F6FB0</strong>Foco, enlaces, gráfica, ping</span></div>
+            <div class="muestra-complementaria"><span class="muestra-complementaria__color" style="--muestra: var(--color-borde)"></span><span><strong>--color-borde · #E2E8F0</strong>Bordes y divisores</span></div>
+            <div class="muestra-complementaria"><span class="muestra-complementaria__color" style="--muestra: var(--color-base); --muestra-letra: var(--color-base-texto)">Aa</span><span><strong>--color-base-texto · #B6C4D3</strong>Texto sobre la barra lateral</span></div>
+            <div class="muestra-complementaria"><span class="muestra-complementaria__color" style="--muestra: var(--color-peligro)"></span><span><strong>--color-peligro · #DC2626</strong>Botón Eliminar (texto blanco AA)</span></div>
+        </div>
+
+        <div class="rejilla rejilla--4">
+            <div class="muestra-complementaria"><span class="muestra-complementaria__color" style="--muestra: var(--color-grafica-1)"></span><span><strong>--color-grafica-1 · #16324F</strong>Serie 1 de la gráfica</span></div>
+            <div class="muestra-complementaria"><span class="muestra-complementaria__color" style="--muestra: var(--color-grafica-2)"></span><span><strong>--color-grafica-2 · #2F6FB0</strong>Serie 2 de la gráfica</span></div>
+            <div class="muestra-complementaria"><span class="muestra-complementaria__color" style="--muestra: var(--color-grafica-3)"></span><span><strong>--color-grafica-3 · #14958A</strong>Serie 3 de la gráfica</span></div>
+            <div class="muestra-complementaria"><span class="muestra-complementaria__color" style="--muestra: var(--color-grafica-4)"></span><span><strong>--color-grafica-4 · #5A92C9</strong>Serie 4 (3.29:1 sobre blanco)</span></div>
+        </div>
+
+        <div class="codigo-tokens" aria-label="Variables CSS principales">
+<pre><span class="codigo-tokens__comentario">:root {</span>
+  --color-base: #0B1D2E;
+  --color-base-2: #16324F;
+  --color-fondo: #F3F6F9;
+  --color-superficie: #FFFFFF;
+  --color-texto: #1E293B;
+  --color-texto-2: #5B6B80;
+  --color-activo: #22C55E;
+  --color-inactivo: #EF4444;
+  --color-alerta: #F59E0B;
+  --color-desconocido: #94A3B8;</pre>
+<pre><span class="codigo-tokens__comentario">/* complementarias */</span>
+--color-acento: #2F6FB0;
+--color-borde: #E2E8F0;
+--color-base-texto: #B6C4D3;
+--color-peligro: #DC2626;
+--color-activo-texto: #15803D;
+--color-inactivo-texto: #B91C1C;
+--color-alerta-texto: #B45309;
+--color-desconocido-texto: #475569;</pre>
+<pre>--radio-sm: 6px; --radio: 8px;
+--radio-lg: 12px;
+--sombra-1: 0 1px 2px rgb(11 29 46/.05);
+--sombra-2: 0 4px 12px -2px rgb(11 29 46/.10);
+--sombra-3: 0 20px 40px -8px rgb(11 29 46/.28);
+<span class="codigo-tokens__comentario">/* Bootstrap */</span>
+--bs-primary: var(--color-base-2);
+--bs-body-bg: var(--color-fondo);
+--bs-body-font-family: Inter, sans-serif;
+--bs-border-radius: var(--radio);
+<span class="codigo-tokens__comentario">}</span></pre>
+        </div>
+    </section>
+
+    <!-- ============================================================ 02 Tipografía -->
+    <section class="seccion" aria-labelledby="s02">
+        <h2 class="seccion__titulo" id="s02">
+            <span class="seccion__numero">02</span><span class="seccion__nombre">Tipografía</span>
+            <span class="seccion__nota">Inter para la interfaz · JetBrains Mono para IP y tiempos</span>
+        </h2>
+        <div class="caja">
+            <div class="fila-tipo"><span class="fila-tipo__nombre">Display · login</span><span class="texto-display">Monitoreo de Red SOA</span><span class="fila-tipo__medidas">28 / 36 · 600 · -1%</span></div>
+            <div class="fila-tipo"><span class="fila-tipo__nombre">Título de página</span><span class="texto-titulo-pagina">Dashboard</span><span class="fila-tipo__medidas">22 / 30 · 600</span></div>
+            <div class="fila-tipo"><span class="fila-tipo__nombre">Título de tarjeta</span><span class="texto-titulo-tarjeta">Estado de dispositivos</span><span class="fila-tipo__medidas">16 / 24 · 600</span></div>
+            <div class="fila-tipo"><span class="fila-tipo__nombre">Indicador</span><span class="texto-indicador">6</span><span class="fila-tipo__medidas">32 / 36 · 600 · tabular</span></div>
+            <div class="fila-tipo"><span class="fila-tipo__nombre">Cuerpo</span><span class="texto-cuerpo">El dispositivo Servidor principal no respondió al monitoreo.</span><span class="fila-tipo__medidas">14 / 20 · 400</span></div>
+            <div class="fila-tipo"><span class="fila-tipo__nombre">Secundario</span><span class="texto-secundario">Sala de servidores · 3 dispositivos</span><span class="fila-tipo__medidas">13 / 18 · 400</span></div>
+            <div class="fila-tipo"><span class="fila-tipo__nombre">Encabezado de tabla</span><span class="texto-encabezado-tabla">Estado · Nombre · Dirección IP</span><span class="fila-tipo__medidas">11 / 16 · 600 · +6%</span></div>
+            <div class="fila-tipo"><span class="fila-tipo__nombre">Monoespaciada</span><span class="texto-mono">192.168.1.10 · 0.08 ms · 10:08:00</span><span class="fila-tipo__medidas">JetBrains Mono 13 / 20 · 500 · cero con barra</span></div>
+        </div>
+    </section>
+
+    <!-- ============================================================ 03 Espaciado, radios y sombras -->
+    <section class="seccion" aria-labelledby="s03">
+        <h2 class="seccion__titulo" id="s03">
+            <span class="seccion__numero">03</span><span class="seccion__nombre">Espaciado, radios y sombras</span>
+        </h2>
+        <div class="rejilla rejilla--2 rejilla-tres">
+            <div class="caja">
+                <h3 class="texto-secundario fw-semibold text-body mb-3">Espaciado · base 4 px</h3>
+                <div class="escala-espacio">
+                    <span>4</span><span class="escala-espacio__barra" style="width: 4px"></span><span class="escala-espacio__clase">.p-1</span>
+                    <span>8</span><span class="escala-espacio__barra" style="width: 8px"></span><span class="escala-espacio__clase">.p-2</span>
+                    <span>12</span><span class="escala-espacio__barra" style="width: 12px"></span><span class="escala-espacio__clase">gap 12</span>
+                    <span>16</span><span class="escala-espacio__barra" style="width: 16px"></span><span class="escala-espacio__clase">.p-3</span>
+                    <span>24</span><span class="escala-espacio__barra" style="width: 24px"></span><span class="escala-espacio__clase">.p-4</span>
+                    <span>32</span><span class="escala-espacio__barra" style="width: 32px"></span><span class="escala-espacio__clase">página</span>
+                    <span>48</span><span class="escala-espacio__barra" style="width: 48px"></span><span class="escala-espacio__clase">.p-5</span>
+                </div>
+            </div>
+            <div class="caja">
+                <h3 class="texto-secundario fw-semibold text-body mb-3">Radios</h3>
+                <div class="radios">
+                    <div class="radio-muestra"><span class="radio-muestra__caja" style="border-radius: var(--radio-sm)"></span><span><strong>6 px</strong>Botón sm, ícono</span></div>
+                    <div class="radio-muestra"><span class="radio-muestra__caja" style="border-radius: var(--radio)"></span><span><strong>8 px</strong>Botón, campo</span></div>
+                    <div class="radio-muestra"><span class="radio-muestra__caja" style="border-radius: var(--radio-lg)"></span><span><strong>12 px</strong>Tarjeta, modal</span></div>
+                    <div class="radio-muestra"><span class="radio-muestra__caja" style="border-radius: var(--radio-pastilla)"></span><span><strong>999 px</strong>Badge, contador</span></div>
+                </div>
+            </div>
+            <div class="sombras">
+                <h3 class="texto-secundario fw-semibold text-body m-0">Sombras</h3>
+                <div class="sombra-muestra" style="box-shadow: var(--sombra-1)"><strong>--sombra-1</strong>Tarjetas</div>
+                <div class="sombra-muestra" style="box-shadow: var(--sombra-2)"><strong>--sombra-2</strong>Hover, menú desplegable</div>
+                <div class="sombra-muestra" style="box-shadow: var(--sombra-3)"><strong>--sombra-3</strong>Modal, notificación</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ 04 Iconos -->
+    <section class="seccion" aria-labelledby="s04">
+        <h2 class="seccion__titulo" id="s04">
+            <span class="seccion__numero">04</span><span class="seccion__nombre">Iconos</span>
+            <span class="seccion__nota">Bootstrap Icons · 16 px en interfaz, 18 px en navegación</span>
+        </h2>
+        <div class="caja iconos">
+            <span class="icono-muestra"><i class="bi bi-pc-display" aria-hidden="true"></i>Computadora</span>
+            <span class="icono-muestra"><i class="bi bi-hdd-rack" aria-hidden="true"></i>Servidor</span>
+            <span class="icono-muestra"><i class="bi bi-printer" aria-hidden="true"></i>Impresora</span>
+            <span class="icono-muestra"><i class="bi bi-router" aria-hidden="true"></i>Router</span>
+            <span class="icono-muestra"><i class="bi bi-grid-1x2" aria-hidden="true"></i>Dashboard</span>
+            <span class="icono-muestra"><i class="bi bi-hdd-network" aria-hidden="true"></i>Dispositivos</span>
+            <span class="icono-muestra"><i class="bi bi-activity" aria-hidden="true"></i>Monitoreos</span>
+            <span class="icono-muestra"><i class="bi bi-bell" aria-hidden="true"></i>Alertas</span>
+            <span class="icono-muestra"><i class="bi bi-broadcast" aria-hidden="true"></i>Monitorear</span>
+            <span class="icono-muestra"><i class="bi bi-pencil" aria-hidden="true"></i>Editar</span>
+            <span class="icono-muestra"><i class="bi bi-trash3" aria-hidden="true"></i>Eliminar</span>
+            <span class="icono-muestra"><i class="bi bi-search" aria-hidden="true"></i>Buscar</span>
+            <span class="icono-muestra"><i class="bi bi-wifi-off" aria-hidden="true"></i>Sin respuesta</span>
+            <span class="icono-muestra"><i class="bi bi-clock-history" aria-hidden="true"></i>Historial</span>
+        </div>
+    </section>
+
+    <!-- ============================================================ 05 Botones -->
+    <section class="seccion" aria-labelledby="s05">
+        <h2 class="seccion__titulo" id="s05">
+            <span class="seccion__numero">05</span><span class="seccion__nombre">Botones</span>
+            <span class="seccion__nota">Altura 38 px (sm 32 px) · radio 8 px · 14 / 500</span>
+        </h2>
+        <div class="caja desplazable">
+            <div class="matriz-botones">
+                <span></span>
+                <span class="matriz-botones__estado">NORMAL</span>
+                <span class="matriz-botones__estado">HOVER</span>
+                <span class="matriz-botones__estado">FOCO</span>
+                <span class="matriz-botones__estado">DESHABILITADO</span>
+                <span class="matriz-botones__estado">CARGANDO</span>
+
+                <span class="matriz-botones__tipo">Primario</span>
+                <div><button type="button" class="btn btn-primary"><i class="bi bi-broadcast" aria-hidden="true"></i>Monitorear todos</button></div>
+                <div><button type="button" class="btn btn-primary estado-hover" tabindex="-1"><i class="bi bi-broadcast" aria-hidden="true"></i>Monitorear todos</button></div>
+                <div><button type="button" class="btn btn-primary estado-foco" tabindex="-1"><i class="bi bi-broadcast" aria-hidden="true"></i>Monitorear todos</button></div>
+                <div><button type="button" class="btn btn-primary" disabled><i class="bi bi-broadcast" aria-hidden="true"></i>Monitorear todos</button></div>
+                <div><button type="button" class="btn btn-primary" aria-busy="true"><span class="girador" aria-hidden="true"></span>Monitoreando…</button></div>
+
+                <span class="matriz-botones__tipo">Secundario</span>
+                <div><button type="button" class="btn btn-secondary"><i class="bi bi-plus-lg" aria-hidden="true"></i>Agregar</button></div>
+                <div><button type="button" class="btn btn-secondary estado-hover" tabindex="-1"><i class="bi bi-plus-lg" aria-hidden="true"></i>Agregar</button></div>
+                <div><button type="button" class="btn btn-secondary estado-foco" tabindex="-1"><i class="bi bi-plus-lg" aria-hidden="true"></i>Agregar</button></div>
+                <div><button type="button" class="btn btn-secondary" disabled><i class="bi bi-plus-lg" aria-hidden="true"></i>Agregar</button></div>
+                <div><button type="button" class="btn btn-secondary" aria-busy="true"><span class="girador girador--oscuro" aria-hidden="true"></span>Guardando…</button></div>
+
+                <span class="matriz-botones__tipo">Peligro</span>
+                <div><button type="button" class="btn btn-danger"><i class="bi bi-trash3" aria-hidden="true"></i>Eliminar</button></div>
+                <div><button type="button" class="btn btn-danger estado-hover" tabindex="-1"><i class="bi bi-trash3" aria-hidden="true"></i>Eliminar</button></div>
+                <div><button type="button" class="btn btn-danger estado-foco" tabindex="-1"><i class="bi bi-trash3" aria-hidden="true"></i>Eliminar</button></div>
+                <div><button type="button" class="btn btn-danger" disabled><i class="bi bi-trash3" aria-hidden="true"></i>Eliminar</button></div>
+                <div><button type="button" class="btn btn-danger" aria-busy="true"><span class="girador" aria-hidden="true"></span>Eliminando…</button></div>
+
+                <span class="matriz-botones__tipo">Texto</span>
+                <div><button type="button" class="btn btn-link">Ver todas<i class="bi bi-arrow-right" aria-hidden="true"></i></button></div>
+                <div><button type="button" class="btn btn-link estado-hover" tabindex="-1">Ver todas<i class="bi bi-arrow-right" aria-hidden="true"></i></button></div>
+                <div><button type="button" class="btn btn-link estado-foco" tabindex="-1">Ver todas<i class="bi bi-arrow-right" aria-hidden="true"></i></button></div>
+                <div><button type="button" class="btn btn-link" disabled>Ver todas<i class="bi bi-arrow-right" aria-hidden="true"></i></button></div>
+                <span></span>
+
+                <span class="matriz-botones__tipo">Acción de tabla</span>
+                <div class="tabla-acciones justify-content-start">
+                    <button type="button" class="btn-accion btn-accion--principal" aria-label="Monitorear"><i class="bi bi-broadcast" aria-hidden="true"></i></button>
+                    <button type="button" class="btn-accion" aria-label="Editar"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+                    <button type="button" class="btn-accion btn-accion--peligro" aria-label="Eliminar"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                </div>
+                <div class="tabla-acciones justify-content-start">
+                    <button type="button" class="btn-accion estado-hover" tabindex="-1" aria-label="Monitorear (hover)"><i class="bi bi-broadcast" aria-hidden="true"></i></button>
+                    <button type="button" class="btn-accion btn-accion--peligro estado-hover" tabindex="-1" aria-label="Eliminar (hover)"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                </div>
+                <div class="tabla-acciones justify-content-start">
+                    <button type="button" class="btn-accion estado-foco" tabindex="-1" aria-label="Editar (foco)"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+                </div>
+                <div class="tabla-acciones justify-content-start">
+                    <button type="button" class="btn-accion" disabled aria-label="Editar (deshabilitado)"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+                </div>
+                <div class="tabla-acciones justify-content-start">
+                    <button type="button" class="btn-accion btn-accion--cargando" disabled aria-label="Monitoreando"><span class="girador girador--acento" aria-hidden="true"></span></button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ 06 Estado · 07 Navegación -->
+    <div class="rejilla rejilla--2 muestra-dos-columnas">
+        <section class="seccion" aria-labelledby="s06">
+            <h2 class="seccion__titulo" id="s06">
+                <span class="seccion__numero">06</span><span class="seccion__nombre">Estado</span>
+                <span class="seccion__nota">Punto + texto, siempre</span>
+            </h2>
+            <div class="caja d-flex flex-column gap-4 flex-grow-1">
+                <div class="grupo-estados">
+                    <span class="etiqueta-muestra">Badge de dispositivo</span>
+                    <div class="fila-estados">
+                        <span class="insignia-estado insignia-estado--activo"><span class="punto-estado punto-estado--activo"></span>Activo</span>
+                        <span class="insignia-estado insignia-estado--inactivo"><span class="punto-estado punto-estado--inactivo"></span>Inactivo</span>
+                        <span class="insignia-estado"><span class="punto-estado punto-estado--desconocido"></span>Sin monitorear</span>
+                        <span class="insignia-estado insignia-estado--monitoreando"><span class="punto-estado punto-estado--monitoreando punto-estado--pulso"></span>Monitoreando…</span>
+                    </div>
+                </div>
+                <div class="grupo-estados">
+                    <span class="etiqueta-muestra">Punto compacto (tablas, listas)</span>
+                    <div class="fila-estados fila-estados--compacta">
+                        <span class="estado-compacto estado-compacto--activo"><span class="punto-estado punto-estado--activo"></span>Activo</span>
+                        <span class="estado-compacto estado-compacto--inactivo"><span class="punto-estado punto-estado--inactivo"></span>Inactivo</span>
+                        <span class="estado-compacto"><span class="punto-estado punto-estado--desconocido"></span>Sin monitorear</span>
+                    </div>
+                </div>
+                <div class="grupo-estados">
+                    <span class="etiqueta-muestra">Alertas</span>
+                    <div class="fila-estados">
+                        <span class="insignia-estado insignia-estado--pendiente"><span class="punto-estado punto-estado--alerta"></span>Pendiente</span>
+                        <span class="insignia-estado insignia-estado--atendida"><i class="bi bi-check2" aria-hidden="true"></i>Atendida</span>
+                        <span class="insignia-estado insignia-estado--sin-respuesta"><i class="bi bi-wifi-off" aria-hidden="true"></i>Sin respuesta</span>
+                        <span class="contador" aria-label="1 alerta pendiente">1</span>
+                    </div>
+                </div>
+                <p class="nota-muestra m-0">Mientras se hace el ping, el punto emite un anillo que se expande (1.2 s, ease-out, infinito). Con <span class="mono">prefers-reduced-motion</span> queda fijo.</p>
+            </div>
+        </section>
+
+        <section class="seccion" aria-labelledby="s07">
+            <h2 class="seccion__titulo" id="s07">
+                <span class="seccion__numero">07</span><span class="seccion__nombre">Navegación, pestañas y progreso</span>
+            </h2>
+            <div class="navegacion-muestra flex-grow-1">
+                <nav class="nav-lateral" aria-label="Navegación de ejemplo">
+                    <a class="nav-lateral__enlace active" aria-current="page" href="#s07"><i class="bi bi-grid-1x2" aria-hidden="true"></i>Dashboard</a>
+                    <a class="nav-lateral__enlace estado-hover" href="#s07"><i class="bi bi-hdd-network" aria-hidden="true"></i>Dispositivos</a>
+                    <a class="nav-lateral__enlace" href="#s07"><i class="bi bi-activity" aria-hidden="true"></i>Monitoreos</a>
+                    <a class="nav-lateral__enlace" href="#s07"><i class="bi bi-bell" aria-hidden="true"></i>Alertas<span class="contador" aria-label="1 alerta pendiente">1</span></a>
+                    <div class="nav-lateral__leyenda" aria-hidden="true"><span>activo</span><span>hover</span><span>normal</span></div>
+                </nav>
+                <div class="d-flex flex-column gap-3">
+                    <div class="pestanas-muestra">
+                        <ul class="nav nav-underline" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" type="button" role="tab" aria-selected="true">Pendientes<span class="contador contador--suave">1</span></button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" type="button" role="tab" aria-selected="false">Atendidas<span class="contador contador--neutro">4</span></button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="progreso-monitoreo" role="status">
+                        <div class="progreso-monitoreo__cabecera">
+                            <span class="progreso-monitoreo__actual"><span class="punto-estado punto-estado--monitoreando punto-estado--pulso"></span>Comprobando Servidor principal <span class="progreso-monitoreo__detalle">192.168.1.10</span></span>
+                            <span class="progreso-monitoreo__detalle">3 de 6</span>
+                        </div>
+                        <div class="progreso-monitoreo__barra" role="progressbar" aria-label="Progreso de Monitorear todos" aria-valuemin="0" aria-valuemax="6" aria-valuenow="2" aria-valuetext="3 de 6">
+                            <div class="progreso-monitoreo__relleno" style="--progreso: 42%"></div>
+                        </div>
+                        <div class="progreso-monitoreo__fichas">
+                            <span class="ficha ficha--hecha"><i class="bi bi-check2" aria-hidden="true"></i>Mi PC</span>
+                            <span class="ficha ficha--hecha"><i class="bi bi-check2" aria-hidden="true"></i>Router principal</span>
+                            <span class="ficha ficha--actual"><span class="punto-estado punto-estado--sm punto-estado--monitoreando punto-estado--pulso"></span>Servidor principal</span>
+                            <span class="ficha">3 en espera</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ============================================================ 08 Tarjeta de indicador -->
+    <section class="seccion" aria-labelledby="s08">
+        <h2 class="seccion__titulo" id="s08">
+            <span class="seccion__numero">08</span><span class="seccion__nombre">Tarjeta de indicador</span>
+            <span class="seccion__nota">col-3 en escritorio · col-6 en celular</span>
+        </h2>
+        <div class="row g-3">
+            <div class="col-6 col-lg-3">
+                <div class="tarjeta-indicador">
+                    <div class="tarjeta-indicador__cabecera"><span class="tarjeta-indicador__titulo">Total de dispositivos</span><span class="tarjeta-indicador__icono"><i class="bi bi-hdd-network" aria-hidden="true"></i></span></div>
+                    <span class="tarjeta-indicador__valor">6</span>
+                    <span class="tarjeta-indicador__detalle">4 tipos · 3 ubicaciones</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="tarjeta-indicador tarjeta-indicador--activo">
+                    <div class="tarjeta-indicador__cabecera"><span class="tarjeta-indicador__titulo">Activos</span><span class="tarjeta-indicador__icono"><i class="bi bi-check-circle" aria-hidden="true"></i></span></div>
+                    <span class="tarjeta-indicador__valor">4</span>
+                    <span class="tarjeta-indicador__detalle">67 % de la red responde</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="tarjeta-indicador tarjeta-indicador--inactivo">
+                    <div class="tarjeta-indicador__cabecera"><span class="tarjeta-indicador__titulo">Inactivos</span><span class="tarjeta-indicador__icono"><i class="bi bi-x-circle" aria-hidden="true"></i></span></div>
+                    <span class="tarjeta-indicador__valor">1</span>
+                    <span class="tarjeta-indicador__detalle">Servidor principal</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="tarjeta-indicador tarjeta-indicador--alerta">
+                    <div class="tarjeta-indicador__cabecera"><span class="tarjeta-indicador__titulo">Alertas pendientes</span><span class="tarjeta-indicador__icono"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span></div>
+                    <span class="tarjeta-indicador__valor">1</span>
+                    <span class="tarjeta-indicador__detalle">Última: 21/09/2026 10:05</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ 09 Tabla -->
+    <section class="seccion" aria-labelledby="s09">
+        <h2 class="seccion__titulo" id="s09">
+            <span class="seccion__numero">09</span><span class="seccion__nombre">Tabla</span>
+            <span class="seccion__nota">Filas de 56 px · encabezado 40 px · hover #F8FAFC</span>
+        </h2>
+        <div class="tabla-tarjeta">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Estado</th>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">Dirección IP</th>
+                            <th scope="col">Tipo</th>
+                            <th scope="col">Últ. respuesta</th>
+                            <th scope="col">Últ. comprobación</th>
+                            <th scope="col" class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="insignia-estado insignia-estado--activo"><span class="punto-estado punto-estado--activo"></span>Activo</span></td>
+                            <td class="tabla-nombre">Router principal</td>
+                            <td class="texto-mono fw-normal">192.168.1.1</td>
+                            <td><span class="tabla-tipo"><i class="bi bi-router" aria-hidden="true"></i>Router</span></td>
+                            <td class="texto-mono fw-normal">1.8 ms</td>
+                            <td class="tabla-tenue">Hoy, 10:05</td>
+                            <td><div class="tabla-acciones">
+                                <button type="button" class="btn-accion btn-accion--principal" aria-label="Monitorear Router principal"><i class="bi bi-broadcast" aria-hidden="true"></i></button>
+                                <button type="button" class="btn-accion" aria-label="Editar Router principal"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+                                <button type="button" class="btn-accion btn-accion--peligro" aria-label="Eliminar Router principal"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                            </div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="insignia-estado insignia-estado--inactivo"><span class="punto-estado punto-estado--inactivo"></span>Inactivo</span></td>
+                            <td class="tabla-nombre">Servidor principal</td>
+                            <td class="texto-mono fw-normal">192.168.1.10</td>
+                            <td><span class="tabla-tipo"><i class="bi bi-hdd-rack" aria-hidden="true"></i>Servidor</span></td>
+                            <td class="texto-mono fw-normal tabla-error">Sin respuesta</td>
+                            <td class="tabla-tenue">Hoy, 10:05</td>
+                            <td><div class="tabla-acciones">
+                                <button type="button" class="btn-accion btn-accion--principal" aria-label="Monitorear Servidor principal"><i class="bi bi-broadcast" aria-hidden="true"></i></button>
+                                <button type="button" class="btn-accion" aria-label="Editar Servidor principal"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+                                <button type="button" class="btn-accion btn-accion--peligro" aria-label="Eliminar Servidor principal"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                            </div></td>
+                        </tr>
+                        <tr class="fila-monitoreando" aria-busy="true">
+                            <td><span class="insignia-estado insignia-estado--monitoreando"><span class="punto-estado punto-estado--monitoreando punto-estado--pulso"></span>Monitoreando…</span></td>
+                            <td class="tabla-nombre">PC Recepción</td>
+                            <td class="texto-mono fw-normal">192.168.1.35</td>
+                            <td><span class="tabla-tipo"><i class="bi bi-pc-display" aria-hidden="true"></i>Computadora</span></td>
+                            <td class="texto-mono fw-normal tabla-tenue">Enviando ping…</td>
+                            <td class="tabla-tenue">Hoy, 10:05</td>
+                            <td><div class="tabla-acciones">
+                                <button type="button" class="btn-accion btn-accion--cargando" disabled aria-label="Monitoreando PC Recepción"><span class="girador girador--acento" aria-hidden="true"></span></button>
+                                <button type="button" class="btn-accion" disabled aria-label="Editar PC Recepción"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+                                <button type="button" class="btn-accion btn-accion--peligro" disabled aria-label="Eliminar PC Recepción"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                            </div></td>
+                        </tr>
+                        <tr class="estado-hover">
+                            <td><span class="insignia-estado"><span class="punto-estado punto-estado--desconocido"></span>Sin monitorear</span></td>
+                            <td class="tabla-nombre">Servidor de respaldo</td>
+                            <td class="texto-mono fw-normal">192.168.1.11</td>
+                            <td><span class="tabla-tipo"><i class="bi bi-hdd-rack" aria-hidden="true"></i>Servidor</span></td>
+                            <td class="texto-mono fw-normal tabla-tenue"><span aria-label="Sin datos">—</span></td>
+                            <td class="tabla-tenue">Nunca</td>
+                            <td><div class="tabla-acciones">
+                                <button type="button" class="btn-accion btn-accion--principal" aria-label="Monitorear Servidor de respaldo"><i class="bi bi-broadcast" aria-hidden="true"></i></button>
+                                <button type="button" class="btn-accion" aria-label="Editar Servidor de respaldo"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+                                <button type="button" class="btn-accion btn-accion--peligro" aria-label="Eliminar Servidor de respaldo"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                            </div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="pie-muestra"><span>Fila 3 · monitoreando: el punto pulsa, el botón muestra spinner y Editar/Eliminar se deshabilitan.</span><span>Fila 4 · hover.</span></div>
+    </section>
+
+    <!-- ============================================================ 10 Campos de formulario -->
+    <section class="seccion" aria-labelledby="s10">
+        <h2 class="seccion__titulo" id="s10">
+            <span class="seccion__numero">10</span><span class="seccion__nombre">Campos de formulario</span>
+            <span class="seccion__nota">38 px · radio 8 px · etiqueta siempre visible</span>
+        </h2>
+        <div class="caja rejilla-campos">
+            <div>
+                <label class="form-label" for="campo-nombre">Nombre</label>
+                <input class="form-control" id="campo-nombre" type="text" placeholder="Ej. Router principal" aria-describedby="ayuda-nombre">
+                <div class="form-text" id="ayuda-nombre">Normal</div>
+            </div>
+            <div>
+                <label class="form-label" for="campo-ip">Dirección IP</label>
+                <input class="form-control mono estado-foco" id="campo-ip" type="text" value="192.168.1.2" inputmode="decimal" aria-describedby="ayuda-ip">
+                <div class="form-text" id="ayuda-ip">Formato IPv4, p. ej. 192.168.1.25</div>
+            </div>
+            <div>
+                <label class="form-label" for="campo-ip-error">Dirección IP</label>
+                <div class="campo-icono">
+                    <input class="form-control mono is-invalid" id="campo-ip-error" type="text" value="192.168.1.300" aria-invalid="true" aria-describedby="error-ip">
+                    <i class="bi bi-exclamation-circle-fill campo-icono__error" aria-hidden="true"></i>
+                </div>
+                <div class="invalid-feedback d-block" id="error-ip">Dirección IP no válida</div>
+            </div>
+            <div>
+                <label class="form-label" for="campo-ubicacion">Ubicación</label>
+                <input class="form-control" id="campo-ubicacion" type="text" value="Laboratorio" disabled aria-describedby="ayuda-ubicacion">
+                <div class="form-text" id="ayuda-ubicacion">Deshabilitado</div>
+            </div>
+            <div>
+                <label class="form-label" for="campo-tipo">Tipo</label>
+                <div class="campo-icono">
+                    <i class="bi bi-router campo-icono__inicio" aria-hidden="true"></i>
+                    <select class="form-select" id="campo-tipo" aria-describedby="ayuda-tipo">
+                        <option value="computadora">Computadora</option>
+                        <option value="servidor">Servidor</option>
+                        <option value="impresora">Impresora</option>
+                        <option value="router" selected>Router</option>
+                    </select>
+                    <i class="bi bi-chevron-down campo-icono__fin" aria-hidden="true"></i>
+                </div>
+                <div class="form-text" id="ayuda-tipo">Select</div>
+            </div>
+            <div>
+                <label class="form-label" for="campo-buscar">Buscar</label>
+                <div class="campo-icono">
+                    <i class="bi bi-search campo-icono__inicio" aria-hidden="true"></i>
+                    <input class="form-control" id="campo-buscar" type="search" placeholder="Buscar por nombre o IP" aria-describedby="ayuda-buscar">
+                </div>
+                <div class="form-text" id="ayuda-buscar">Buscador con ícono</div>
+            </div>
+            <fieldset class="rejilla-campos__doble m-0">
+                <legend class="form-label float-none">Filtro por estado</legend>
+                <div class="filtro-segmentado" role="group" aria-label="Filtro por estado">
+                    <input type="radio" class="btn-check" name="filtro-estado" id="filtro-todos" checked>
+                    <label class="btn" for="filtro-todos">Todos</label>
+                    <input type="radio" class="btn-check" name="filtro-estado" id="filtro-activos">
+                    <label class="btn" for="filtro-activos">Activos</label>
+                    <input type="radio" class="btn-check" name="filtro-estado" id="filtro-inactivos">
+                    <label class="btn" for="filtro-inactivos">Inactivos</label>
+                    <input type="radio" class="btn-check" name="filtro-estado" id="filtro-sin-monitorear">
+                    <label class="btn btn--ancho" for="filtro-sin-monitorear">Sin monitorear</label>
+                </div>
+                <div class="form-text">btn-group</div>
+            </fieldset>
+        </div>
+    </section>
+
+    <!-- ============================================================ 11 Modal · 12 Notificaciones -->
+    <div class="rejilla rejilla--2 muestra-dos-columnas">
+        <section class="seccion" aria-labelledby="s11">
+            <h2 class="seccion__titulo" id="s11">
+                <span class="seccion__numero">11</span><span class="seccion__nombre">Modal</span>
+                <span class="seccion__nota">Fondo rgba(11,29,46,.5) · sin desenfoque</span>
+            </h2>
+            <div class="marco-modal">
+                <div class="modal-content" aria-hidden="true">
+                    <div class="modal-confirmar">
+                        <span class="modal-confirmar__icono"><i class="bi bi-trash3"></i></span>
+                        <div class="modal-confirmar__cuerpo">
+                            <p class="modal-title m-0">¿Eliminar dispositivo?</p>
+                            <p class="modal-confirmar__texto">Se eliminará <strong>Servidor de respaldo</strong> (<span class="mono">192.168.1.11</span>) y todo su historial de monitoreos. Esta acción no se puede deshacer.</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" tabindex="-1">Cancelar</button>
+                        <button type="button" class="btn btn-danger" tabindex="-1">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="acciones-demo">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modal-eliminar"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>Abrir el modal real</button>
+            </div>
+        </section>
+
+        <section class="seccion" aria-labelledby="s12">
+            <h2 class="seccion__titulo" id="s12">
+                <span class="seccion__numero">12</span><span class="seccion__nombre">Notificaciones</span>
+                <span class="seccion__nota">Toast arriba a la derecha · 4.5 s</span>
+            </h2>
+            <div class="pila-notificaciones">
+                <div class="toast show" role="status" aria-live="off">
+                    <div class="notificacion notificacion--exito">
+                        <span class="notificacion__icono"><i class="bi bi-check-lg" aria-hidden="true"></i></span>
+                        <div class="notificacion__cuerpo"><span class="notificacion__titulo">Monitoreo completado</span><span>4 de 6 dispositivos responden.</span></div>
+                        <button type="button" class="notificacion__cerrar" aria-label="Cerrar notificación"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                    </div>
+                </div>
+                <div class="toast show" role="status" aria-live="off">
+                    <div class="notificacion notificacion--error">
+                        <span class="notificacion__icono"><i class="bi bi-wifi-off" aria-hidden="true"></i></span>
+                        <div class="notificacion__cuerpo"><span class="notificacion__titulo">Servidor principal no respondió</span><span>Se generó una alerta pendiente. <a href="#s12">Ver alerta</a></span></div>
+                        <button type="button" class="notificacion__cerrar" aria-label="Cerrar notificación"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                    </div>
+                </div>
+                <div class="toast show" role="status" aria-live="off">
+                    <div class="notificacion">
+                        <span class="notificacion__icono"><i class="bi bi-plus-lg" aria-hidden="true"></i></span>
+                        <div class="notificacion__cuerpo"><span class="notificacion__titulo">Dispositivo agregado</span><span>Impresora Laboratorio se registró correctamente.</span></div>
+                        <button type="button" class="notificacion__cerrar" aria-label="Cerrar notificación"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="acciones-demo">
+                <button type="button" class="btn btn-secondary btn-sm" data-notificacion="exito"><i class="bi bi-bell" aria-hidden="true"></i>Lanzar: completado</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-notificacion="error"><i class="bi bi-bell" aria-hidden="true"></i>Lanzar: sin respuesta</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-notificacion="info"><i class="bi bi-bell" aria-hidden="true"></i>Lanzar: agregado</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- ============================================================ 13 Estado vacío · 14 Esqueleto -->
+    <div class="rejilla rejilla--2 muestra-dos-columnas">
+        <section class="seccion" aria-labelledby="s13">
+            <h2 class="seccion__titulo" id="s13">
+                <span class="seccion__numero">13</span><span class="seccion__nombre">Estado vacío</span>
+            </h2>
+            <div class="rejilla rejilla--2">
+                <div class="estado-vacio">
+                    <span class="estado-vacio__icono"><i class="bi bi-check2-circle" aria-hidden="true"></i></span>
+                    <h3 class="estado-vacio__titulo">Toda la red responde</h3>
+                    <p class="estado-vacio__texto">No hay alertas pendientes. La última comprobación fue hoy a las 10:05.</p>
+                    <button type="button" class="btn btn-secondary btn-sm">Ver atendidas</button>
+                </div>
+                <div class="estado-vacio estado-vacio--neutro">
+                    <span class="estado-vacio__icono"><i class="bi bi-hdd-network" aria-hidden="true"></i></span>
+                    <h3 class="estado-vacio__titulo">Aún no hay dispositivos</h3>
+                    <p class="estado-vacio__texto">Registra el primer equipo de la red para empezar a monitorearlo.</p>
+                    <button type="button" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg" aria-hidden="true"></i>Agregar dispositivo</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="seccion" aria-labelledby="s14">
+            <h2 class="seccion__titulo" id="s14">
+                <span class="seccion__numero">14</span><span class="seccion__nombre">Esqueleto de carga</span>
+                <span class="seccion__nota">Opacidad 1 → .55, 1.4 s</span>
+            </h2>
+            <div class="d-flex flex-column gap-3" aria-busy="true">
+                <span class="visually-hidden">Cargando…</span>
+                <div class="rejilla rejilla--2 gap-3">
+                    <div class="esqueleto-tarjeta" aria-hidden="true">
+                        <div class="esqueleto-tarjeta__cabecera"><span class="esqueleto" style="width: 110px"></span><span class="esqueleto esqueleto--suave esqueleto--icono"></span></div>
+                        <span class="esqueleto esqueleto--numero"></span>
+                        <span class="esqueleto esqueleto--suave esqueleto--texto" style="width: 130px"></span>
+                    </div>
+                    <div class="esqueleto-tarjeta" aria-hidden="true">
+                        <div class="esqueleto-tarjeta__cabecera"><span class="esqueleto" style="width: 80px"></span><span class="esqueleto esqueleto--suave esqueleto--icono"></span></div>
+                        <span class="esqueleto esqueleto--numero" style="width: 30px"></span>
+                        <span class="esqueleto esqueleto--suave esqueleto--texto" style="width: 100px"></span>
+                    </div>
+                </div>
+                <div class="tabla-tarjeta" aria-hidden="true">
+                    <div class="esqueleto-tabla__encabezado"></div>
+                    <div class="esqueleto-tabla__fila"><span class="esqueleto esqueleto--suave esqueleto--pastilla"></span><span class="esqueleto" style="width: 70%"></span><span class="esqueleto esqueleto--suave"></span><span class="esqueleto esqueleto--suave"></span></div>
+                    <div class="esqueleto-tabla__fila"><span class="esqueleto esqueleto--suave esqueleto--pastilla"></span><span class="esqueleto" style="width: 55%"></span><span class="esqueleto esqueleto--suave"></span><span class="esqueleto esqueleto--suave"></span></div>
+                    <div class="esqueleto-tabla__fila"><span class="esqueleto esqueleto--suave esqueleto--pastilla"></span><span class="esqueleto" style="width: 80%"></span><span class="esqueleto esqueleto--suave"></span><span class="esqueleto esqueleto--suave"></span></div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- Modal real (se abre con "Abrir el modal real"). -->
+<div class="modal fade" id="modal-eliminar" tabindex="-1" aria-labelledby="modal-eliminar-titulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-confirmar">
+                <span class="modal-confirmar__icono" aria-hidden="true"><i class="bi bi-trash3"></i></span>
+                <div class="modal-confirmar__cuerpo">
+                    <h2 class="modal-title" id="modal-eliminar-titulo">¿Eliminar dispositivo?</h2>
+                    <p class="modal-confirmar__texto">Se eliminará <strong>Servidor de respaldo</strong> (<span class="mono">192.168.1.11</span>) y todo su historial de monitoreos. Esta acción no se puede deshacer.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notificaciones reales, arriba a la derecha. -->
+<div class="toast-container notificaciones position-fixed" aria-live="polite" aria-atomic="false"></div>
+
+<template id="plantilla-notificacion">
+    <div class="toast" role="status" aria-live="polite" aria-atomic="true">
+        <div class="notificacion">
+            <span class="notificacion__icono"><i class="bi" aria-hidden="true"></i></span>
+            <div class="notificacion__cuerpo"><span class="notificacion__titulo"></span><span class="notificacion__texto"></span></div>
+            <button type="button" class="notificacion__cerrar" data-bs-dismiss="toast" aria-label="Cerrar notificación"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        </div>
+    </div>
+</template>
+
+<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="js/componentes.js"></script>
 </body>
 </html>
