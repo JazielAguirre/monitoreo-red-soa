@@ -1061,6 +1061,228 @@ comprobarIgual(['opcion' => XSS, 'fila' => XSS, 'titulo' => 'Tiempos de respuest
 $navegador->procesarEventos(0.5);
 comprobarIgual([], $navegador->dialogos, '  no se ejecutó ningún alert()');
 
+// =====================================================================
+seccion('6.6 · Alertas: pestañas, lista y contadores');
+
+/**
+ * Espera a que la lista de alertas termine de cargar.
+ */
+function esperarAlertas(Navegador $navegador): bool
+{
+    $listo = $navegador->esperarHasta("!document.getElementById('lista-alertas').hasAttribute('aria-busy')", 10);
+    $navegador->procesarEventos(0.2);
+    return $listo;
+}
+
+/**
+ * Alertas visibles: [nombre, IP, mensaje, fecha, insignia, botón].
+ */
+function alertasVisibles(Navegador $navegador): array
+{
+    return $navegador->evaluar(<<<'JS'
+        [...document.querySelectorAll('#lista-alertas .alerta')].map((a) => [
+            a.querySelector('.alerta__nombre').textContent,
+            a.querySelector('.alerta__ip')?.textContent ?? null,
+            a.querySelector('.alerta__mensaje').textContent,
+            a.querySelector('.alerta__fecha').textContent,
+            a.querySelector('.alerta__acciones .insignia-estado').textContent,
+            a.querySelector('.alerta__boton')?.textContent ?? null,
+        ])
+    JS) ?? [];
+}
+
+/**
+ * Pestañas y contadores: activa, [pendientes, atendidas], clase del contador de pendientes, menú y URL.
+ */
+function estadoAlertas(Navegador $navegador): array
+{
+    return $navegador->evaluar(<<<'JS'
+        (() => {
+            const contador = (p) => { const c = document.getElementById(`contador-${p}`); return c.hidden ? null : c.textContent; };
+            const menu = document.querySelector('#barra-lateral .js-contador-alertas');
+            return {
+                activa: document.querySelector('[role="tab"][aria-selected="true"]').dataset.pestana,
+                contadores: [contador('pendientes'), contador('atendidas')],
+                suave: document.getElementById('contador-pendientes').classList.contains('contador--suave'),
+                menu: menu.hidden ? null : menu.textContent,
+                url: location.search,
+                panel: document.getElementById('lista-alertas').getAttribute('aria-labelledby'),
+            };
+        })()
+    JS) ?? [];
+}
+
+recargarBaseDeDatos();
+$navegador->tamano(1440, 900);
+$navegador->interceptar('servicios/alertas?', ['retener' => true]);
+abrirPagina($navegador, 'alertas.html');
+$navegador->procesarEventos(0.5);
+comprobarIgual(['true', 2], [$navegador->evaluar("document.getElementById('lista-alertas').getAttribute('aria-busy')"), $navegador->evaluar("document.querySelectorAll('#lista-alertas .alerta--esqueleto').length")], 'mientras carga: esqueleto de dos alertas');
+$navegador->liberar('servicios/alertas?');
+$navegador->quitarIntercepciones();
+comprobar(esperarAlertas($navegador), 'la lista termina de cargar');
+
+comprobarIgual(['activa' => 'pendientes', 'contadores' => ['1', '3'], 'suave' => true, 'menu' => '1', 'url' => '', 'panel' => 'pestana-pendientes'], estadoAlertas($navegador), 'pestaña Pendientes activa con los contadores de GET /alertas/conteo (ámbar si hay pendientes) y el del menú');
+comprobarIgual([['Servidor principal', '192.0.2.10', 'El dispositivo Servidor principal no respondió al monitoreo.', '27/09/2026 09:30', 'Pendiente', 'Marcar como atendida']], alertasVisibles($navegador), '  la alerta pendiente con nombre e IP (de Dispositivos), mensaje, fecha, «Pendiente» y su botón');
+comprobarIgual('Sin respuesta', $navegador->evaluar("document.querySelector('.alerta .insignia-estado--sin-respuesta').textContent"), '  y el tipo «Sin respuesta»');
+comprobarIgual([], $navegador->erroresJs, 'Alertas sin errores de JavaScript');
+capturar($navegador, 'alertas-1440');
+
+clic($navegador, '#pestana-atendidas');
+esperarAlertas($navegador);
+comprobarIgual(['activa' => 'atendidas', 'contadores' => ['1', '3'], 'suave' => true, 'menu' => '1', 'url' => '?pestana=atendidas', 'panel' => 'pestana-atendidas'], estadoAlertas($navegador), 'la pestaña Atendidas se activa y se guarda en la URL');
+comprobarIgual([
+    ['Router principal', '192.168.0.1', 'El dispositivo Router principal no respondió al monitoreo.', '25/09/2026 14:10Atendida el 25/09/2026 14:32', 'Atendida', null],
+    ['Impresora Laboratorio', '192.0.2.20', 'El dispositivo Impresora Laboratorio no respondió al monitoreo.', '24/09/2026 11:05Atendida el 24/09/2026 11:40', 'Atendida', null],
+    ['Servidor principal', '192.0.2.10', 'El dispositivo Servidor principal no respondió al monitoreo.', '22/09/2026 08:15Atendida el 22/09/2026 09:00', 'Atendida', null],
+], alertasVisibles($navegador), '  las 3 atendidas, de la más reciente a la más antigua, con la fecha de atención y sin botón');
+capturar($navegador, 'alertas-atendidas');
+
+$navegador->evaluar("document.getElementById('pestana-atendidas').focus()");
+$navegador->tecla('ArrowLeft');
+esperarAlertas($navegador);
+comprobarIgual(['pendientes', 'pestana-pendientes', '0', '-1'], [estadoAlertas($navegador)['activa'] ?? null, $navegador->evaluar('document.activeElement.id'), $navegador->evaluar("document.getElementById('pestana-pendientes').getAttribute('tabindex')"), $navegador->evaluar("document.getElementById('pestana-atendidas').getAttribute('tabindex')")], 'con el teclado: la flecha izquierda cambia de pestaña y la enfoca (solo la activa está en el orden de tabulación)');
+$navegador->tecla('End');
+esperarAlertas($navegador);
+comprobarIgual(['atendidas', 'pestana-atendidas'], [estadoAlertas($navegador)['activa'] ?? null, $navegador->evaluar('document.activeElement.id')], '  «Fin» va a la última pestaña');
+
+abrirPagina($navegador, 'alertas.html?pestana=atendidas');
+esperarAlertas($navegador);
+comprobarIgual(['atendidas', 3], [estadoAlertas($navegador)['activa'] ?? null, count(alertasVisibles($navegador))], 'la pestaña se lee de la URL');
+abrirPagina($navegador, 'alertas.html?pestana=otra');
+esperarAlertas($navegador);
+comprobarIgual(['pendientes', ''], campos(estadoAlertas($navegador), ['activa', 'url']), 'una pestaña no válida en la URL se ignora y se limpia');
+
+// =====================================================================
+seccion('6.6 · Alertas: marcar como atendida');
+
+peticion('POST', '/alertas', ['dispositivo_id' => 5, 'tipo' => 'sin_respuesta', 'mensaje' => 'El dispositivo Impresora Laboratorio no respondió al monitoreo.']);
+peticion('POST', '/alertas', ['dispositivo_id' => 2, 'tipo' => 'sin_respuesta', 'mensaje' => 'El dispositivo Router principal no respondió al monitoreo.']);
+$idRouter = (int) valorBd('SELECT id FROM alertas WHERE dispositivo_id = 2 AND atendida = 0');
+abrirPagina($navegador, 'alertas.html');
+esperarAlertas($navegador);
+comprobarIgual([['Router principal', 'Impresora Laboratorio', 'Servidor principal'], ['3', '3'], '3'], [array_column(alertasVisibles($navegador), 0), estadoAlertas($navegador)['contadores'] ?? null, estadoAlertas($navegador)['menu'] ?? null], 'con 3 pendientes: la más reciente primero, y los contadores en 3');
+
+$navegador->interceptar('/atender', ['retener' => true]);
+clic($navegador, "#lista-alertas .alerta[data-id=\"$idRouter\"] .alerta__boton");
+$navegador->procesarEventos(0.2);
+clic($navegador, "#lista-alertas .alerta[data-id=\"$idRouter\"] .alerta__boton");
+$r = $navegador->evaluar("(() => { const b = document.querySelector('#lista-alertas .alerta[data-id=\"$idRouter\"] .alerta__boton'); return [b.textContent, b.disabled, b.getAttribute('aria-busy'), !!b.querySelector('.girador')]; })()");
+comprobarIgual(['Marcando…', true, 'true', true], $r, 'en curso: el botón dice «Marcando…», con spinner, deshabilitado (el doble clic no repite la petición)');
+capturar($navegador, 'alertas-marcando');
+$navegador->liberar('/atender');
+$navegador->quitarIntercepciones();
+$navegador->esperarHasta("!document.querySelector('#lista-alertas .alerta[data-id=\"$idRouter\"]') && document.getElementById('contador-pendientes').textContent === '2'", 8);
+$navegador->procesarEventos(0.3);
+comprobarIgual([['Impresora Laboratorio', 'Servidor principal'], ['2', '4'], '2'], [array_column(alertasVisibles($navegador), 0), estadoAlertas($navegador)['contadores'] ?? null, estadoAlertas($navegador)['menu'] ?? null], 'al terminar: la alerta sale de Pendientes y se actualizan los contadores de las pestañas y del menú');
+comprobarIgual([1, 1], [(int) valorBd("SELECT atendida FROM alertas WHERE id = $idRouter"), (int) valorBd("SELECT COUNT(*) FROM alertas WHERE dispositivo_id = 2 AND atendida = 1 AND fecha_atendida IS NOT NULL AND id = $idRouter")], '  la base de datos la guarda como atendida, con su fecha');
+$textos = $navegador->evaluar("[...document.querySelectorAll('.toast')].map((t) => [t.querySelector('.notificacion__titulo').textContent, t.querySelector('.notificacion__texto').textContent, t.getAttribute('role')])");
+comprobarIgual([['Alerta atendida', 'La alerta de Router principal pasó a Atendidas.', 'status']], $textos, '  notificación de éxito (role="status")');
+comprobarIgual('Marcar como atendida la alerta de Impresora Laboratorio', $navegador->evaluar("document.activeElement.getAttribute('aria-label')"), '  el foco pasa al botón de la siguiente alerta');
+cerrarNotificaciones($navegador);
+
+$idImpresora = (int) valorBd('SELECT id FROM alertas WHERE dispositivo_id = 5 AND atendida = 0');
+$navegador->interceptar('/atender', ['codigo' => 500, 'cuerpo' => '{"ok":false,"error":"Error interno del servidor"}']);
+clic($navegador, "#lista-alertas .alerta[data-id=\"$idImpresora\"] .alerta__boton");
+$navegador->esperarHasta("document.querySelector('.toast')", 5);
+$r = $navegador->evaluar("(() => { const b = document.querySelector('#lista-alertas .alerta[data-id=\"$idImpresora\"] .alerta__boton'); return [b?.textContent, b?.disabled, document.querySelector('.toast .notificacion__titulo')?.textContent, document.querySelector('.toast .notificacion__texto')?.textContent, document.querySelector('.toast')?.getAttribute('role')]; })()");
+comprobarIgual(['Marcar como atendida', false, 'No se pudo marcar la alerta', 'Error interno del servidor', 'alert'], $r, 'si falla (500): notificación de error con el mensaje, la alerta sigue en la lista y su botón vuelve a estar disponible');
+$navegador->quitarIntercepciones();
+cerrarNotificaciones($navegador);
+
+peticion('DELETE', '/dispositivos/5'); // sus alertas (la pendiente y una atendida del seed) se borran en cascada
+clic($navegador, "#lista-alertas .alerta[data-id=\"$idImpresora\"] .alerta__boton");
+$navegador->esperarHasta("document.querySelector('.toast') && !document.querySelector('#lista-alertas .alerta[data-id=\"$idImpresora\"]')", 8);
+$navegador->procesarEventos(0.3);
+comprobarIgual(['La alerta no existe', ['Servidor principal'], ['1', '3']], [$navegador->evaluar("document.querySelector('.toast .notificacion__texto')?.textContent"), array_column(alertasVisibles($navegador), 0), estadoAlertas($navegador)['contadores'] ?? null], 'una alerta que ya no existe (404): se avisa, se quita de la lista y se actualizan los contadores');
+cerrarNotificaciones($navegador);
+
+clic($navegador, '#lista-alertas .alerta__boton');
+$navegador->esperarHasta("document.querySelector('#lista-alertas .estado-vacio')", 8);
+$navegador->procesarEventos(0.3);
+$r = $navegador->evaluar("({ titulo: document.querySelector('#lista-alertas .estado-vacio__titulo')?.textContent, exito: !document.querySelector('#lista-alertas .estado-vacio').classList.contains('estado-vacio--neutro'), boton: document.querySelector('#lista-alertas .estado-vacio button')?.textContent.trim(), foco: document.activeElement.id })");
+comprobarIgual(['titulo' => 'Toda la red responde', 'exito' => true, 'boton' => 'Ver atendidas', 'foco' => 'pestana-pendientes'], $r, 'al atender la última: vacío positivo «Toda la red responde» con «Ver atendidas»; el foco vuelve a la pestaña');
+comprobarIgual([['0', '4'], false, null], campos(estadoAlertas($navegador), ['contadores', 'suave', 'menu']), '  contador de pendientes en 0 (gris) y el del menú oculto');
+capturar($navegador, 'alertas-vacio');
+cerrarNotificaciones($navegador);
+clic($navegador, '#lista-alertas .estado-vacio button');
+esperarAlertas($navegador);
+comprobarIgual(['atendidas', 'pestana-atendidas', 4], [estadoAlertas($navegador)['activa'] ?? null, $navegador->evaluar('document.activeElement.id'), count(alertasVisibles($navegador))], '«Ver atendidas» abre la pestaña Atendidas');
+
+// =====================================================================
+seccion('6.6 · Alertas: vacíos y errores');
+
+recargarBaseDeDatos();
+$navegador->interceptar('servicios/alertas?', ['codigo' => 200, 'cuerpo' => '{"ok":true,"data":[]}']);
+$navegador->interceptar('alertas/conteo', ['codigo' => 200, 'cuerpo' => '{"ok":true,"data":{"pendientes":0,"atendidas":0}}']);
+abrirPagina($navegador, 'alertas.html');
+esperarAlertas($navegador);
+comprobarIgual(['Toda la red responde', 0], [$navegador->evaluar("document.querySelector('#lista-alertas .estado-vacio__titulo')?.textContent"), $navegador->evaluar("document.querySelectorAll('#lista-alertas .estado-vacio button').length")], 'sin alertas de ningún tipo: «Toda la red responde» sin «Ver atendidas»');
+clic($navegador, '#pestana-atendidas');
+esperarAlertas($navegador);
+comprobarIgual(['Aún no hay alertas atendidas', true], [$navegador->evaluar("document.querySelector('#lista-alertas .estado-vacio__titulo')?.textContent"), $navegador->evaluar("document.querySelector('#lista-alertas .estado-vacio').classList.contains('estado-vacio--neutro')")], 'Atendidas vacía: su propio vacío (neutro)');
+$navegador->quitarIntercepciones();
+
+$navegador->interceptar('servicios/alertas?', ['fallar' => true]);
+abrirPagina($navegador, 'alertas.html');
+esperarAlertas($navegador);
+comprobarIgual(['No se pudieron cargar las alertas', 'No se pudo conectar con el servidor. Revisa que Apache esté encendido.', 'Reintentar', 'alert', true], [
+    $navegador->evaluar("document.querySelector('#lista-alertas .vista-error__titulo')?.textContent"),
+    $navegador->evaluar("document.querySelector('#lista-alertas .vista-error__texto')?.textContent"),
+    $navegador->evaluar("document.querySelector('#lista-alertas .vista-error button')?.textContent.trim()"),
+    $navegador->evaluar("document.querySelector('#lista-alertas .vista-error')?.getAttribute('role')"),
+    $navegador->evaluar("!!document.querySelector('#barra-lateral .nav-lateral__enlace') && !document.getElementById('pestana-pendientes').hidden"),
+], 'sin conexión: error con el mensaje y «Reintentar»; la estructura y las pestañas siguen visibles');
+capturar($navegador, 'alertas-error');
+$navegador->quitarIntercepciones();
+clic($navegador, '#lista-alertas .vista-error button');
+esperarAlertas($navegador);
+comprobarIgual(1, count(alertasVisibles($navegador)), '«Reintentar», con el servicio de vuelta, carga la lista');
+
+$navegador->interceptar('servicios/dispositivos', ['codigo' => 500, 'cuerpo' => '{"ok":false,"error":"Error interno del servidor"}']);
+$navegador->interceptar('alertas/conteo', ['fallar' => true]);
+abrirPagina($navegador, 'alertas.html');
+esperarAlertas($navegador);
+comprobarIgual([[['Dispositivo 4', null, 'El dispositivo Servidor principal no respondió al monitoreo.', '27/09/2026 09:30', 'Pendiente', 'Marcar como atendida']], [null, null]], [alertasVisibles($navegador), estadoAlertas($navegador)['contadores'] ?? null], 'si fallan Dispositivos y el conteo: la alerta se ve con su mensaje («Dispositivo 4», sin IP) y los contadores se ocultan');
+$navegador->quitarIntercepciones();
+
+// =====================================================================
+seccion('6.6 · Alertas en celular (390 px) y seguridad');
+
+$navegador->tamano(390, 844, true);
+abrirPagina($navegador, 'alertas.html');
+esperarAlertas($navegador);
+$r = $navegador->evaluar(<<<'JS'
+    (() => {
+        const caja = (s) => document.querySelector(s).getBoundingClientRect();
+        return {
+            desborde: document.documentElement.scrollWidth > innerWidth,
+            botonDebajo: caja('.alerta__boton').top >= caja('.alerta__fecha').bottom,
+            altoBoton: Math.round(caja('.alerta__boton').height),
+        };
+    })()
+JS);
+comprobarIgual(['desborde' => false, 'botonDebajo' => true, 'altoBoton' => 44], $r, 'a 390 px: la tarjeta se apila, el botón de 44 px queda debajo del texto y no hay desplazamiento horizontal');
+capturar($navegador, 'alertas-390');
+clic($navegador, '#pestana-atendidas');
+esperarAlertas($navegador);
+comprobarIgual(false, $navegador->evaluar('document.documentElement.scrollWidth > innerWidth'), '  también en Atendidas');
+capturar($navegador, 'alertas-390-atendidas');
+
+$navegador->tamano(1440, 900);
+peticion('POST', '/dispositivos', ['nombre' => XSS, 'ip' => '192.0.2.99', 'tipo' => 'servidor', 'ubicacion' => 'Laboratorio']);
+$idXss = (int) valorBd("SELECT id FROM dispositivos WHERE ip = '192.0.2.99'");
+peticion('POST', "/monitoreo/$idXss");
+abrirPagina($navegador, 'alertas.html');
+esperarAlertas($navegador);
+$r = $navegador->evaluar("(() => { const a = document.querySelector('#lista-alertas .alerta'); return { nombre: a.querySelector('.alerta__nombre').textContent, mensaje: a.querySelector('.alerta__mensaje').textContent, etiqueta: a.querySelector('.alerta__boton').getAttribute('aria-label'), imagenes: document.querySelectorAll('#contenido img').length }; })()");
+comprobarIgual(['nombre' => XSS, 'mensaje' => 'El dispositivo ' . XSS . ' no respondió al monitoreo.', 'etiqueta' => 'Marcar como atendida la alerta de ' . XSS, 'imagenes' => 0], $r, 'Alertas: el nombre con HTML se muestra como texto en el título, el mensaje y la etiqueta del botón, sin crear <img>');
+clic($navegador, '#lista-alertas .alerta .alerta__boton');
+$navegador->esperarHasta("document.querySelector('.toast')", 8);
+comprobarIgual(['La alerta de ' . XSS . ' pasó a Atendidas.', 0], [$navegador->evaluar("document.querySelector('.toast .notificacion__texto').textContent"), $navegador->evaluar("document.querySelectorAll('.toast img').length")], '  también en la notificación');
+$navegador->procesarEventos(0.5);
+comprobarIgual([], $navegador->dialogos, '  no se ejecutó ningún alert()');
+
 $navegador->cerrar();
 echo "\nCapturas: $carpetaCapturas\n";
 terminarPruebas();

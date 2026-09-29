@@ -1025,6 +1025,83 @@
             </nav>
         </div>
     </section>
+    <!-- ============================================================ 29 Alerta (Alertas) -->
+    <section class="seccion" aria-labelledby="s29">
+        <h2 class="seccion__titulo" id="s29">
+            <span class="seccion__numero">29</span><span class="seccion__nombre">Alerta con pestañas</span>
+            <span class="seccion__nota">Alertas · pendiente con «Marcar como atendida» · atendida con su fecha de atención · en celular el botón queda debajo del texto</span>
+        </h2>
+        <div class="panel-alertas">
+            <div class="panel-alertas__pestanas">
+                <div class="nav nav-underline" role="tablist" aria-label="Pestañas de ejemplo">
+                    <button class="nav-link active" type="button" role="tab" aria-selected="true">Pendientes<span class="contador contador--suave">1</span></button>
+                    <button class="nav-link" type="button" role="tab" aria-selected="false" tabindex="-1">Atendidas<span class="contador contador--neutro">3</span></button>
+                </div>
+            </div>
+            <ul class="lista-alertas-completa">
+                <li class="alerta">
+                    <span class="alerta__icono"><i class="bi bi-wifi-off" aria-hidden="true"></i></span>
+                    <div class="alerta__cuerpo">
+                        <div class="alerta__cabecera"><p class="alerta__nombre" role="presentation">Servidor principal</p><span class="alerta__ip">192.168.1.10</span><span class="insignia-estado insignia-estado--sin-respuesta"><i class="bi bi-wifi-off" aria-hidden="true"></i>Sin respuesta</span></div>
+                        <p class="alerta__mensaje">El dispositivo Servidor principal no respondió al monitoreo.</p>
+                        <span class="alerta__fecha"><i class="bi bi-clock" aria-hidden="true"></i><span class="mono">21/09/2026 10:05</span></span>
+                    </div>
+                    <div class="alerta__acciones">
+                        <span class="insignia-estado insignia-estado--pendiente"><span class="punto-estado punto-estado--alerta"></span>Pendiente</span>
+                        <button type="button" class="btn btn-secondary alerta__boton"><i class="bi bi-check2" aria-hidden="true"></i>Marcar como atendida</button>
+                    </div>
+                </li>
+                <li class="alerta">
+                    <span class="alerta__icono"><i class="bi bi-wifi-off" aria-hidden="true"></i></span>
+                    <div class="alerta__cuerpo">
+                        <div class="alerta__cabecera"><p class="alerta__nombre" role="presentation">Router principal</p><span class="alerta__ip">192.168.1.1</span><span class="insignia-estado insignia-estado--sin-respuesta"><i class="bi bi-wifi-off" aria-hidden="true"></i>Sin respuesta</span></div>
+                        <p class="alerta__mensaje">El dispositivo Router principal no respondió al monitoreo.</p>
+                        <span class="alerta__fecha"><i class="bi bi-clock" aria-hidden="true"></i><span class="mono">21/09/2026 10:04</span></span>
+                    </div>
+                    <div class="alerta__acciones">
+                        <span class="insignia-estado insignia-estado--pendiente"><span class="punto-estado punto-estado--alerta"></span>Pendiente</span>
+                        <button type="button" class="btn btn-secondary alerta__boton" disabled aria-busy="true"><span class="girador girador--oscuro" aria-hidden="true"></span>Marcando…</button>
+                    </div>
+                </li>
+                <li class="alerta alerta--atendida">
+                    <span class="alerta__icono"><i class="bi bi-wifi-off" aria-hidden="true"></i></span>
+                    <div class="alerta__cuerpo">
+                        <div class="alerta__cabecera"><p class="alerta__nombre" role="presentation">PC Recepción</p><span class="alerta__ip">192.168.1.35</span><span class="insignia-estado insignia-estado--sin-respuesta"><i class="bi bi-wifi-off" aria-hidden="true"></i>Sin respuesta</span></div>
+                        <p class="alerta__mensaje">El dispositivo PC Recepción no respondió al monitoreo.</p>
+                        <span class="alerta__fecha"><i class="bi bi-clock" aria-hidden="true"></i><span class="mono">20/09/2026 17:48</span><span class="alerta__atendida">Atendida el 20/09/2026 18:02</span></span>
+                    </div>
+                    <div class="alerta__acciones">
+                        <span class="insignia-estado insignia-estado--atendida"><i class="bi bi-check2" aria-hidden="true"></i>Atendida</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ============================================================ 30 Vacíos de Alertas -->
+    <section class="seccion" aria-labelledby="s30">
+        <h2 class="seccion__titulo" id="s30">
+            <span class="seccion__numero">30</span><span class="seccion__nombre">Alertas sin elementos</span>
+            <span class="seccion__nota">Pendientes vacía: vacío positivo con «Ver atendidas» (si hay atendidas) · Atendidas vacía: vacío neutro sin acción</span>
+        </h2>
+        <div class="rejilla rejilla--2">
+            <div class="panel-alertas">
+                <div class="estado-vacio bloque-sin-borde">
+                    <span class="estado-vacio__icono"><i class="bi bi-check2-circle" aria-hidden="true"></i></span>
+                    <h3 class="estado-vacio__titulo">Toda la red responde</h3>
+                    <p class="estado-vacio__texto">No hay alertas pendientes. Cuando un dispositivo deje de responder, aparecerá aquí.</p>
+                    <button type="button" class="btn btn-secondary btn-sm">Ver atendidas</button>
+                </div>
+            </div>
+            <div class="panel-alertas">
+                <div class="estado-vacio estado-vacio--neutro bloque-sin-borde">
+                    <span class="estado-vacio__icono"><i class="bi bi-inbox" aria-hidden="true"></i></span>
+                    <h3 class="estado-vacio__titulo">Aún no hay alertas atendidas</h3>
+                    <p class="estado-vacio__texto">Las alertas que marques como atendidas se guardan aquí.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 </main>
 
 <!-- Modal real (se abre con "Abrir el modal real"). -->

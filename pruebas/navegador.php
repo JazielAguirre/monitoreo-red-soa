@@ -470,7 +470,7 @@ final class Navegador
      */
     public function tecla(string $nombre): void
     {
-        $codigos = ['Escape' => 27, 'Tab' => 9, 'Enter' => 13];
+        $codigos = ['Escape' => 27, 'Tab' => 9, 'Enter' => 13, 'End' => 35, 'Home' => 36, 'ArrowLeft' => 37, 'ArrowRight' => 39];
         $base = ['key' => $nombre, 'code' => $nombre, 'windowsVirtualKeyCode' => $codigos[$nombre] ?? 0];
         $this->enviar('Input.dispatchKeyEvent', ['type' => 'keyDown'] + $base);
         $this->enviar('Input.dispatchKeyEvent', ['type' => 'keyUp'] + $base);

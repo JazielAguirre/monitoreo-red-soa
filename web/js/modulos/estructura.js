@@ -188,14 +188,15 @@ function conectarMenu(boton, menu, fondo) {
 }
 
 /**
- * Pide el conteo de alertas y actualiza todos los contadores del menú.
+ * Actualiza todos los contadores del menú con las pendientes: las que se indican o,
+ * si no se indican, las que devuelva GET /alertas/conteo.
  * Si falla, los contadores se ocultan (la página sigue funcionando).
  */
-export async function actualizarContadorAlertas() {
+export async function actualizarContadorAlertas(conocidas = null) {
     let pendientes = 0;
 
     try {
-        pendientes = (await api.alertas.conteo()).pendientes;
+        pendientes = conocidas ?? (await api.alertas.conteo()).pendientes;
     } catch {
         pendientes = 0;
     }

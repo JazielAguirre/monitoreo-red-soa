@@ -3083,6 +3083,194 @@ a.encabezado-movil__boton:hover {
     }
 }
 
+/* ============================================================ Alertas (4a, 4b) */
+
+.panel-alertas {
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-1);
+    overflow: hidden;
+}
+
+.panel-alertas__pestanas {
+    padding: 0 24px;
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.panel-alertas__pestanas .nav-underline {
+    --bs-nav-underline-gap: 28px;
+    --bs-nav-link-padding-y: 14px;
+    border-bottom: 0;
+}
+
+#lista-alertas:focus {
+    outline: 0;
+}
+
+.panel-alertas__nota {
+    margin: 0;
+    font-size: var(--texto-secundario-tamano);
+}
+
+.lista-alertas-completa {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.alerta {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px;
+    border-top: 1px solid var(--color-borde-suave);
+}
+
+.alerta:first-child {
+    border-top: 0;
+}
+
+.alerta__icono {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+    color: var(--color-inactivo-texto);
+    background-color: var(--color-inactivo-fondo);
+    border-radius: var(--radio-icono);
+}
+
+.alerta--atendida .alerta__icono {
+    color: var(--color-texto-2);
+    background-color: var(--color-desconocido-fondo);
+}
+
+.alerta__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.alerta__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    min-width: 0;
+}
+
+.alerta__nombre {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: 15px;
+    line-height: 22px;
+    font-weight: 600;
+}
+
+.alerta__ip {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: 12.5px;
+    color: var(--color-texto-2);
+}
+
+.alerta--atendida .insignia-estado--sin-respuesta {
+    --insignia-texto: var(--color-desconocido-texto);
+    border-color: var(--color-borde);
+}
+
+.alerta__mensaje {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: var(--texto-cuerpo-tamano);
+    line-height: 20px;
+    color: var(--color-desconocido-texto);
+    text-wrap: pretty;
+}
+
+.alerta__fecha {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    font-size: 12.5px;
+    color: var(--color-texto-2);
+}
+
+/* "· Atendida el …" en la misma línea; en celular, en su propia línea y sin el punto. */
+.alerta__atendida::before {
+    content: "·";
+    margin-right: 8px;
+}
+
+.alerta__acciones {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.alerta__boton {
+    white-space: nowrap;
+}
+
+.alerta--esqueleto .esqueleto--icono {
+    width: 40px;
+    height: 40px;
+}
+
+.alerta--esqueleto .alerta__cuerpo {
+    gap: 10px;
+}
+
+.alerta__esqueleto-boton {
+    width: 180px;
+    height: 38px;
+    border-radius: var(--radio);
+}
+
+/* En celular (sin diseño de referencia): la tarjeta se apila y el botón queda debajo del texto. */
+@media (max-width: 575.98px) {
+    .panel-alertas__pestanas {
+        padding: 0 16px;
+    }
+
+    .alerta {
+        grid-template-columns: 40px minmax(0, 1fr);
+        align-items: start;
+        gap: 12px 14px;
+        padding: 16px;
+    }
+
+    .alerta__acciones {
+        grid-column: 1 / -1;
+        justify-content: space-between;
+    }
+
+    .alerta--atendida .alerta__acciones {
+        grid-column: 2;
+    }
+
+    .alerta__atendida {
+        flex-basis: 100%;
+    }
+
+    .alerta__atendida::before {
+        content: none;
+    }
+
+    .alerta__boton {
+        height: var(--alto-control-tactil);
+    }
+
+    .alerta__esqueleto-boton {
+        display: none;
+    }
+}
+
 /* ============================================================ Movimiento reducido */
 
 /* El pulso y el esqueleto quedan fijos; el spinner gira más lento, porque es lo
