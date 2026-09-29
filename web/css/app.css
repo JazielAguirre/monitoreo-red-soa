@@ -2055,6 +2055,9 @@ a.encabezado-movil__boton:hover {
 
 .modal-formulario {
     --bs-modal-width: var(--ancho-modal-formulario);
+    /* Contenedor para la versión "hoja inferior": se decide por el ancho del modal
+       (en la pantalla, el de la ventana; en componentes.html, el del marco de 390 px). */
+    container: hoja / inline-size;
 }
 
 .modal-formulario__asa {
@@ -2308,7 +2311,7 @@ a.encabezado-movil__boton:hover {
 }
 
 /* El modal de formulario es una hoja inferior en el celular (2f). */
-@media (max-width: 575.98px) {
+@container hoja (max-width: 575.98px) {
     .modal-dialog-hoja {
         display: flex;
         align-items: flex-end;

@@ -7,6 +7,7 @@
 import { mostrarNotificacion } from './modulos/notificaciones.js';
 import { crearError, mostrarBloque } from './modulos/vistas.js';
 import { actualizarContadorAlertas, llenarBarraLateral, llenarEncabezadoMovil } from './modulos/estructura.js';
+import { crearProgreso } from './modulos/monitorear-todos.js';
 
 const NOTIFICACIONES_DE_EJEMPLO = {
     exito: { tipo: 'exito', titulo: 'Monitoreo completado', texto: '4 de 6 dispositivos responden.' },
@@ -51,4 +52,23 @@ if (barraDemo && encabezadoDemo) {
     boton.setAttribute('aria-label', 'Cerrar el menú');
     boton.firstElementChild.className = 'bi bi-x-lg';
     actualizarContadorAlertas();
+}
+
+// Progreso como en 2d: dos comprobados, el tercero en curso y el resto en espera.
+const contenedorProgreso = document.getElementById('demo-progreso');
+if (contenedorProgreso) {
+    const lista = [
+        { nombre: 'Mi PC', ip: '127.0.0.1' },
+        { nombre: 'Router principal', ip: '192.168.1.1' },
+        { nombre: 'Servidor principal', ip: '192.168.1.10' },
+        { nombre: 'Servidor de respaldo', ip: '192.168.1.11' },
+        { nombre: 'Impresora Laboratorio', ip: '192.168.1.20' },
+        { nombre: 'PC Recepción', ip: '192.168.1.35' },
+    ];
+    const progreso = crearProgreso(contenedorProgreso);
+    progreso.mostrar(lista);
+    progreso.actualizar(2, {
+        0: { monitoreo: { estado: 'activo', tiempo_respuesta_ms: 0.31 } },
+        1: { monitoreo: { estado: 'activo', tiempo_respuesta_ms: 1.9 } },
+    });
 }

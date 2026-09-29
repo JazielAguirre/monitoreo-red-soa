@@ -534,8 +534,9 @@
 
 /* ============================================================ 11 Modal */
 
-.marco-modal {
-    /* La vista estática no está dentro de .modal, donde Bootstrap define estas variables. */
+.marco-modal,
+.hoja-demo {
+    /* Las vistas estáticas no están dentro de .modal, donde Bootstrap define estas variables. */
     --bs-modal-bg: var(--color-superficie);
     --bs-modal-color: var(--color-texto);
     --bs-modal-border-width: 0;
@@ -543,6 +544,9 @@
     --bs-modal-box-shadow: var(--sombra-3);
     --bs-modal-footer-gap: 8px;
     --bs-modal-footer-border-width: 0;
+}
+
+.marco-modal {
     position: relative;
     display: grid;
     place-items: center;
@@ -632,6 +636,33 @@
     display: flex;
 }
 
+/* ============================================================ 18–22 Piezas de Dispositivos */
+
+.demo-tarjetas-movil {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+}
+
+.hoja-demo {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background-color: var(--color-fondo-modal);
+}
+
+.hoja-demo .modal-dialog {
+    width: 100%;
+    max-width: none;
+}
+
+.marco-movil--hoja {
+    height: 700px;
+}
+
 /* ============================================================ Pantallas medianas y celular */
 
 @media (max-width: 1199.98px) {
@@ -643,6 +674,7 @@
 @media (max-width: 991.98px) {
     .rejilla--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .rejilla--2.rejilla-tres { grid-template-columns: 1fr; }
+    .demo-tarjetas-movil { grid-template-columns: 1fr; }
     .rejilla-campos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .navegacion-muestra { grid-template-columns: 1fr; }
     .muestra-dos-columnas { grid-template-columns: 1fr; }
