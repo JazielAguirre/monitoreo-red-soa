@@ -32,6 +32,7 @@ sudo /opt/lampp/lampp startmysql
 /opt/lampp/bin/php pruebas/dispositivos.php
 /opt/lampp/bin/php pruebas/alertas.php
 /opt/lampp/bin/php pruebas/monitoreo.php
+/opt/lampp/bin/php pruebas/interfaz.php   # abre su propio Chrome headless (perfil temporal); se omite si no hay Chrome
 
 # Colores fuera de tokens.css, solo en estilos (CSS, JS, style="" y <style>). Debe no imprimir nada.
 # Los hexadecimales como texto visible en componentes.html son documentación y no se revisan.
@@ -62,10 +63,10 @@ servicios/
 └── auth/          index.php               → dueño de la tabla usuarios
 web/
 ├── css/         tokens.css (variables de diseño, único archivo con colores), app.css (componentes y Bootstrap), componentes.css (solo la página de muestra)
-├── js/          api.js (único punto de acceso a la API) + un archivo por página (componentes.js: demostraciones de la página de muestra)
+├── js/          api.js (único punto de acceso a la API, URL base relativa) + modulos/ (formatos, notificaciones, vistas, estructura, gráficas…) + un módulo ES por página
 ├── vendor/      bootstrap, bootstrap-icons, chart.js, fuentes Inter y JetBrains Mono
 └── *.html       login, index (dashboard), dispositivos, monitoreos, alertas, componentes
-pruebas/         ayudas.php + un script por servicio (dispositivos.php, ...). Solo línea de comandos; no accesible por HTTP
+pruebas/         ayudas.php + un script por servicio (dispositivos.php, ...) + interfaz.php con navegador.php (cliente del protocolo de Chrome). Solo línea de comandos; no accesible por HTTP
 Reglas SOA (no negociables)
 Cada servicio solo lee y escribe sus propias tablas.
 Si un servicio necesita datos o acciones de otro, los pide por HTTP usando servicios/comun/http.php. Nunca hace require del código de otro servicio ni consultas SQL a tablas ajenas.
@@ -73,6 +74,7 @@ Ejemplo: Monitoreo obtiene la IP con GET /dispositivos/{id}, actualiza el estado
 comun/http.php: llamarServicio() usa streams de PHP (no curl), espera TIEMPO_ESPERA_SERVICIOS (config.php) y envía X-Servicio-Clave. Si el otro servicio no responde o no devuelve el JSON del formato común, lanza ErrorDeComunicacion, que el index.php responde como 502 "No se pudo comunicar con el Servicio de {nombre}".
 Archivo de fallo simulado (pruebas/.fallo-simulado.json, leído por comun/http.php): solo lo usan las pruebas para simular que Dispositivos o Alertas no responde. Caduca solo (máximo 60 s), solo admite modos fijos hacia 127.0.0.1 o web/index.html, y no puede activarse por HTTP (ningún endpoint escribe archivos y pruebas/ responde 404). Detalle en docs/PLAN.md, "Pruebas automáticas".
 La interfaz nunca accede a la base de datos: todo pasa por web/js/api.js.
+Seguridad en la interfaz: los datos de la API se insertan con textContent o pasan por escaparHtml() de web/js/modulos/formatos.js; nunca directo en innerHTML. Las fechas de la API se separan con partesFecha(), nunca con new Date(texto) (Safari del iPhone las toma como inválidas). Los formularios usan novalidate: los mensajes de validación vienen solo de la API.
 comun/ contiene solo infraestructura (conexión, respuestas, cliente HTTP, autenticación). Nunca lógica de negocio.
 Las URLs base y la clave interna viven en comun/config.php. Nada hardcodeado en los servicios.
 Patrón de un servicio (lo fija Dispositivos): index.php declara las rutas y llama a despachar() de comun/enrutador.php dentro de try/catch; endpoints.php tiene una función por endpoint; validacion.php las reglas; datos.php todo el SQL y la conversión de tipos. comun/peticion.php lee método, ruta, parámetros de la URL (filtroOpcional()) y cuerpo JSON.

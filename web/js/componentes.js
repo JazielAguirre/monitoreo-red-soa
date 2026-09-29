@@ -1,69 +1,37 @@
 /*
  * Demostraciones de web/componentes.html (página de muestra del sistema de diseño):
- * lanza notificaciones reales arriba a la derecha. El modal se abre solo con los
- * atributos data-bs-* de Bootstrap.
- * En la Fase 6, mostrarNotificacion() pasa al módulo común de la interfaz.
+ * lanza notificaciones reales y muestra el bloque de error con "Reintentar".
+ * El modal se abre solo con los atributos data-bs-* de Bootstrap.
  */
 
-'use strict';
+import { mostrarNotificacion } from './modulos/notificaciones.js';
+import { crearError, mostrarBloque } from './modulos/vistas.js';
 
 const NOTIFICACIONES_DE_EJEMPLO = {
-    exito: {
-        variante: 'notificacion--exito',
-        icono: 'bi-check-lg',
-        titulo: 'Monitoreo completado',
-        texto: '4 de 6 dispositivos responden.',
-    },
+    exito: { tipo: 'exito', titulo: 'Monitoreo completado', texto: '4 de 6 dispositivos responden.' },
     error: {
-        variante: 'notificacion--error',
+        tipo: 'error',
         icono: 'bi-wifi-off',
         titulo: 'Servidor principal no respondió',
         texto: 'Se generó una alerta pendiente.',
+        enlace: { texto: 'Ver alerta', href: 'alertas.html' },
     },
-    info: {
-        variante: '',
-        icono: 'bi-plus-lg',
-        titulo: 'Dispositivo agregado',
-        texto: 'Impresora Laboratorio se registró correctamente.',
-    },
+    info: { tipo: 'info', icono: 'bi-plus-lg', titulo: 'Dispositivo agregado', texto: 'Impresora Laboratorio se registró correctamente.' },
 };
 
-/**
- * Tiempo visible de una notificación, leído del token --duracion-notificacion
- * (por ejemplo "4.5s"), para no escribirlo dos veces.
- */
-function duracionNotificacionMs() {
-    const valor = getComputedStyle(document.documentElement).getPropertyValue('--duracion-notificacion').trim();
-    const segundos = parseFloat(valor);
-
-    return Number.isFinite(segundos) ? segundos * 1000 : 4500;
+function mostrarErrorDeEjemplo(contenedor) {
+    mostrarBloque(contenedor, crearError({
+        titulo: 'No se pudieron cargar los dispositivos',
+        mensaje: 'No se pudo conectar con el servidor. Revisa que Apache esté encendido.',
+        alReintentar: () => mostrarNotificacion({ tipo: 'info', titulo: 'Reintentando…', texto: 'En las pantallas, aquí se vuelven a pedir los datos.' }),
+    }));
 }
 
-/**
- * Muestra una notificación arriba a la derecha y la elimina del DOM al ocultarse.
- */
-function mostrarNotificacion({ variante, icono, titulo, texto }) {
-    const plantilla = document.getElementById('plantilla-notificacion');
-    const contenedor = document.querySelector('.toast-container.notificaciones');
-    const toast = plantilla.content.firstElementChild.cloneNode(true);
-
-    const notificacion = toast.querySelector('.notificacion');
-    if (variante) {
-        notificacion.classList.add(variante);
-    }
-    toast.querySelector('.notificacion__icono .bi').classList.add(icono);
-    toast.querySelector('.notificacion__titulo').textContent = titulo;
-    toast.querySelector('.notificacion__texto').textContent = texto;
-
-    contenedor.append(toast);
-    toast.addEventListener('hidden.bs.toast', () => toast.remove());
-    bootstrap.Toast.getOrCreateInstance(toast, { delay: duracionNotificacionMs() }).show();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-notificacion]').forEach((boton) => {
-        boton.addEventListener('click', () => {
-            mostrarNotificacion(NOTIFICACIONES_DE_EJEMPLO[boton.dataset.notificacion]);
-        });
-    });
+document.querySelectorAll('[data-notificacion]').forEach((boton) => {
+    boton.addEventListener('click', () => mostrarNotificacion(NOTIFICACIONES_DE_EJEMPLO[boton.dataset.notificacion]));
 });
+
+const contenedorError = document.getElementById('demo-error');
+if (contenedorError) {
+    mostrarErrorDeEjemplo(contenedorError);
+}

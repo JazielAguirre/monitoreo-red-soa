@@ -632,6 +632,21 @@
             </div>
         </section>
     </div>
+
+    <!-- ============================================================ 15 Error al cargar -->
+    <section class="seccion" aria-labelledby="s15">
+        <h2 class="seccion__titulo" id="s15">
+            <span class="seccion__numero">15</span><span class="seccion__nombre">Error al cargar</span>
+            <span class="seccion__nota">En el lugar del contenido · mensaje claro · «Reintentar»</span>
+        </h2>
+        <div class="rejilla rejilla--2">
+            <div id="demo-error"></div>
+            <div class="caja d-flex flex-column gap-2 justify-content-center">
+                <p class="texto-secundario m-0">Si una vista no puede cargar sus datos (servicio caído, MySQL apagado, sin conexión), muestra este bloque con el mensaje que devuelve la API. Nunca queda una pantalla en blanco.</p>
+                <p class="texto-secundario m-0">Los errores de una acción (guardar, eliminar, monitorear) se muestran como notificación.</p>
+            </div>
+        </div>
+    </section>
 </main>
 
 <!-- Modal real (se abre con "Abrir el modal real"). -->
@@ -653,20 +668,8 @@
     </div>
 </div>
 
-<!-- Notificaciones reales, arriba a la derecha. -->
-<div class="toast-container notificaciones position-fixed" aria-live="polite" aria-atomic="false"></div>
-
-<template id="plantilla-notificacion">
-    <div class="toast" role="status" aria-live="polite" aria-atomic="true">
-        <div class="notificacion">
-            <span class="notificacion__icono"><i class="bi" aria-hidden="true"></i></span>
-            <div class="notificacion__cuerpo"><span class="notificacion__titulo"></span><span class="notificacion__texto"></span></div>
-            <button type="button" class="notificacion__cerrar" data-bs-dismiss="toast" aria-label="Cerrar notificación"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
-        </div>
-    </div>
-</template>
 
 <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="js/componentes.js"></script>
+<script type="module" src="js/componentes.js"></script>
 </body>
 </html>

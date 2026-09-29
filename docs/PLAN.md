@@ -39,6 +39,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - Cada script recarga la base de datos al empezar, para que los resultados no dependan de pruebas anteriores. **Borra los datos que hayas agregado a mano.**
 - Se ejecutan con `/opt/lampp/bin/php pruebas/<servicio>.php` (en Windows, `C:/xampp/php/php.exe`) y terminan con código de salida distinto de 0 si algo falla.
 - `pruebas/` no debe ser accesible por HTTP.
+- `pruebas/interfaz.php` prueba las pantallas con un Chrome headless propio (`pruebas/navegador.php`, cliente del protocolo de depuración escrito en PHP): perfil temporal, puerto elegido por Chrome, nunca se conecta al Chrome del usuario, y se cierra y borra el perfil al terminar, también ante un error o Ctrl+C. Emula 390 px y `prefers-reduced-motion`, y simula servicios caídos interceptando las peticiones de la página. Si no hay Chrome, Chromium o Edge, se omite con un aviso.
 
 **Archivo de fallo simulado (`pruebas/.fallo-simulado.json`).** Sirve para probar el 502 de Monitoreo cuando Dispositivos o Alertas no responde, sin apagar nada:
 

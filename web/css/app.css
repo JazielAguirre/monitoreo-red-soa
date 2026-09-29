@@ -1209,6 +1209,58 @@ a:focus-visible {
     font-size: 24px;
 }
 
+/* ============================================================ Error al cargar (con "Reintentar") */
+
+.vista-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 36px 24px;
+    text-align: center;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+}
+
+.vista-error__icono {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+    color: var(--color-inactivo-texto);
+    background-color: var(--color-inactivo-fondo);
+    border-radius: 50%;
+}
+
+.vista-error__titulo {
+    margin: 8px 0 0;
+    font-size: var(--texto-titulo-tarjeta-tamano);
+    line-height: var(--texto-titulo-tarjeta-alto);
+    font-weight: 600;
+}
+
+.vista-error__texto {
+    max-width: 360px;
+    margin: 0;
+    font-size: var(--texto-secundario-tamano);
+    line-height: 19px;
+    color: var(--color-texto-2);
+    text-wrap: pretty;
+}
+
+.vista-error > .btn {
+    margin-top: 6px;
+}
+
+/* Estado vacío o error dentro de una tarjeta que ya tiene borde. */
+.bloque-sin-borde {
+    background-color: transparent;
+    border: 0;
+    border-radius: 0;
+}
+
 /* ============================================================ Esqueleto de carga */
 
 .esqueleto {
