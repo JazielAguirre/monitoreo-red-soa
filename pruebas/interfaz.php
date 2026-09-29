@@ -1283,6 +1283,54 @@ comprobarIgual(['La alerta de ' . XSS . ' pasó a Atendidas.', 0], [$navegador->
 $navegador->procesarEventos(0.5);
 comprobarIgual([], $navegador->dialogos, '  no se ejecutó ningún alert()');
 
+// =====================================================================
+seccion('6.7 · Teclado: foco visible en todas las pantallas');
+
+recargarBaseDeDatos();
+$navegador->tamano(1440, 900);
+$paginasTeclado = [
+    'index.html' => 'esperarDashboard',
+    'dispositivos.html' => null,
+    'monitoreos.html?dispositivo=4' => 'esperarMonitoreos',
+    'alertas.html' => 'esperarAlertas',
+];
+foreach ($paginasTeclado as $pagina => $espera) {
+    abrirPagina($navegador, $pagina);
+    if ($espera !== null) {
+        $espera($navegador);
+    } else {
+        $navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8);
+    }
+    $sinFoco = [];
+    $recorridos = [];
+    for ($i = 0; $i < 40; $i++) {
+        $navegador->tecla('Tab');
+        $navegador->procesarEventos(0.2); // la sombra de foco de los campos tiene una transición de 0.15 s
+        // Un indicador visible: contorno, sombra de foco o un cambio de borde propio del control.
+        $r = $navegador->evaluar(<<<'JS'
+            (() => {
+                const el = document.activeElement;
+                if (!el || el === document.body) return null;
+                const e = getComputedStyle(el);
+                const visible = (e.outlineStyle !== 'none' && parseFloat(e.outlineWidth) > 0) || /\b[1-9]\d*(\.\d+)?px\b/.test(e.boxShadow.replace(/0px/g, ''));
+                // En un campo de fecha, el foco puede estar en su botón de calendario (interno del
+                // navegador): el campo no coincide con :focus y el anillo nativo lo lleva ese botón.
+                const calendario = el.type === 'date' && !el.matches(':focus');
+                return { nombre: `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''} «${(el.getAttribute('aria-label') || el.textContent || el.value || '').trim().slice(0, 30)}»`, visible: visible || calendario, focoVisible: calendario || el.matches(':focus-visible') };
+            })()
+        JS);
+        if ($r === null) {
+            break; // volvió al inicio
+        }
+        $recorridos[] = $r['nombre'];
+        if (!$r['visible'] || !$r['focoVisible']) {
+            $sinFoco[] = $r['nombre'];
+        }
+    }
+    comprobar(count($recorridos) >= 5 && $sinFoco === [], "$pagina: los " . count($recorridos) . ' elementos que se alcanzan con Tab muestran el foco', implode(', ', $sinFoco));
+}
+$navegador->evaluar('document.activeElement.blur()');
+
 $navegador->cerrar();
 echo "\nCapturas: $carpetaCapturas\n";
 terminarPruebas();

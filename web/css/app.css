@@ -2903,6 +2903,12 @@ a.encabezado-movil__boton:hover {
     padding: 0 10px;
 }
 
+/* El botón del calendario se alcanza con Tab y muestra el anillo de foco de Chrome
+   (no se puede cambiar su color); aquí solo se redondea. */
+.filtros-historial input[type="date"]::-webkit-calendar-picker-indicator {
+    border-radius: var(--radio-sm);
+}
+
 .filtros-historial__acciones {
     display: flex;
     justify-content: flex-end;

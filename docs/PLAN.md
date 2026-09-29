@@ -175,11 +175,11 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 **Listo cuando:**
 
 - [ ] Todas las pantallas funcionan con los servicios reales y coinciden con `docs/diseno/`.
-- [ ] Cada vista tiene sus estados de carga, vacío y error. Con MySQL apagado se ve un error claro, nunca una pantalla en blanco.
-- [ ] "Monitorear todos" comprueba los dispositivos uno por uno, con progreso visible, y al final muestra una notificación con el resumen.
-- [ ] El contador de alertas del menú se actualiza después de monitorear y después de atender una alerta.
+- [x] Cada vista tiene sus estados de carga, vacío y error. Con MySQL apagado se ve un error claro, nunca una pantalla en blanco.
+- [x] "Monitorear todos" comprueba los dispositivos uno por uno, con progreso visible, y al final muestra una notificación con el resumen.
+- [x] El contador de alertas del menú se actualiza después de monitorear y después de atender una alerta.
 - [ ] Probado en un celular real, entrando por la IP de la computadora en la red local.
-- [ ] Se puede usar solo con el teclado: foco visible y los modales se cierran con Escape.
+- [x] Se puede usar solo con el teclado: foco visible y los modales se cierran con Escape.
 
 ## Fase 7 · Inicio de sesión
 
