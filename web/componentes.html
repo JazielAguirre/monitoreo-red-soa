@@ -864,6 +864,83 @@
             </div>
         </div>
     </section>
+
+    <!-- ============================================================ 23 Tarjeta de estado (Dashboard) -->
+    <section class="seccion" aria-labelledby="s23">
+        <h2 class="seccion__titulo" id="s23">
+            <span class="seccion__numero">23</span><span class="seccion__nombre">Tarjeta de estado de dispositivo</span>
+            <span class="seccion__nota">Dashboard · activo · inactivo con borde rojo · sin monitorear con borde punteado · monitoreando · enlaza al historial</span>
+        </h2>
+        <div class="rejilla-estado rejilla-estado--muestra">
+                <article class="tarjeta-estado tarjeta-estado--activo">
+                    <div class="tarjeta-estado__cabecera"><span class="tarjeta-estado__icono"><i class="bi bi-pc-display" aria-hidden="true"></i></span><span class="insignia-estado insignia-estado--activo"><span class="punto-estado punto-estado--activo"></span>Activo</span></div>
+                    <div class="tarjeta-estado__textos"><a class="tarjeta-estado__nombre enlace-discreto stretched-link" href="monitoreos.html?dispositivo=1">Mi PC</a><span class="tarjeta-estado__ip">127.0.0.1</span></div>
+                    <div class="tarjeta-estado__pie"><span class="tarjeta-estado__tiempo">0.32 ms</span><span class="tarjeta-estado__fecha">Hoy, 10:05</span></div>
+                </article>
+                <article class="tarjeta-estado tarjeta-estado--inactivo">
+                    <div class="tarjeta-estado__cabecera"><span class="tarjeta-estado__icono"><i class="bi bi-hdd-rack" aria-hidden="true"></i></span><span class="insignia-estado insignia-estado--inactivo"><span class="punto-estado punto-estado--inactivo"></span>Inactivo</span></div>
+                    <div class="tarjeta-estado__textos"><a class="tarjeta-estado__nombre enlace-discreto stretched-link" href="monitoreos.html?dispositivo=1">Servidor principal</a><span class="tarjeta-estado__ip">192.168.1.10</span></div>
+                    <div class="tarjeta-estado__pie"><span class="tarjeta-estado__tiempo texto-error">Sin respuesta</span><span class="tarjeta-estado__fecha">Hoy, 10:05</span></div>
+                </article>
+                <article class="tarjeta-estado tarjeta-estado--desconocido">
+                    <div class="tarjeta-estado__cabecera"><span class="tarjeta-estado__icono"><i class="bi bi-hdd-rack" aria-hidden="true"></i></span><span class="insignia-estado"><span class="punto-estado punto-estado--desconocido"></span>Sin monitorear</span></div>
+                    <div class="tarjeta-estado__textos"><a class="tarjeta-estado__nombre enlace-discreto stretched-link" href="monitoreos.html?dispositivo=1">Servidor de respaldo</a><span class="tarjeta-estado__ip">192.168.1.11</span></div>
+                    <div class="tarjeta-estado__pie"><span class="tarjeta-estado__tiempo texto-tenue">—</span><span class="tarjeta-estado__fecha">Nunca comprobado</span></div>
+                </article>
+                <article class="tarjeta-estado tarjeta-estado--monitoreando">
+                    <div class="tarjeta-estado__cabecera"><span class="tarjeta-estado__icono"><i class="bi bi-router" aria-hidden="true"></i></span><span class="insignia-estado insignia-estado--monitoreando"><span class="punto-estado punto-estado--monitoreando punto-estado--pulso"></span>Monitoreando…</span></div>
+                    <div class="tarjeta-estado__textos"><a class="tarjeta-estado__nombre enlace-discreto stretched-link" href="monitoreos.html?dispositivo=1">Router principal</a><span class="tarjeta-estado__ip">192.168.1.1</span></div>
+                    <div class="tarjeta-estado__pie"><span class="tarjeta-estado__tiempo texto-tenue">Enviando ping…</span><span class="tarjeta-estado__fecha">Hoy, 10:05</span></div>
+                </article>
+        </div>
+    </section>
+
+    <!-- ============================================================ 24 Últimas alertas (Dashboard) -->
+    <section class="seccion" aria-labelledby="s24">
+        <h2 class="seccion__titulo" id="s24">
+            <span class="seccion__numero">24</span><span class="seccion__nombre">Elemento de la lista de alertas</span>
+            <span class="seccion__nota">Dashboard · pendiente · atendida</span>
+        </h2>
+        <div class="panel panel--alertas" style="max-width: 420px">
+            <div class="panel__cabecera">
+                <div class="panel__titulo-con-contador"><p class="panel__titulo" role="presentation">Últimas alertas</p><span class="contador contador--suave">1</span></div>
+                <a class="panel__enlace" href="alertas.html">Ver todas<i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+            </div>
+            <ul class="lista-alertas">
+                <li class="alerta-reciente">
+                    <span class="alerta-reciente__icono"><i class="bi bi-wifi-off" aria-hidden="true"></i></span>
+                    <div class="alerta-reciente__cuerpo">
+                        <div class="alerta-reciente__cabecera"><span class="alerta-reciente__nombre">Servidor principal</span><span class="insignia-estado insignia-estado--sm insignia-estado--pendiente"><span class="punto-estado punto-estado--alerta"></span>Pendiente</span></div>
+                        <p class="alerta-reciente__mensaje">El dispositivo Servidor principal no respondió al monitoreo.</p>
+                        <span class="alerta-reciente__fecha">21/09/2026 10:05</span>
+                    </div>
+                </li>
+                <li class="alerta-reciente alerta-reciente--atendida">
+                    <span class="alerta-reciente__icono"><i class="bi bi-wifi-off" aria-hidden="true"></i></span>
+                    <div class="alerta-reciente__cuerpo">
+                        <div class="alerta-reciente__cabecera"><span class="alerta-reciente__nombre">PC Recepción</span><span class="insignia-estado insignia-estado--sm insignia-estado--atendida"><i class="bi bi-check2" aria-hidden="true"></i>Atendida</span></div>
+                        <p class="alerta-reciente__mensaje">El dispositivo PC Recepción no respondió al monitoreo.</p>
+                        <span class="alerta-reciente__fecha">20/09/2026 17:48</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ============================================================ 25 Gráfica de tiempos (Dashboard) -->
+    <section class="seccion" aria-labelledby="s25">
+        <h2 class="seccion__titulo" id="s25">
+            <span class="seccion__numero">25</span><span class="seccion__nombre">Gráfica de tiempos de respuesta</span>
+            <span class="seccion__nota">Chart.js con los colores de los tokens · 4 series; de la 5.ª a la 8.ª, línea punteada · sin animación con prefers-reduced-motion</span>
+        </h2>
+        <div class="panel panel--grafica">
+            <div class="panel__cabecera panel__cabecera--grafica">
+                <div><p class="panel__titulo" role="presentation">Tiempos de respuesta recientes</p><p class="panel__subtitulo">Datos de ejemplo · milisegundos (ms)</p></div>
+                <ul class="leyenda-grafica" id="demo-leyenda" aria-label="Series de la gráfica"></ul>
+            </div>
+            <div class="grafica"><canvas id="demo-grafica" role="img" aria-label="Gráfica de ejemplo con cinco series"></canvas></div>
+        </div>
+    </section>
 </main>
 
 <!-- Modal real (se abre con "Abrir el modal real"). -->
@@ -887,6 +964,7 @@
 
 
 <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="vendor/chart.js/chart.umd.min.js"></script>
 <script type="module" src="js/componentes.js"></script>
 </body>
 </html>

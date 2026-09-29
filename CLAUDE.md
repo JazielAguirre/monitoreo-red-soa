@@ -207,7 +207,9 @@ Progreso de la Fase 6 (un commit por subpaso):
 - 6.1 hecho: api.js (URL base relativa, ErrorApi), modulos/formatos.js, notificaciones.js, vistas.js; arnés pruebas/navegador.php + pruebas/interfaz.php.
 - 6.2 hecho: modulos/estructura.js (barra lateral, encabezado móvil con menú, contador de alertas) y encabezado de página.
 - 6.3 hecho: Dispositivos (filtros, tabla y tarjetas de celular, monitorear una fila y todos, agregar/editar con hoja inferior en celular, eliminar), modulos/piezas.js, monitorear-todos.js, formulario-dispositivo.js, modales.js; piezas en componentes.html (secciones 18–22). Revisado por el equipo.
-- Siguiente: 6.4 Dashboard, 6.5 Monitoreos, 6.6 Alertas, 6.7 verificación final.
+- Pendientes de 6.3 hechos: piezas de Dispositivos en componentes.html (secciones 18–22) y las suites restauran el seed al terminar, aunque fallen o se interrumpan.
+- 6.4 hecho: Dashboard (indicadores calculados, tarjetas de estado, últimas alertas, gráfica con modulos/graficas.js, «Monitorear todos», celular 1c; cada panel falla por separado); piezas en componentes.html (secciones 23–25).
+- Siguiente: 6.5 Monitoreos, 6.6 Alertas, 6.7 verificación final.
 Completado:
 - Fase 0 — Preparación y prueba de ping: estructura del proyecto, comun/config.php y comun/respuesta.php, puntos de entrada de dispositivos, alertas y monitoreo con reescritura de URLs, esqueletos HTML, librerías en web/vendor/, repositorio git, .htaccess que solo expone web/ y los servicios, y servicios/monitoreo/ping.php probado a través de Apache (127.0.0.1 y la puerta de enlace activos, 192.0.2.1 inactivo en ~1 s, entradas inválidas → 400 sin ejecutar comandos).
 - Fase 1 — Base de datos: database/schema.sql con las 4 tablas de docs/API.md (FK con ON DELETE CASCADE, índices, utf8mb4_unicode_ci), database/seed.sql (6 dispositivos, 56 monitoreos, 1 alerta pendiente y 3 atendidas, usuario admin) y comun/db.php (PDO con EMULATE_PREPARES en false y colación utf8mb4_unicode_ci). Verificado: carga desde cero repetible, coherencia de ultimo_* con el último monitoreo, UNIQUE, FK y cascada (con ROLLBACK).

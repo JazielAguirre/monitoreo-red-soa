@@ -612,6 +612,187 @@ comprobarIgual([XSS . ' no respondió', 0], [notificaciones($navegador)[0] ?? nu
 $navegador->procesarEventos(0.5);
 comprobarIgual([], $navegador->dialogos, '  no se ejecutó ningún alert()');
 
+// =====================================================================
+seccion('6.4 · Dashboard: indicadores, estado, alertas y gráfica');
+
+/**
+ * Espera a que el Dashboard termine de cargar sus tres paneles (y la animación de la gráfica).
+ */
+function esperarDashboard(Navegador $navegador): bool
+{
+    $listo = $navegador->esperarHasta("!document.getElementById('panel-estado').hasAttribute('aria-busy') && !document.getElementById('panel-alertas').hasAttribute('aria-busy') && !document.getElementById('panel-grafica').hasAttribute('aria-busy')", 12);
+    $navegador->procesarEventos(0.8);
+    return $listo;
+}
+
+recargarBaseDeDatos();
+$navegador->tamano(1440, 900);
+$navegador->interceptar('servicios/dispositivos', ['retener' => true]);
+abrirPagina($navegador, 'index.html');
+comprobarIgual([4, 'true'], [$navegador->evaluar("document.querySelectorAll('.indicadores .esqueleto').length"), $navegador->evaluar("document.getElementById('panel-estado').getAttribute('aria-busy')")], 'mientras cargan: esqueleto en los indicadores y en el estado de dispositivos');
+$navegador->liberar('servicios/dispositivos');
+$navegador->quitarIntercepciones();
+comprobar(esperarDashboard($navegador), 'los tres paneles terminan de cargar');
+
+$r = $navegador->evaluar(<<<'JS'
+    (() => {
+        const t = (id) => document.getElementById(id).textContent;
+        return {
+            indicadores: [t('indicador-total'), t('indicador-total-detalle'), t('indicador-activos'), t('indicador-activos-detalle'), t('indicador-inactivos'), t('indicador-inactivos-detalle'), t('indicador-alertas'), t('indicador-alertas-detalle')],
+            ultima: t('ultima-comprobacion'),
+            resumen: t('resumen-estado'),
+        };
+    })()
+JS);
+comprobarIgual(['6', '4 tipos · 4 ubicaciones', '4', '67 % de la red responde', '1', 'Servidor principal', '1', 'Última: 27/09/2026 09:30'], $r['indicadores'] ?? null, 'indicadores y subtítulos calculados como en el diseño');
+comprobarIgual(['27/09/2026 · 09:45:03', '4 activos · 1 inactivo · 1 sin monitorear'], [$r['ultima'] ?? '', $r['resumen'] ?? ''], '«Última comprobación» es la más reciente de los dispositivos, y el resumen del panel');
+
+$r = $navegador->evaluar(<<<'JS'
+    [...document.querySelectorAll('.rejilla-estado .tarjeta-estado')].map((t) => [
+        t.querySelector('.tarjeta-estado__nombre').textContent,
+        t.className.replace('tarjeta-estado ', ''),
+        t.querySelector('.tarjeta-estado__tiempo').textContent,
+        t.querySelector('.tarjeta-estado__fecha').textContent,
+    ])
+JS);
+comprobarIgual([
+    ['Impresora Laboratorio', 'tarjeta-estado--activo', '2.75 ms', '27/09/2026 09:45'],
+    ['Mi PC', 'tarjeta-estado--activo', '0.06 ms', '27/09/2026 09:45'],
+    ['PC Recepción', 'tarjeta-estado--activo', '0.07 ms', '27/09/2026 09:45'],
+    ['Router principal', 'tarjeta-estado--activo', '32.9 ms', '27/09/2026 09:45'],
+    ['Servidor de respaldo', 'tarjeta-estado--desconocido', '—', 'Nunca comprobado'],
+    ['Servidor principal', 'tarjeta-estado--inactivo', 'Sin respuesta', '27/09/2026 09:45'],
+], $r, '6 tarjetas de estado: variante, tiempo y fecha (sin monitorear → «Nunca comprobado»)');
+comprobarIgual(['monitoreos.html?dispositivo=6', 'dashed'], [$navegador->evaluar("document.querySelector('.tarjeta-estado--desconocido a').getAttribute('href')"), $navegador->evaluar("getComputedStyle(document.querySelector('.tarjeta-estado--desconocido')).borderTopStyle")], '  la tarjeta enlaza al historial; la de «Sin monitorear» tiene borde punteado');
+
+$r = $navegador->evaluar("({ contador: document.getElementById('contador-panel-alertas').textContent, items: [...document.querySelectorAll('.alerta-reciente')].map((a) => [a.querySelector('.alerta-reciente__nombre').textContent, a.querySelector('.insignia-estado').textContent, a.querySelector('.alerta-reciente__fecha').textContent]) })");
+comprobarIgual(['contador' => '1', 'items' => [
+    ['Servidor principal', 'Pendiente', '27/09/2026 09:30'],
+    ['Router principal', 'Atendida', '25/09/2026 14:10'],
+    ['Impresora Laboratorio', 'Atendida', '24/09/2026 11:05'],
+    ['Servidor principal', 'Atendida', '22/09/2026 08:15'],
+]], $r, 'últimas 4 alertas con el nombre del dispositivo, su estado y fecha; contador de pendientes en el panel');
+
+$r = $navegador->evaluar(<<<'JS'
+    (() => {
+        const c = Chart.getChart(document.querySelector('#panel-grafica canvas'));
+        const token = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+        return {
+            series: c.data.datasets.map((d) => d.label),
+            etiquetas: c.data.labels,
+            colores: c.data.datasets.map((d) => d.borderColor),
+            tokens: ['--color-grafica-1', '--color-grafica-2', '--color-grafica-3', '--color-grafica-4'].map(token),
+            leyenda: [...document.querySelectorAll('#leyenda-grafica li')].map((l) => l.textContent),
+            ultimoPunto: c.getDatasetMeta(0).data.map((p) => p.options.radius),
+            animacion: c.options.animation !== false,
+        };
+    })()
+JS);
+comprobarIgual(['Impresora Laboratorio', 'Mi PC', 'PC Recepción', 'Router principal'], $r['series'] ?? null, 'la gráfica muestra solo los dispositivos que responden (4 activos)');
+comprobarIgual($r['series'] ?? 'x', $r['leyenda'] ?? null, '  con su leyenda');
+comprobarIgual(['09:00', '09:05', '09:10', '09:15', '09:20', '09:25', '09:30', '09:35', '09:40', '09:45'], $r['etiquetas'] ?? null, '  las últimas 10 comprobaciones, en orden, con la hora');
+comprobarIgual($r['tokens'] ?? 'x', $r['colores'] ?? null, '  los colores de las series son los tokens --color-grafica-1 a 4');
+comprobarIgual([0, 0, 0, 0, 0, 0, 0, 0, 0, 4], $r['ultimoPunto'] ?? null, '  solo el último punto de cada serie lleva círculo');
+comprobarIgual(true, $r['animacion'] ?? null, '  con animación cuando no se pide movimiento reducido');
+comprobarIgual([], $navegador->erroresJs, 'Dashboard sin errores de JavaScript');
+capturar($navegador, 'dashboard-1440');
+
+$navegador->movimientoReducido(true);
+abrirPagina($navegador, 'index.html');
+esperarDashboard($navegador);
+comprobarIgual(false, $navegador->evaluar("Chart.getChart(document.querySelector('#panel-grafica canvas')).options.animation"), 'con prefers-reduced-motion, Chart.js no anima');
+$navegador->movimientoReducido(false);
+
+// =====================================================================
+seccion('6.4 · Dashboard: cada panel falla por separado');
+
+$navegador->interceptar('monitoreo/recientes', ['codigo' => 502, 'cuerpo' => '{"ok":false,"error":"No se pudo comunicar con el Servicio de Monitoreo"}']);
+abrirPagina($navegador, 'index.html');
+esperarDashboard($navegador);
+comprobarIgual(['No se pudo cargar la gráfica', 6, 4], [$navegador->evaluar("document.querySelector('#panel-grafica .vista-error__titulo')?.textContent"), $navegador->evaluar("document.querySelectorAll('.rejilla-estado .tarjeta-estado').length"), $navegador->evaluar("document.querySelectorAll('.alerta-reciente').length")], 'si falla la gráfica, los dispositivos y las alertas siguen visibles');
+$navegador->quitarIntercepciones();
+
+$navegador->interceptar('servicios/alertas', ['fallar' => true]);
+abrirPagina($navegador, 'index.html');
+esperarDashboard($navegador);
+comprobarIgual(['No se pudieron cargar las alertas', '—', 6, false], [$navegador->evaluar("document.querySelector('#panel-alertas .vista-error__titulo')?.textContent"), $navegador->evaluar("document.getElementById('indicador-alertas').textContent"), $navegador->evaluar("document.querySelectorAll('.rejilla-estado .tarjeta-estado').length"), $navegador->evaluar("document.getElementById('monitorear-todos').disabled")], 'si falla Alertas: su panel muestra el error, el indicador «—», y lo demás funciona');
+$navegador->quitarIntercepciones();
+
+$navegador->interceptar('servicios/dispositivos', ['codigo' => 500, 'cuerpo' => '{"ok":false,"error":"Error interno del servidor"}']);
+abrirPagina($navegador, 'index.html');
+esperarDashboard($navegador);
+comprobarIgual(['No se pudieron cargar los dispositivos', 'Error interno del servidor', '—', true, 4], [$navegador->evaluar("document.querySelector('#panel-estado .vista-error__titulo')?.textContent"), $navegador->evaluar("document.querySelector('#panel-estado .vista-error__texto')?.textContent"), $navegador->evaluar("document.getElementById('indicador-total').textContent"), $navegador->evaluar("document.getElementById('monitorear-todos').disabled"), $navegador->evaluar("document.querySelectorAll('.alerta-reciente').length")], 'con MySQL apagado para Dispositivos: error con el mensaje, indicadores «—», «Monitorear todos» deshabilitado, las alertas se ven');
+capturar($navegador, 'dashboard-error');
+$navegador->quitarIntercepciones();
+clic($navegador, '#panel-estado .vista-error button');
+comprobar($navegador->esperarHasta("document.querySelectorAll('.rejilla-estado .tarjeta-estado').length === 6", 8), '«Reintentar» recarga el Dashboard');
+
+// =====================================================================
+seccion('6.4 · Dashboard: «Monitorear todos»');
+
+peticion('PUT', '/dispositivos/2', ['nombre' => 'Router principal', 'ip' => '192.0.2.30', 'tipo' => 'router', 'ubicacion' => 'Cuarto de telecomunicaciones']);
+peticion('PUT', '/dispositivos/3', ['nombre' => 'PC Recepción', 'ip' => '192.0.2.31', 'tipo' => 'computadora', 'ubicacion' => 'Recepción']);
+abrirPagina($navegador, 'index.html');
+esperarDashboard($navegador);
+$navegador->interceptar('servicios/monitoreo/', ['retener' => true]);
+clic($navegador, '#monitorear-todos');
+$navegador->esperarHasta("!document.getElementById('progreso-monitoreo').hidden", 3);
+comprobarIgual(['Monitoreando 1 de 6…', true, '1 de 6', 1], [
+    $navegador->evaluar("document.getElementById('monitorear-todos').textContent.trim()"),
+    $navegador->evaluar("document.getElementById('monitorear-todos').disabled"),
+    $navegador->evaluar("document.querySelector('#progreso-monitoreo .progreso-monitoreo__cabecera > .progreso-monitoreo__detalle').textContent"),
+    $navegador->evaluar("document.querySelectorAll('.rejilla-estado .tarjeta-estado--monitoreando').length"),
+], 'en curso: botón deshabilitado «Monitoreando 1 de 6…», progreso «1 de 6» y la tarjeta en «monitoreando»');
+capturar($navegador, 'dashboard-monitoreando');
+$navegador->liberar('servicios/monitoreo/');
+$navegador->quitarIntercepciones();
+comprobar($navegador->esperarHasta("!document.getElementById('monitorear-todos').disabled && document.getElementById('progreso-monitoreo').hidden", 40), 'termina y el botón vuelve a habilitarse');
+esperarDashboard($navegador);
+comprobar(in_array('Monitoreo completado', notificaciones($navegador), true) && in_array('4 dispositivos no respondieron', notificaciones($navegador), true), '  notificaciones de resumen y de alertas nuevas', json_encode(notificaciones($navegador), JSON_UNESCAPED_UNICODE));
+$r = $navegador->evaluar("({ activos: document.getElementById('indicador-activos').textContent, alertas: document.getElementById('indicador-alertas').textContent, menu: document.querySelector('#barra-lateral .js-contador-alertas').textContent, ultima: document.getElementById('ultima-comprobacion').textContent, series: Chart.getChart(document.querySelector('#panel-grafica canvas'))?.data.datasets.map((d) => d.label) })");
+comprobarIgual(['1', '5', '5', ['Mi PC']], campos($r, ['activos', 'alertas', 'menu', 'series']), '  se actualizan los indicadores, el contador del menú y la gráfica (solo responde Mi PC)');
+$hoy = date('d/m/Y');
+comprobar(str_starts_with($r['ultima'] ?? '', $hoy), "  «Última comprobación» pasa a hoy ($hoy)", (string) ($r['ultima'] ?? ''));
+cerrarNotificaciones($navegador);
+
+// =====================================================================
+seccion('6.4 · Dashboard en celular (390 px) y seguridad');
+
+recargarBaseDeDatos();
+$navegador->tamano(390, 844, true);
+abrirPagina($navegador, 'index.html');
+esperarDashboard($navegador);
+$r = $navegador->evaluar(<<<'JS'
+    (() => {
+        const alto = (s) => Math.round(document.querySelector(s).getBoundingClientRect().height);
+        const arriba = (s) => document.querySelector(s).getBoundingClientRect().top;
+        return {
+            rejilla: getComputedStyle(document.querySelector('.rejilla-estado')).display,
+            filas: document.querySelectorAll('.lista-estado .fila-estado').length,
+            detalle: getComputedStyle(document.getElementById('indicador-total-detalle')).display,
+            boton: alto('#monitorear-todos'),
+            anchoBoton: Math.round(document.getElementById('monitorear-todos').getBoundingClientRect().width),
+            grafica: alto('.grafica'),
+            graficaAntesDeAlertas: arriba('.panel--grafica') < arriba('.panel--alertas'),
+            desborde: document.documentElement.scrollWidth > innerWidth,
+        };
+    })()
+JS);
+comprobarIgual(['rejilla' => 'none', 'filas' => 6, 'detalle' => 'none', 'boton' => 44, 'anchoBoton' => 358, 'grafica' => 190, 'graficaAntesDeAlertas' => true, 'desborde' => false], $r,
+    'a 390 px (1c): filas en lugar de tarjetas, indicadores compactos, botón de 44 px a todo el ancho, gráfica de 190 px antes de las alertas, sin desplazamiento horizontal');
+capturar($navegador, 'dashboard-390');
+
+$navegador->tamano(1440, 900);
+peticion('POST', '/dispositivos', ['nombre' => XSS, 'ip' => '192.0.2.99', 'tipo' => 'servidor', 'ubicacion' => 'Laboratorio']);
+$idXss = (int) valorBd("SELECT id FROM dispositivos WHERE ip = '192.0.2.99'");
+peticion('POST', "/monitoreo/$idXss");
+abrirPagina($navegador, 'index.html');
+esperarDashboard($navegador);
+$r = $navegador->evaluar("({ tarjeta: [...document.querySelectorAll('.tarjeta-estado__nombre')].some((n) => n.textContent === " . json_encode(XSS) . "), inactivos: document.getElementById('indicador-inactivos-detalle').textContent, alerta: document.querySelector('.alerta-reciente__nombre').textContent, imagenes: document.querySelectorAll('#contenido img').length })");
+comprobarIgual(['tarjeta' => true, 'inactivos' => XSS . ', Servidor principal', 'alerta' => XSS, 'imagenes' => 0], $r, 'Dashboard: el nombre con HTML se muestra como texto en la tarjeta, el indicador y la alerta, sin crear <img>');
+$navegador->procesarEventos(0.5);
+comprobarIgual([], $navegador->dialogos, '  no se ejecutó ningún alert()');
+
 $navegador->cerrar();
 echo "\nCapturas: $carpetaCapturas\n";
 terminarPruebas();

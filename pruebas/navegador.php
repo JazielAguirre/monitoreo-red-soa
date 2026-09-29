@@ -447,16 +447,22 @@ final class Navegador
      */
     public function captura(string $ruta, bool $paginaCompleta = true): void
     {
-        $parametros = ['format' => 'png'];
+        $original = $this->metricas;
 
         if ($paginaCompleta) {
+            // Se agranda la ventana emulada al alto de la página y se espera a que las
+            // gráficas terminen de acomodarse (Chart.js anima al cambiar de tamaño).
             $alto = (int) ceil($this->evaluar('document.documentElement.scrollHeight'));
-            $parametros['captureBeyondViewport'] = true;
-            $parametros['clip'] = ['x' => 0, 'y' => 0, 'width' => $this->metricas['width'], 'height' => $alto, 'scale' => 1];
+            $this->enviar('Emulation.setDeviceMetricsOverride', ['height' => max($alto, $original['height'])] + $original + ['deviceScaleFactor' => 1]);
+            $this->procesarEventos(1.2);
         }
 
-        $resultado = $this->enviar('Page.captureScreenshot', $parametros, 60);
+        $resultado = $this->enviar('Page.captureScreenshot', ['format' => 'png'], 60);
         file_put_contents($ruta, base64_decode($resultado['data']));
+
+        if ($paginaCompleta) {
+            $this->tamano($original['width'], $original['height'], $original['mobile']);
+        }
     }
 
     /**

@@ -2396,6 +2396,487 @@ a.encabezado-movil__boton:hover {
     }
 }
 
+/* ============================================================ Dashboard */
+
+.boton-dashboard {
+    min-width: 198px;
+}
+
+.tablero {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-areas:
+        "dispositivos alertas"
+        "grafica grafica";
+    gap: 16px;
+    align-items: start;
+}
+
+.panel--dispositivos { grid-area: dispositivos; }
+.panel--alertas { grid-area: alertas; }
+.panel--grafica { grid-area: grafica; }
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+    padding: 20px 24px 24px;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-1);
+}
+
+.panel--alertas {
+    gap: 6px;
+    padding-bottom: 12px;
+}
+
+.panel--grafica {
+    gap: 14px;
+    padding-bottom: 16px;
+}
+
+.panel__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px 24px;
+}
+
+.panel__cabecera--grafica {
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.panel__titulo {
+    margin: 0;
+    font-size: var(--texto-titulo-tarjeta-tamano);
+    line-height: var(--texto-titulo-tarjeta-alto);
+    font-weight: 600;
+}
+
+.panel__subtitulo {
+    margin: 2px 0 0;
+    font-size: var(--texto-secundario-tamano);
+    color: var(--color-texto-2);
+}
+
+.panel__titulo-con-contador {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.panel__enlace {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--texto-secundario-tamano);
+    font-weight: 500;
+}
+
+/* Tarjetas de estado de dispositivo (1b). */
+.rejilla-estado {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.tarjeta-estado {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-icono);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.tarjeta-estado--inactivo {
+    border-color: var(--color-inactivo-borde);
+}
+
+.tarjeta-estado--desconocido {
+    border: 1px dashed var(--color-borde-control);
+}
+
+.tarjeta-estado--monitoreando {
+    background-color: var(--color-acento-tenue);
+    border-color: var(--color-acento-borde-fuerte);
+}
+
+.tarjeta-estado:has(.stretched-link:hover) {
+    box-shadow: var(--sombra-2);
+}
+
+.tarjeta-estado--esqueleto {
+    gap: 10px;
+    min-height: 132px;
+}
+
+.tarjeta-estado--esqueleto .esqueleto--icono {
+    width: 32px;
+    height: 32px;
+}
+
+.tarjeta-estado__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.tarjeta-estado__icono,
+.fila-estado__icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+    color: var(--color-base-2);
+    background-color: var(--color-fondo);
+    border-radius: var(--radio);
+}
+
+.tarjeta-estado__textos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.tarjeta-estado__nombre {
+    overflow: hidden;
+    font-size: var(--texto-cuerpo-tamano);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tarjeta-estado__ip,
+.fila-estado__ip {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: 12.5px;
+    color: var(--color-texto-2);
+}
+
+.tarjeta-estado__pie {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-borde-suave);
+}
+
+.tarjeta-estado__tiempo {
+    white-space: nowrap;
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: var(--texto-mono-tamano);
+    font-weight: 500;
+}
+
+.tarjeta-estado__fecha {
+    min-width: 0;
+    overflow: hidden;
+    font-size: var(--texto-pequeno-tamano);
+    color: var(--color-texto-2);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Filas de estado (celular, 1c). */
+.lista-estado {
+    display: none;
+    flex-direction: column;
+}
+
+.fila-estado {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 60px;
+    border-top: 1px solid var(--color-borde-suave);
+}
+
+.fila-estado:first-child {
+    border-top: 0;
+}
+
+.fila-estado__icono {
+    width: 36px;
+    height: 36px;
+}
+
+.fila-estado__textos {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.fila-estado__nombre {
+    overflow: hidden;
+    font-size: var(--texto-cuerpo-tamano);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fila-estado__ip {
+    font-size: var(--texto-pequeno-tamano);
+}
+
+.fila-estado__lado {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.fila-estado__tiempo {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: var(--texto-pequeno-tamano);
+}
+
+.insignia-estado--sm {
+    gap: 6px;
+    padding: 2px 9px 2px 7px;
+    font-size: 11.5px;
+}
+
+.insignia-estado--sm .punto-estado {
+    width: 7px;
+    height: 7px;
+}
+
+/* Últimas alertas. */
+.lista-alertas {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.alerta-reciente {
+    display: flex;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--color-borde-suave);
+}
+
+.alerta-reciente:last-child {
+    border-bottom: 0;
+}
+
+.alerta-reciente__icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    color: var(--color-inactivo-texto);
+    background-color: var(--color-inactivo-fondo);
+    border-radius: var(--radio);
+}
+
+.alerta-reciente--atendida .alerta-reciente__icono {
+    color: var(--color-texto-2);
+    background-color: var(--color-desconocido-fondo);
+}
+
+.alerta-reciente__cuerpo {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.alerta-reciente__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.alerta-reciente__nombre {
+    overflow: hidden;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.alerta-reciente__mensaje {
+    margin: 0;
+    font-size: var(--texto-secundario-tamano);
+    line-height: var(--texto-secundario-alto);
+    color: var(--color-desconocido-texto);
+    text-wrap: pretty;
+}
+
+.alerta-reciente--atendida .alerta-reciente__mensaje {
+    color: var(--color-texto-2);
+}
+
+.alerta-reciente__fecha {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: var(--texto-pequeno-tamano);
+    color: var(--color-texto-2);
+}
+
+/* Gráfica y su leyenda. */
+.leyenda-grafica {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin: 0;
+    padding: 4px 0 0;
+    font-size: 12.5px;
+    color: var(--color-desconocido-texto);
+    list-style: none;
+}
+
+.leyenda-grafica__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.leyenda-grafica__linea {
+    width: 14px;
+    height: 3px;
+    background-color: var(--color-serie);
+    border-radius: 2px;
+}
+
+.leyenda-grafica__item--punteada .leyenda-grafica__linea {
+    background: repeating-linear-gradient(90deg, var(--color-serie) 0 4px, transparent 4px 6px);
+}
+
+.grafica {
+    position: relative;
+    height: 250px;
+}
+
+.grafica--esqueleto {
+    display: flex;
+    align-items: stretch;
+}
+
+.grafica--esqueleto .esqueleto {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radio);
+}
+
+@media (max-width: 1199.98px) {
+    .tablero {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "dispositivos"
+            "grafica"
+            "alertas";
+    }
+
+    .rejilla-estado {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Dashboard en celular (1c). */
+@media (max-width: 575.98px) {
+    .boton-dashboard {
+        min-width: 0;
+    }
+
+    .panel {
+        gap: 12px;
+        padding: 16px 16px 4px;
+    }
+
+    .panel--grafica {
+        padding-bottom: 12px;
+    }
+
+    .panel__enlace {
+        font-size: var(--texto-secundario-tamano);
+    }
+
+    .rejilla-estado {
+        display: none;
+    }
+
+    .lista-estado {
+        display: flex;
+    }
+
+    .panel__cabecera--grafica {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .leyenda-grafica {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px 12px;
+        padding: 0;
+    }
+
+    .grafica {
+        height: 190px;
+    }
+
+    .indicadores {
+        --bs-gutter-x: 12px;
+        --bs-gutter-y: 12px;
+    }
+
+    .indicadores .tarjeta-indicador {
+        gap: 8px;
+        padding: 14px;
+    }
+
+    .indicadores .tarjeta-indicador__cabecera {
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+    }
+
+    .indicadores .tarjeta-indicador__icono {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+        border-radius: var(--radio);
+    }
+
+    .indicadores .tarjeta-indicador__titulo {
+        font-size: var(--texto-pequeno-tamano);
+        line-height: 15px;
+    }
+
+    .indicadores .tarjeta-indicador__valor {
+        font-size: 26px;
+        line-height: 32px;
+    }
+
+    .indicadores .tarjeta-indicador__detalle {
+        display: none;
+    }
+}
+
 /* ============================================================ Movimiento reducido */
 
 /* El pulso y el esqueleto quedan fijos; el spinner gira más lento, porque es lo

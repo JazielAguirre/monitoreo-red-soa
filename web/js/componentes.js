@@ -8,6 +8,7 @@ import { mostrarNotificacion } from './modulos/notificaciones.js';
 import { crearError, mostrarBloque } from './modulos/vistas.js';
 import { actualizarContadorAlertas, llenarBarraLateral, llenarEncabezadoMovil } from './modulos/estructura.js';
 import { crearProgreso } from './modulos/monitorear-todos.js';
+import { crearGraficaLineas, estiloSerie } from './modulos/graficas.js';
 
 const NOTIFICACIONES_DE_EJEMPLO = {
     exito: { tipo: 'exito', titulo: 'Monitoreo completado', texto: '4 de 6 dispositivos responden.' },
@@ -71,4 +72,28 @@ if (contenedorProgreso) {
         0: { monitoreo: { estado: 'activo', tiempo_respuesta_ms: 0.31 } },
         1: { monitoreo: { estado: 'activo', tiempo_respuesta_ms: 1.9 } },
     });
+}
+
+// Gráfica de ejemplo con cinco series: la quinta repite el primer color con línea punteada.
+const lienzoDemo = document.getElementById('demo-grafica');
+if (lienzoDemo && window.Chart) {
+    const series = [
+        { nombre: 'Router principal', datos: [1.6, 1.9, 1.7, 2.1, 1.8, 1.7, 2.4, 1.9, 1.7, 1.8] },
+        { nombre: 'Impresora Laboratorio', datos: [3.8, 4.4, 4.0, 5.2, 4.6, 3.9, 4.3, 4.8, 4.2, 4.1] },
+        { nombre: 'PC Recepción', datos: [2.2, 2.6, 2.4, 2.3, 3.1, 2.7, 2.5, 2.4, 2.8, 2.5] },
+        { nombre: 'Mi PC', datos: [0.3, 0.28, 0.35, 0.31, 0.3, 0.34, 0.29, 0.33, 0.3, 0.32] },
+        { nombre: 'Servidor de archivos', datos: [5.1, 5.6, null, null, 5.9, 5.4, 5.2, 5.8, 5.5, 5.3] },
+    ];
+    document.getElementById('demo-leyenda').replaceChildren(...series.map((serie, i) => {
+        const estilo = estiloSerie(i);
+        const item = document.createElement('li');
+        item.className = `leyenda-grafica__item${estilo.punteada ? ' leyenda-grafica__item--punteada' : ''}`;
+        const linea = document.createElement('span');
+        linea.className = 'leyenda-grafica__linea';
+        linea.style.setProperty('--color-serie', `var(${estilo.variable})`);
+        item.append(linea, serie.nombre);
+        return item;
+    }));
+    const etiquetas = ['09:20', '09:25', '09:30', '09:35', '09:40', '09:45', '09:50', '09:55', '10:00', '10:05'];
+    crearGraficaLineas(lienzoDemo, { etiquetas, series });
 }

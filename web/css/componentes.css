@@ -663,6 +663,10 @@
     height: 700px;
 }
 
+.rejilla-estado--muestra {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 /* ============================================================ Pantallas medianas y celular */
 
 @media (max-width: 1199.98px) {
@@ -675,6 +679,7 @@
     .rejilla--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .rejilla--2.rejilla-tres { grid-template-columns: 1fr; }
     .demo-tarjetas-movil { grid-template-columns: 1fr; }
+    .rejilla-estado--muestra { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .rejilla-campos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .navegacion-muestra { grid-template-columns: 1fr; }
     .muestra-dos-columnas { grid-template-columns: 1fr; }
