@@ -1373,6 +1373,12 @@ a.encabezado-movil__boton:hover {
     color: var(--color-inactivo-texto);
 }
 
+/* La visibilidad del mensaje la controla el atributo hidden (el campo puede estar
+   dentro de .campo-icono y no ser hermano del mensaje, como espera Bootstrap). */
+.invalid-feedback:not([hidden]) {
+    display: block;
+}
+
 /* El select usa su propio chevron (ícono) en lugar de la imagen de Bootstrap. */
 .form-select {
     padding-right: 36px;
@@ -1734,12 +1740,656 @@ a.encabezado-movil__boton:hover {
     border-radius: var(--radio-pastilla);
 }
 
+.esqueleto-tabla__encabezado {
+    height: var(--alto-encabezado-tabla);
+    background-color: var(--color-superficie-hover);
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.esqueleto-tabla__fila {
+    display: grid;
+    grid-template-columns: 90px 1fr 110px 70px;
+    gap: 16px;
+    align-items: center;
+    height: 52px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--color-borde-suave);
+}
+
+.esqueleto-tabla__fila:last-child {
+    border-bottom: 0;
+}
+
 @keyframes esqueleto {
     from {
         opacity: 1;
     }
     to {
         opacity: 0.55;
+    }
+}
+
+/* ============================================================ Dispositivos: filtros, tabla y pie */
+
+.contenido--dispositivos {
+    gap: 20px;
+}
+
+.barra-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.barra-filtros__buscar {
+    width: 280px;
+}
+
+.barra-filtros__fila {
+    display: contents;
+}
+
+.barra-filtros__tipo {
+    min-width: 180px;
+}
+
+.limpiar-filtros {
+    --bs-btn-padding-x: 10px;
+    --bs-btn-font-size: 13.5px;
+}
+
+/* Filtro de estado: grupo segmentado con punto y contador (en celular, fichas). */
+.filtro-estado {
+    display: flex;
+    min-width: 0;
+    height: var(--alto-control);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-borde-control);
+    border-radius: var(--radio);
+}
+
+.filtro-estado__opcion {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 12px;
+    font-size: var(--texto-secundario-tamano);
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--color-desconocido-texto);
+    background-color: var(--color-superficie);
+    border-left: 1px solid var(--color-borde-control);
+    cursor: pointer;
+    user-select: none;
+}
+
+.filtro-estado > .filtro-estado__opcion:first-of-type {
+    border-left: 0;
+}
+
+.filtro-estado__opcion:hover {
+    color: var(--color-texto);
+    background-color: var(--color-superficie-hover);
+}
+
+.filtro-estado__numero {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: 11.5px;
+    color: var(--color-texto-2);
+}
+
+.btn-check:checked + .filtro-estado__opcion {
+    color: var(--color-superficie);
+    background-color: var(--color-base-2);
+}
+
+.btn-check:checked + .filtro-estado__opcion .filtro-estado__numero {
+    color: var(--color-base-texto);
+}
+
+.btn-check:focus-visible + .filtro-estado__opcion {
+    box-shadow: inset 0 0 0 2px var(--color-acento);
+}
+
+.panel-dispositivos .table > thead > tr > th {
+    border-top: 0;
+}
+
+.tabla-ubicacion {
+    display: inline-block;
+    max-width: 180px;
+    overflow: hidden;
+    font-size: 13.5px;
+    color: var(--color-desconocido-texto);
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.texto-tenue {
+    color: var(--color-texto-2);
+}
+
+.texto-error {
+    color: var(--color-inactivo-texto);
+}
+
+.enlace-discreto {
+    color: inherit;
+}
+
+.enlace-discreto:hover {
+    color: var(--color-acento);
+}
+
+.pie-tabla {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 14px 20px;
+    font-size: var(--texto-secundario-tamano);
+    color: var(--color-texto-2);
+    border-top: 1px solid var(--color-borde-suave);
+}
+
+.pie-tabla__nota {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.esqueleto-lista {
+    border-top: 0;
+}
+
+/* Tarjetas de dispositivo (celular). */
+.lista-tarjetas-dispositivo {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+}
+
+.tarjeta-dispositivo-movil {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+}
+
+.tarjeta-dispositivo-movil--inactivo {
+    border-color: var(--color-inactivo-borde);
+}
+
+.tarjeta-dispositivo-movil--monitoreando {
+    background-color: var(--color-acento-tenue);
+    border-color: var(--color-acento-borde-fuerte);
+}
+
+.tarjeta-dispositivo-movil__cabecera {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tarjeta-dispositivo-movil__icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+    color: var(--color-base-2);
+    background-color: var(--color-fondo);
+    border-radius: var(--radio-icono);
+}
+
+.tarjeta-dispositivo-movil__textos {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.tarjeta-dispositivo-movil__nombre {
+    overflow: hidden;
+    font-size: 15px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tarjeta-dispositivo-movil__ip {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: 12.5px;
+    color: var(--color-texto-2);
+}
+
+.tarjeta-dispositivo-movil__datos {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 8px;
+    margin: 0;
+    padding: 10px 0;
+    border-top: 1px solid var(--color-borde-suave);
+    border-bottom: 1px solid var(--color-borde-suave);
+}
+
+.tarjeta-dispositivo-movil__datos > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.tarjeta-dispositivo-movil__datos dt {
+    font-size: var(--texto-encabezado-tamano);
+    font-weight: 400;
+    color: var(--color-texto-2);
+}
+
+.tarjeta-dispositivo-movil__datos dd {
+    margin: 0;
+    overflow: hidden;
+    font-size: 12.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tarjeta-dispositivo-movil__acciones {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    gap: 8px;
+}
+
+.btn-tarjeta {
+    --bs-btn-padding-x: 8px;
+    --bs-btn-font-size: 13.5px;
+    gap: 7px;
+    height: var(--alto-control-tactil);
+}
+
+.btn-tarjeta--peligro {
+    --bs-btn-color: var(--color-peligro);
+    --bs-btn-hover-color: var(--color-peligro);
+    --bs-btn-hover-bg: var(--color-inactivo-fondo);
+    --bs-btn-hover-border-color: var(--color-inactivo-borde);
+}
+
+.btn-tarjeta--cargando:disabled {
+    background-color: var(--color-acento-fondo);
+    border-color: var(--color-acento-borde);
+    opacity: 1;
+}
+
+/* Fichas del progreso que aún no se comprueban, y su tiempo. */
+.ficha--espera .bi {
+    font-size: 8px;
+}
+
+.ficha__ms {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: 11.5px;
+}
+
+.ficha .bi-check2,
+.ficha .bi-x-lg,
+.ficha .bi-exclamation-lg {
+    font-size: 12px;
+}
+
+/* ============================================================ Modal de formulario y selector de tipo */
+
+.modal-formulario {
+    --bs-modal-width: var(--ancho-modal-formulario);
+}
+
+.modal-formulario__asa {
+    display: none;
+    width: 36px;
+    height: 4px;
+    margin: 8px auto 0;
+    background-color: var(--color-borde-control);
+    border-radius: var(--radio-pastilla);
+}
+
+.modal-formulario__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 20px 24px 16px;
+}
+
+.modal-formulario__titulo {
+    margin: 0;
+    font-size: var(--texto-titulo-tarjeta-tamano);
+    line-height: var(--texto-titulo-tarjeta-alto);
+    font-weight: 600;
+}
+
+.modal-formulario__subtitulo {
+    margin: 4px 0 0;
+    font-size: var(--texto-secundario-tamano);
+    color: var(--color-texto-2);
+}
+
+.modal-formulario__cerrar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 14px;
+    color: var(--color-texto-2);
+    background: none;
+    border: 0;
+    border-radius: var(--radio);
+    cursor: pointer;
+}
+
+.modal-formulario__cerrar:hover {
+    color: var(--color-texto);
+    background-color: var(--color-fondo);
+}
+
+.modal-formulario__cerrar:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--color-foco-anillo);
+}
+
+.modal-formulario__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 4px 24px 24px;
+}
+
+.modal-formulario__error {
+    margin: 0;
+    padding: 10px 12px;
+    font-size: var(--texto-secundario-tamano);
+    font-weight: 500;
+    color: var(--color-inactivo-texto);
+    background-color: var(--color-inactivo-fondo);
+    border: 1px solid var(--color-inactivo-borde);
+    border-radius: var(--radio);
+}
+
+.modal-formulario__pie {
+    padding: 16px 24px;
+    border-top: 1px solid var(--color-borde-suave);
+}
+
+.selector-tipo {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    border-radius: var(--radio);
+}
+
+.selector-tipo.is-invalid {
+    box-shadow: 0 0 0 3px var(--color-error-anillo);
+}
+
+.selector-tipo__opcion {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    height: 64px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--color-desconocido-texto);
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde-control);
+    border-radius: var(--radio);
+    cursor: pointer;
+    user-select: none;
+}
+
+.selector-tipo__opcion > .bi {
+    font-size: 18px;
+}
+
+.selector-tipo__opcion:hover {
+    color: var(--color-texto);
+    background-color: var(--color-superficie-hover);
+}
+
+.btn-check:checked + .selector-tipo__opcion {
+    color: var(--color-base-2);
+    background-color: var(--color-acento-fondo);
+    border-color: var(--color-acento);
+    box-shadow: 0 0 0 1px var(--color-acento);
+}
+
+.btn-check:focus-visible + .selector-tipo__opcion {
+    box-shadow: 0 0 0 3px var(--color-foco-anillo);
+}
+
+/* ============================================================ Dispositivos en celular */
+
+@media (max-width: 991.98px) {
+    .tabla-dispositivos {
+        display: none;
+    }
+
+    .lista-tarjetas-dispositivo {
+        display: flex;
+    }
+
+    .contenido--dispositivos {
+        gap: 14px;
+    }
+
+    .panel-dispositivos {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        overflow: visible;
+        background: none;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .panel-dispositivos .pie-tabla {
+        padding: 4px 0 0;
+        border-top: 0;
+    }
+
+    .lista-tarjetas-dispositivo {
+        padding: 0;
+    }
+
+    .panel-dispositivos .estado-vacio,
+    .panel-dispositivos .vista-error {
+        background-color: var(--color-superficie);
+        border: 1px solid var(--color-borde);
+        border-radius: var(--radio-lg);
+    }
+
+    .barra-filtros {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        padding: 0;
+        border: 0;
+    }
+
+    .barra-filtros__buscar,
+    .filtro-estado,
+    .limpiar-filtros {
+        grid-column: 1 / -1;
+        width: auto;
+    }
+
+    .barra-filtros .form-control,
+    .barra-filtros .form-select,
+    .barra-filtros .btn {
+        height: var(--alto-control-tactil);
+    }
+
+    .barra-filtros__buscar .form-control {
+        padding-left: 40px;
+        font-size: 15px;
+    }
+
+    .limpiar-filtros {
+        justify-self: start;
+    }
+
+    /* El filtro de estado pasa a fichas desplazables (2e). */
+    .filtro-estado {
+        gap: 8px;
+        height: auto;
+        margin: 0 -16px;
+        padding: 0 16px;
+        overflow-x: auto;
+        border: 0;
+        border-radius: 0;
+        scrollbar-width: none;
+    }
+
+    .filtro-estado__opcion {
+        flex: none;
+        height: var(--alto-control-tactil);
+        padding: 0 14px;
+        font-size: 13.5px;
+        border: 1px solid var(--color-borde-control);
+        border-radius: var(--radio-pastilla);
+    }
+
+    .filtro-estado > .filtro-estado__opcion:first-of-type {
+        border-left: 1px solid var(--color-borde-control);
+    }
+
+    .btn-check:checked + .filtro-estado__opcion {
+        border-color: var(--color-base-2);
+    }
+
+    .filtro-estado__numero {
+        font-size: var(--texto-pequeno-tamano);
+    }
+
+    .encabezado-pagina--dispositivos {
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+
+    .encabezado-pagina--dispositivos .encabezado-pagina__acciones {
+        width: auto;
+    }
+
+    .encabezado-pagina--dispositivos .encabezado-pagina__acciones > .btn {
+        flex: none;
+        height: var(--alto-control-tactil);
+        padding: 0 14px;
+        font-size: var(--texto-cuerpo-tamano);
+    }
+
+    .encabezado-pagina--dispositivos .encabezado-pagina__subtitulo {
+        font-size: var(--texto-secundario-tamano);
+    }
+}
+
+/* El modal de formulario es una hoja inferior en el celular (2f). */
+@media (max-width: 575.98px) {
+    .modal-dialog-hoja {
+        display: flex;
+        align-items: flex-end;
+        min-height: 100%;
+        margin: 0;
+    }
+
+    .modal-dialog-hoja .modal-content {
+        border-radius: 16px 16px 0 0;
+        box-shadow: var(--sombra-hoja);
+    }
+
+    .modal.fade .modal-dialog-hoja {
+        transform: translateY(40px);
+    }
+
+    .modal.show .modal-dialog-hoja {
+        transform: none;
+    }
+
+    .modal-formulario__asa {
+        display: block;
+    }
+
+    .modal-formulario__cabecera {
+        align-items: center;
+        padding: 8px 8px 4px 20px;
+    }
+
+    .modal-formulario__titulo {
+        font-size: 17px;
+    }
+
+    .modal-formulario__subtitulo {
+        display: none;
+    }
+
+    .modal-formulario__cerrar {
+        width: 44px;
+        height: 44px;
+        font-size: 16px;
+    }
+
+    .modal-formulario__cuerpo {
+        gap: 16px;
+        padding: 8px 20px 20px;
+    }
+
+    .modal-formulario .form-control {
+        height: var(--alto-control-tactil);
+        font-size: 15px;
+    }
+
+    .modal-formulario .form-label {
+        font-size: 13.5px;
+    }
+
+    .selector-tipo {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .selector-tipo__opcion {
+        flex-direction: row;
+        gap: 8px;
+        height: 48px;
+        font-size: var(--texto-cuerpo-tamano);
+    }
+
+    .selector-tipo__opcion > .bi {
+        font-size: 16px;
+    }
+
+    .modal-formulario__pie {
+        display: grid;
+        grid-template-columns: 1fr 1.4fr;
+        padding: 16px 20px 20px;
+    }
+
+    .modal-formulario__pie > .btn {
+        height: var(--alto-control-tactil);
+        font-size: 15px;
     }
 }
 

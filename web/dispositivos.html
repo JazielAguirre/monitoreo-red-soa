@@ -15,15 +15,152 @@
     <aside class="barra-lateral" id="barra-lateral"></aside>
     <header class="encabezado-movil" id="encabezado-movil"></header>
 
-    <main class="contenido" id="contenido" tabindex="-1">
-        <div class="encabezado-pagina">
+    <main class="contenido contenido--dispositivos" id="contenido" tabindex="-1">
+        <div class="encabezado-pagina encabezado-pagina--dispositivos">
             <div class="encabezado-pagina__textos">
                 <h1 class="encabezado-pagina__titulo">Dispositivos</h1>
-                <p class="encabezado-pagina__subtitulo">Dispositivos registrados</p>
+                <p class="encabezado-pagina__subtitulo" id="subtitulo-dispositivos">Cargando dispositivos…</p>
+            </div>
+            <div class="encabezado-pagina__acciones">
+                <button type="button" class="btn btn-secondary boton-monitorear-todos d-none d-lg-inline-flex" id="monitorear-todos-escritorio" disabled><i class="bi bi-broadcast" aria-hidden="true"></i>Monitorear todos</button>
+                <button type="button" class="btn btn-primary" id="agregar-dispositivo"><i class="bi bi-plus-lg" aria-hidden="true"></i><span class="d-none d-sm-inline">Agregar dispositivo</span><span class="d-sm-none">Agregar</span></button>
             </div>
         </div>
-        <p class="texto-secundario">Esta pantalla se construye en el subpaso 6.3.</p>
+
+        <div id="progreso-monitoreo" hidden></div>
+
+        <section class="tabla-tarjeta panel-dispositivos" aria-labelledby="titulo-lista">
+            <h2 class="visually-hidden" id="titulo-lista">Lista de dispositivos</h2>
+            <div class="barra-filtros">
+                <div class="campo-icono barra-filtros__buscar">
+                    <label class="visually-hidden" for="buscar-dispositivo">Buscar por nombre o IP</label>
+                    <i class="bi bi-search campo-icono__inicio" aria-hidden="true"></i>
+                    <input class="form-control" id="buscar-dispositivo" type="search" placeholder="Buscar por nombre o IP" autocomplete="off">
+                </div>
+
+                <fieldset class="filtro-estado" id="filtro-estado">
+                    <legend class="visually-hidden">Filtrar por estado</legend>
+                    <input type="radio" class="btn-check" name="estado" id="estado-todos" value="todos" checked>
+                    <label class="filtro-estado__opcion" for="estado-todos">Todos<span class="filtro-estado__numero" data-cuenta="todos"></span></label>
+                    <input type="radio" class="btn-check" name="estado" id="estado-activo" value="activo">
+                    <label class="filtro-estado__opcion" for="estado-activo"><span class="punto-estado punto-estado--activo"></span>Activos<span class="filtro-estado__numero" data-cuenta="activo"></span></label>
+                    <input type="radio" class="btn-check" name="estado" id="estado-inactivo" value="inactivo">
+                    <label class="filtro-estado__opcion" for="estado-inactivo"><span class="punto-estado punto-estado--inactivo"></span>Inactivos<span class="filtro-estado__numero" data-cuenta="inactivo"></span></label>
+                    <input type="radio" class="btn-check" name="estado" id="estado-desconocido" value="desconocido">
+                    <label class="filtro-estado__opcion" for="estado-desconocido"><span class="punto-estado punto-estado--desconocido"></span>Sin monitorear<span class="filtro-estado__numero" data-cuenta="desconocido"></span></label>
+                </fieldset>
+
+                <div class="barra-filtros__fila">
+                    <div class="campo-icono barra-filtros__tipo">
+                        <label class="visually-hidden" for="filtro-tipo">Filtrar por tipo</label>
+                        <select class="form-select" id="filtro-tipo">
+                            <option value="todos">Todos los tipos</option>
+                            <option value="computadora">Computadora</option>
+                            <option value="servidor">Servidor</option>
+                            <option value="impresora">Impresora</option>
+                            <option value="router">Router</option>
+                        </select>
+                        <i class="bi bi-chevron-down campo-icono__fin" aria-hidden="true"></i>
+                    </div>
+                    <button type="button" class="btn btn-secondary boton-monitorear-todos d-lg-none" id="monitorear-todos-movil" disabled><i class="bi bi-broadcast" aria-hidden="true"></i>Monitorear todos</button>
+                </div>
+
+                <button type="button" class="btn btn-link limpiar-filtros" id="limpiar-filtros" hidden><i class="bi bi-x-circle" aria-hidden="true"></i>Limpiar filtros</button>
+            </div>
+
+            <div class="panel-dispositivos__contenido" id="contenido-dispositivos" aria-busy="true">
+                <!-- Esqueleto de la primera carga (se reemplaza al llegar los datos). -->
+                <div class="esqueleto-lista" aria-hidden="true">
+                    <div class="esqueleto-tabla__encabezado"></div>
+                    <div class="esqueleto-tabla__fila"><span class="esqueleto esqueleto--suave esqueleto--pastilla"></span><span class="esqueleto" style="width: 70%"></span><span class="esqueleto esqueleto--suave"></span><span class="esqueleto esqueleto--suave"></span></div>
+                    <div class="esqueleto-tabla__fila"><span class="esqueleto esqueleto--suave esqueleto--pastilla"></span><span class="esqueleto" style="width: 55%"></span><span class="esqueleto esqueleto--suave"></span><span class="esqueleto esqueleto--suave"></span></div>
+                    <div class="esqueleto-tabla__fila"><span class="esqueleto esqueleto--suave esqueleto--pastilla"></span><span class="esqueleto" style="width: 80%"></span><span class="esqueleto esqueleto--suave"></span><span class="esqueleto esqueleto--suave"></span></div>
+                    <div class="esqueleto-tabla__fila"><span class="esqueleto esqueleto--suave esqueleto--pastilla"></span><span class="esqueleto" style="width: 60%"></span><span class="esqueleto esqueleto--suave"></span><span class="esqueleto esqueleto--suave"></span></div>
+                </div>
+                <span class="visually-hidden">Cargando dispositivos…</span>
+            </div>
+
+            <div class="pie-tabla" id="pie-dispositivos" hidden>
+                <span id="texto-pie-dispositivos"></span>
+                <span class="pie-tabla__nota"><i class="bi bi-info-circle" aria-hidden="true"></i>El monitoreo envía un ping por dispositivo</span>
+            </div>
+        </section>
     </main>
+</div>
+
+<!-- Agregar / editar dispositivo -->
+<div class="modal fade modal-formulario" id="modal-dispositivo" tabindex="-1" aria-labelledby="modal-dispositivo-titulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-hoja">
+        <form class="modal-content" novalidate>
+            <div class="modal-formulario__asa" aria-hidden="true"></div>
+            <div class="modal-formulario__cabecera">
+                <div>
+                    <h2 class="modal-formulario__titulo" id="modal-dispositivo-titulo">Agregar dispositivo</h2>
+                    <p class="modal-formulario__subtitulo">Registra un equipo de la red para monitorearlo.</p>
+                </div>
+                <button type="button" class="modal-formulario__cerrar" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+            </div>
+            <div class="modal-formulario__cuerpo">
+                <p class="modal-formulario__error" role="alert" hidden></p>
+                <div>
+                    <label class="form-label" for="campo-nombre">Nombre</label>
+                    <input class="form-control" id="campo-nombre" name="nombre" type="text" placeholder="Ej. Router principal" autocomplete="off" aria-describedby="error-nombre">
+                    <div class="invalid-feedback" id="error-nombre" hidden></div>
+                </div>
+                <div>
+                    <label class="form-label" for="campo-ip">Dirección IP</label>
+                    <div class="campo-icono">
+                        <input class="form-control mono" id="campo-ip" name="ip" type="text" inputmode="decimal" placeholder="192.168.1.25" autocomplete="off" aria-describedby="ayuda-ip error-ip">
+                        <i class="bi bi-exclamation-circle-fill campo-icono__error" aria-hidden="true" hidden></i>
+                    </div>
+                    <div class="form-text" id="ayuda-ip">Formato IPv4, p. ej. 192.168.1.25</div>
+                    <div class="invalid-feedback" id="error-ip" hidden></div>
+                </div>
+                <fieldset class="m-0">
+                    <legend class="form-label float-none">Tipo</legend>
+                    <div class="selector-tipo" role="radiogroup" aria-describedby="error-tipo">
+                        <input type="radio" class="btn-check" name="tipo" id="tipo-computadora" value="computadora" checked>
+                        <label class="selector-tipo__opcion" for="tipo-computadora"><i class="bi bi-pc-display" aria-hidden="true"></i>Computadora</label>
+                        <input type="radio" class="btn-check" name="tipo" id="tipo-servidor" value="servidor">
+                        <label class="selector-tipo__opcion" for="tipo-servidor"><i class="bi bi-hdd-rack" aria-hidden="true"></i>Servidor</label>
+                        <input type="radio" class="btn-check" name="tipo" id="tipo-impresora" value="impresora">
+                        <label class="selector-tipo__opcion" for="tipo-impresora"><i class="bi bi-printer" aria-hidden="true"></i>Impresora</label>
+                        <input type="radio" class="btn-check" name="tipo" id="tipo-router" value="router">
+                        <label class="selector-tipo__opcion" for="tipo-router"><i class="bi bi-router" aria-hidden="true"></i>Router</label>
+                    </div>
+                    <div class="invalid-feedback" id="error-tipo" hidden></div>
+                </fieldset>
+                <div>
+                    <label class="form-label" for="campo-ubicacion">Ubicación</label>
+                    <input class="form-control" id="campo-ubicacion" name="ubicacion" type="text" placeholder="Ej. Laboratorio" autocomplete="off" aria-describedby="error-ubicacion">
+                    <div class="invalid-feedback" id="error-ubicacion" hidden></div>
+                </div>
+            </div>
+            <div class="modal-footer modal-formulario__pie">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Agregar dispositivo</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Confirmar eliminación -->
+<div class="modal fade" id="modal-eliminar" tabindex="-1" aria-labelledby="modal-eliminar-titulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-confirmar">
+                <span class="modal-confirmar__icono" aria-hidden="true"><i class="bi bi-trash3"></i></span>
+                <div class="modal-confirmar__cuerpo">
+                    <h2 class="modal-title" id="modal-eliminar-titulo">¿Eliminar dispositivo?</h2>
+                    <p class="modal-confirmar__texto">Se eliminará <strong id="eliminar-nombre"></strong> (<span class="mono" id="eliminar-ip"></span>) y todo su historial de monitoreos. Esta acción no se puede deshacer.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmar-eliminar"><i class="bi bi-trash3" aria-hidden="true"></i>Eliminar</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

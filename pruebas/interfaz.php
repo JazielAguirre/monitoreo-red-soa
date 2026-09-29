@@ -62,6 +62,46 @@ function esperarEstructura(Navegador $navegador): bool
 }
 
 /**
+ * Hace clic en el primer elemento que coincide con el selector (debe existir).
+ */
+function clic(Navegador $navegador, string $selector): void
+{
+    $selectorJs = json_encode($selector);
+    $navegador->evaluar("(() => { const el = document.querySelector($selectorJs); if (!el) throw new Error('No existe ' + $selectorJs); el.click(); })()");
+}
+
+/**
+ * Escribe en un campo y dispara los eventos input y change, como una persona.
+ */
+function escribir(Navegador $navegador, string $selector, string $valor): void
+{
+    $selectorJs = json_encode($selector);
+    $valorJs = json_encode($valor);
+    $navegador->evaluar("(() => { const el = document.querySelector($selectorJs); el.value = $valorJs; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); })()");
+}
+
+/**
+ * Nombres de las filas visibles de la tabla de Dispositivos.
+ */
+function filasDispositivos(Navegador $navegador): array
+{
+    return $navegador->evaluar("[...document.querySelectorAll('.tabla-dispositivos tbody tr')].map((tr) => tr.querySelector('.tabla-nombre').textContent)") ?? [];
+}
+
+/**
+ * Títulos de las notificaciones visibles.
+ */
+function notificaciones(Navegador $navegador): array
+{
+    return $navegador->evaluar("[...document.querySelectorAll('.toast .notificacion__titulo')].map((t) => t.textContent)") ?? [];
+}
+
+function cerrarNotificaciones(Navegador $navegador): void
+{
+    $navegador->evaluar("document.querySelectorAll('.toast-container .toast').forEach((t) => t.remove())");
+}
+
+/**
  * Importa un módulo de web/js/ en la página y evalúa código con él (variable m).
  */
 function conModulo(Navegador $navegador, string $modulo, string $codigo): mixed
@@ -273,6 +313,304 @@ comprobar($navegador->evaluar("[...document.querySelectorAll('.js-contador-alert
     && count(array_filter($navegador->erroresJs, fn($e) => !str_contains($e, 'Failed to load resource'))) === 0,
     'si el conteo falla, los contadores se ocultan sin romper la página', json_encode($navegador->erroresJs));
 $navegador->quitarIntercepciones();
+
+// =====================================================================
+seccion('6.3 · Dispositivos: carga, tabla y filtros');
+
+recargarBaseDeDatos();
+$navegador->tamano(1440, 900);
+$navegador->interceptar('servicios/dispositivos', ['retener' => true]);
+abrirPagina($navegador, 'dispositivos.html');
+$r = $navegador->evaluar("({ ocupado: document.getElementById('contenido-dispositivos').getAttribute('aria-busy'), esqueletos: document.querySelectorAll('#contenido-dispositivos .esqueleto').length, monitorearTodos: document.getElementById('monitorear-todos-escritorio').disabled })");
+comprobarIgual(['ocupado' => 'true', 'esqueletos' => 16, 'monitorearTodos' => true], $r, 'mientras llegan los datos: esqueleto (aria-busy) y "Monitorear todos" deshabilitado');
+$navegador->liberar('servicios/dispositivos');
+$navegador->quitarIntercepciones();
+comprobar($navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8), 'al llegar los datos, la tabla muestra los 6 dispositivos');
+
+comprobarIgual(['Impresora Laboratorio', 'Mi PC', 'PC Recepción', 'Router principal', 'Servidor de respaldo', 'Servidor principal'], filasDispositivos($navegador), '  ordenados por nombre');
+$r = $navegador->evaluar(<<<'JS'
+    (() => {
+        const fila = (nombre) => [...document.querySelectorAll('.tabla-dispositivos tbody tr')].find((tr) => tr.querySelector('.tabla-nombre').textContent === nombre);
+        const celdas = (tr) => [...tr.children].slice(0, 7).map((td) => td.textContent.trim());
+        return {
+            miPc: celdas(fila('Mi PC')),
+            servidor: celdas(fila('Servidor principal')),
+            respaldo: celdas(fila('Servidor de respaldo')),
+            errorEnRojo: fila('Servidor principal').querySelector('.texto-error')?.textContent,
+            enlace: fila('PC Recepción').querySelector('a.tabla-nombre').getAttribute('href'),
+            subtitulo: document.getElementById('subtitulo-dispositivos').textContent,
+            pie: document.getElementById('texto-pie-dispositivos').textContent,
+            cuentas: [...document.querySelectorAll('[data-cuenta]')].map((n) => n.dataset.cuenta + ':' + n.textContent),
+            ocupado: document.getElementById('contenido-dispositivos').hasAttribute('aria-busy'),
+        };
+    })()
+JS);
+comprobarIgual(['Activo', 'Mi PC', '127.0.0.1', 'Computadora', 'Laboratorio', '0.06 ms', '27/09/2026 09:45'], $r['miPc'] ?? null, 'fila de Mi PC: estado, nombre, IP, tipo, ubicación, respuesta y fecha (de otro día → "27/09/2026 09:45")');
+comprobarIgual(['Inactivo', 'Servidor principal', '192.0.2.10', 'Servidor', 'Sala de servidores', 'Sin respuesta', '27/09/2026 09:45'], $r['servidor'] ?? null, 'fila del Servidor principal: "Sin respuesta"');
+comprobarIgual('Sin respuesta', $r['errorEnRojo'] ?? null, '  en el color de error');
+comprobarIgual(['Sin monitorear', 'Servidor de respaldo', '192.0.2.11', 'Servidor', 'Sala de servidores', '—', 'Nunca'], $r['respaldo'] ?? null, 'fila del Servidor de respaldo: "—" y "Nunca"');
+comprobarIgual('monitoreos.html?dispositivo=3', $r['enlace'] ?? null, 'el nombre enlaza al historial del dispositivo en Monitoreos');
+comprobarIgual(['6 dispositivos registrados', 'Mostrando 6 de 6 dispositivos'], [$r['subtitulo'] ?? '', $r['pie'] ?? ''], 'subtítulo y pie de tabla');
+comprobarIgual(['todos:6', 'activo:4', 'inactivo:1', 'desconocido:1'], $r['cuentas'] ?? null, 'contadores del filtro de estado');
+comprobarIgual(false, $r['ocupado'] ?? null, '  y la lista ya no está marcada como ocupada');
+
+clic($navegador, '[for="estado-activo"]');
+comprobarIgual(['Impresora Laboratorio', 'Mi PC', 'PC Recepción', 'Router principal'], filasDispositivos($navegador), 'filtro «Activos» → 4');
+escribir($navegador, '#filtro-tipo', 'computadora');
+comprobarIgual(['Mi PC', 'PC Recepción'], filasDispositivos($navegador), '  y tipo «Computadora» → 2');
+comprobarIgual(['Mostrando 2 de 6 dispositivos', false], [$navegador->evaluar("document.getElementById('texto-pie-dispositivos').textContent"), $navegador->evaluar("document.getElementById('limpiar-filtros').hidden")], '  el pie lo refleja y aparece «Limpiar filtros»');
+clic($navegador, '#limpiar-filtros');
+comprobarIgual(6, count(filasDispositivos($navegador)), '«Limpiar filtros» vuelve a los 6');
+escribir($navegador, '#buscar-dispositivo', 'recepcion');
+comprobarIgual(['PC Recepción'], filasDispositivos($navegador), 'buscar «recepcion» (sin acento) encuentra «PC Recepción»');
+escribir($navegador, '#buscar-dispositivo', '192.0.2');
+comprobarIgual(['Impresora Laboratorio', 'Servidor de respaldo', 'Servidor principal'], filasDispositivos($navegador), 'buscar por parte de la IP («192.0.2»)');
+escribir($navegador, '#buscar-dispositivo', 'no existe');
+$r = $navegador->evaluar("({ titulo: document.querySelector('#contenido-dispositivos .estado-vacio__titulo')?.textContent, boton: document.querySelector('#contenido-dispositivos .estado-vacio button')?.textContent.trim() })");
+comprobarIgual(['titulo' => 'Ningún dispositivo coincide', 'boton' => 'Limpiar filtros'], $r, 'sin coincidencias → estado vacío de filtros, con «Limpiar filtros»');
+clic($navegador, '#contenido-dispositivos .estado-vacio button');
+comprobarIgual([6, ''], [count(filasDispositivos($navegador)), $navegador->evaluar("document.getElementById('buscar-dispositivo').value")], '  que vacía la búsqueda y vuelve a los 6');
+comprobarIgual([], $navegador->erroresJs, 'Dispositivos sin errores de JavaScript');
+capturar($navegador, 'dispositivos-1440');
+
+// =====================================================================
+seccion('6.3 · Dispositivos: agregar, editar y eliminar');
+
+/**
+ * Espera a que el modal indicado termine de abrirse o cerrarse.
+ */
+function esperarModal(Navegador $navegador, string $id, bool $abierto): bool
+{
+    $condicion = $abierto
+        ? "document.getElementById('$id').classList.contains('show')"
+        : "!document.getElementById('$id').classList.contains('show') && !document.querySelector('.modal-backdrop')";
+    $listo = $navegador->esperarHasta($condicion, 5);
+    $navegador->procesarEventos(0.45); // la animación de Bootstrap dura 0.3 s
+    return $listo;
+}
+
+function erroresFormulario(Navegador $navegador): array
+{
+    return $navegador->evaluar("Object.fromEntries(['nombre', 'ip', 'tipo', 'ubicacion'].map((c) => [c, document.getElementById('error-' + c).hidden ? null : document.getElementById('error-' + c).textContent]))") ?? [];
+}
+
+$navegador->evaluar("document.getElementById('agregar-dispositivo').focus()");
+clic($navegador, '#agregar-dispositivo');
+comprobar(esperarModal($navegador, 'modal-dispositivo', true), '«Agregar dispositivo» abre el modal');
+$r = $navegador->evaluar("({ titulo: document.getElementById('modal-dispositivo-titulo').textContent, foco: document.activeElement.id, novalidate: document.querySelector('#modal-dispositivo form').noValidate, tipo: document.querySelector('#modal-dispositivo form').elements.tipo.value })");
+comprobarIgual(['titulo' => 'Agregar dispositivo', 'foco' => 'campo-nombre', 'novalidate' => true, 'tipo' => 'computadora'], $r, '  título, foco en «Nombre», formulario con novalidate y tipo inicial «Computadora»');
+
+clic($navegador, '#modal-dispositivo [type="submit"]');
+$navegador->esperarHasta("!document.getElementById('error-nombre').hidden", 5);
+comprobarIgual(['nombre' => 'El nombre es obligatorio', 'ip' => 'Dirección IP no válida', 'tipo' => null, 'ubicacion' => 'La ubicación es obligatoria'], erroresFormulario($navegador), 'enviar vacío → los mensajes de la API debajo de cada campo');
+$r = $navegador->evaluar("({ invalido: document.getElementById('campo-ip').getAttribute('aria-invalid'), icono: !document.querySelector('#modal-dispositivo .campo-icono__error').hidden, ayuda: document.getElementById('ayuda-ip').hidden, foco: document.activeElement.id, visible: getComputedStyle(document.getElementById('error-ip')).display })");
+comprobarIgual(['invalido' => 'true', 'icono' => true, 'ayuda' => true, 'foco' => 'campo-nombre', 'visible' => 'block'], $r, '  la IP queda marcada (aria-invalid, ícono, mensaje visible en lugar de la ayuda) y el foco va al primer campo con error');
+escribir($navegador, '#campo-nombre', 'Nuevo equipo');
+comprobarIgual([null], campos(erroresFormulario($navegador), ['nombre']), '  al corregir «Nombre», su error desaparece');
+
+escribir($navegador, '#campo-ip', '192.168.1.300');
+escribir($navegador, '#campo-ubicacion', 'Laboratorio');
+clic($navegador, '#modal-dispositivo [type="submit"]');
+$navegador->esperarHasta("!document.getElementById('error-ip').hidden", 5);
+comprobarIgual('Dirección IP no válida', erroresFormulario($navegador)['ip'] ?? null, 'IP 192.168.1.300 → «Dirección IP no válida»');
+escribir($navegador, '#campo-ip', '127.0.0.1');
+clic($navegador, '#modal-dispositivo [type="submit"]');
+$navegador->esperarHasta("document.getElementById('error-ip').textContent === 'Ya existe un dispositivo con esa IP'", 5);
+comprobarIgual(['nombre' => null, 'ip' => 'Ya existe un dispositivo con esa IP', 'tipo' => null, 'ubicacion' => null], erroresFormulario($navegador), 'IP repetida (409) → «Ya existe un dispositivo con esa IP» debajo de la IP');
+
+$antes = (int) valorBd('SELECT COUNT(*) FROM dispositivos');
+escribir($navegador, '#campo-ip', '192.0.2.40');
+clic($navegador, '[for="tipo-router"]');
+$navegador->evaluar("const b = document.querySelector('#modal-dispositivo [type=submit]'); b.click(); b.click();");
+comprobar(esperarModal($navegador, 'modal-dispositivo', false), 'con datos válidos, el modal se cierra');
+comprobarIgual($antes + 1, (int) valorBd('SELECT COUNT(*) FROM dispositivos'), '  dos clics seguidos en «Agregar» crean un solo dispositivo');
+comprobar($navegador->esperarHasta("[...document.querySelectorAll('.tabla-dispositivos tbody tr')].some((tr) => tr.textContent.includes('Nuevo equipo'))", 5), '  la tabla muestra «Nuevo equipo»');
+comprobar(in_array('Dispositivo agregado', notificaciones($navegador), true), '  y la notificación «Dispositivo agregado»');
+comprobarIgual(['router', 'desconocido'], [valorBd("SELECT tipo FROM dispositivos WHERE ip = '192.0.2.40'"), valorBd("SELECT estado FROM dispositivos WHERE ip = '192.0.2.40'")], '  guardado como router, «Sin monitorear»');
+comprobarIgual('agregar-dispositivo', $navegador->evaluar('document.activeElement.id'), '  el foco vuelve al botón que abrió el modal');
+cerrarNotificaciones($navegador);
+
+$idNuevo = (int) valorBd("SELECT id FROM dispositivos WHERE ip = '192.0.2.40'");
+clic($navegador, ".tabla-dispositivos tr[data-id=\"$idNuevo\"] [data-accion=\"editar\"]");
+esperarModal($navegador, 'modal-dispositivo', true);
+$r = $navegador->evaluar("(() => { const f = document.querySelector('#modal-dispositivo form'); return { titulo: document.getElementById('modal-dispositivo-titulo').textContent, nombre: f.elements.nombre.value, ip: f.elements.ip.value, tipo: f.elements.tipo.value, ubicacion: f.elements.ubicacion.value, boton: document.querySelector('#modal-dispositivo [type=submit]').textContent.trim() }; })()");
+comprobarIgual(['titulo' => 'Editar dispositivo', 'nombre' => 'Nuevo equipo', 'ip' => '192.0.2.40', 'tipo' => 'router', 'ubicacion' => 'Laboratorio', 'boton' => 'Guardar cambios'], $r, '«Editar» abre el modal con los datos del dispositivo');
+escribir($navegador, '#campo-nombre', 'Equipo renombrado');
+clic($navegador, '#modal-dispositivo [type="submit"]');
+esperarModal($navegador, 'modal-dispositivo', false);
+comprobar($navegador->esperarHasta("[...document.querySelectorAll('.tabla-dispositivos .tabla-nombre')].some((a) => a.textContent === 'Equipo renombrado')", 5), '  al guardar, la tabla muestra el nombre nuevo');
+comprobarIgual('Equipo renombrado', valorBd('SELECT nombre FROM dispositivos WHERE id = ?', [$idNuevo]), '  y queda en la base');
+
+$navegador->evaluar("document.querySelector('.tabla-dispositivos tr[data-id=\"$idNuevo\"] [data-accion=\"editar\"]').focus()");
+clic($navegador, ".tabla-dispositivos tr[data-id=\"$idNuevo\"] [data-accion=\"editar\"]");
+esperarModal($navegador, 'modal-dispositivo', true);
+$navegador->tecla('Escape');
+comprobar(esperarModal($navegador, 'modal-dispositivo', false), 'Escape cierra el modal');
+comprobarIgual('editar', $navegador->evaluar('document.activeElement.dataset.accion'), '  y el foco vuelve al botón «Editar» de la fila');
+
+clic($navegador, ".tabla-dispositivos tr[data-id=\"$idNuevo\"] [data-accion=\"eliminar\"]");
+esperarModal($navegador, 'modal-eliminar', true);
+comprobarIgual(['Equipo renombrado', '192.0.2.40'], [$navegador->evaluar("document.getElementById('eliminar-nombre').textContent"), $navegador->evaluar("document.getElementById('eliminar-ip').textContent")], '«Eliminar» pide confirmación nombrando el dispositivo y su IP');
+clic($navegador, '#confirmar-eliminar');
+comprobar(esperarModal($navegador, 'modal-eliminar', false), '  al confirmar, el modal se cierra');
+comprobar($navegador->esperarHasta('document.querySelectorAll(".tabla-dispositivos tbody tr").length === 6', 5), '  la fila desaparece');
+comprobarIgual(0, (int) valorBd('SELECT COUNT(*) FROM dispositivos WHERE id = ?', [$idNuevo]), '  y el dispositivo ya no existe en la base');
+comprobar(in_array('Dispositivo eliminado', notificaciones($navegador), true), '  notificación «Dispositivo eliminado»');
+cerrarNotificaciones($navegador);
+
+// =====================================================================
+seccion('6.3 · Dispositivos: monitorear una fila y «Monitorear todos»');
+
+$navegador->interceptar('servicios/monitoreo/', ['retener' => true]);
+clic($navegador, '.tabla-dispositivos tr[data-id="1"] [data-accion="monitorear"]');
+$navegador->esperarHasta("document.querySelector('.tabla-dispositivos tr[data-id=\"1\"]')?.classList.contains('fila-monitoreando')", 3);
+$r = $navegador->evaluar(<<<'JS'
+    (() => {
+        const tr = document.querySelector('.tabla-dispositivos tr[data-id="1"]');
+        return {
+            insignia: tr.querySelector('.insignia-estado').textContent,
+            pulso: !!tr.querySelector('.punto-estado--pulso'),
+            respuesta: tr.children[5].textContent,
+            girador: !!tr.querySelector('[data-accion="monitorear"] .girador'),
+            editarDeshabilitado: tr.querySelector('[data-accion="editar"]').disabled,
+            otrosMonitorear: [...document.querySelectorAll('.tabla-dispositivos [data-accion="monitorear"]')].every((b) => b.disabled),
+        };
+    })()
+JS);
+comprobarIgual(['insignia' => 'Monitoreando…', 'pulso' => true, 'respuesta' => 'Enviando ping…', 'girador' => true, 'editarDeshabilitado' => true, 'otrosMonitorear' => true], $r, 'durante el ping: «Monitoreando…» con pulso, «Enviando ping…», spinner, Editar/Eliminar y los demás Monitorear deshabilitados');
+capturar($navegador, 'dispositivos-fila-monitoreando');
+$navegador->liberar('servicios/monitoreo/');
+$navegador->quitarIntercepciones();
+comprobar($navegador->esperarHasta("document.querySelector('.tabla-dispositivos tr[data-id=\"1\"] .insignia-estado')?.textContent === 'Activo' && document.querySelector('.tabla-dispositivos tr[data-id=\"1\"]').children[6].textContent.startsWith('Hoy, ')", 8), 'al terminar: Mi PC «Activo» y comprobado «Hoy, HH:MM»');
+comprobar(in_array('Mi PC responde', notificaciones($navegador), true), '  notificación «Mi PC responde»');
+cerrarNotificaciones($navegador);
+
+// Solo 127.0.0.1 y 192.0.2.x: las pruebas no dependen de la red local.
+peticion('PUT', '/dispositivos/2', ['nombre' => 'Router principal', 'ip' => '192.0.2.30', 'tipo' => 'router', 'ubicacion' => 'Cuarto de telecomunicaciones']);
+peticion('PUT', '/dispositivos/3', ['nombre' => 'PC Recepción', 'ip' => '192.0.2.31', 'tipo' => 'computadora', 'ubicacion' => 'Recepción']);
+$pendientesAntes = (int) valorBd('SELECT COUNT(*) FROM alertas WHERE atendida = 0');
+abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6 && !document.getElementById('monitorear-todos-escritorio').disabled", 8);
+
+$navegador->interceptar('servicios/monitoreo/', ['retener' => true]);
+clic($navegador, '#monitorear-todos-escritorio');
+$navegador->esperarHasta("!document.getElementById('progreso-monitoreo').hidden", 3);
+$r = $navegador->evaluar(<<<'JS'
+    ({
+        boton: document.getElementById('monitorear-todos-escritorio').textContent.trim(),
+        deshabilitado: document.getElementById('monitorear-todos-escritorio').disabled,
+        posicion: document.querySelector('#progreso-monitoreo .progreso-monitoreo__cabecera > .progreso-monitoreo__detalle').textContent,
+        fichas: document.querySelectorAll('#progreso-monitoreo .ficha').length,
+        enEspera: document.querySelectorAll('#progreso-monitoreo .ficha--espera').length,
+        anuncio: document.querySelector('#progreso-monitoreo [aria-live]').textContent,
+        filasMonitoreando: document.querySelectorAll('.tabla-dispositivos .fila-monitoreando').length,
+        agregar: document.getElementById('agregar-dispositivo').disabled,
+    })
+JS);
+comprobarIgual(['boton' => 'Monitoreando 1 de 6…', 'deshabilitado' => true, 'posicion' => '1 de 6', 'fichas' => 6, 'enEspera' => 5, 'anuncio' => 'Comprobando Impresora Laboratorio, 1 de 6', 'filasMonitoreando' => 1, 'agregar' => false], $r,
+    'en curso: botón deshabilitado «Monitoreando 1 de 6…», progreso «1 de 6» con 6 fichas (5 en espera), aviso aria-live y la fila en «monitoreando»');
+$navegador->liberar('servicios/monitoreo/');
+$navegador->quitarIntercepciones();
+comprobar($navegador->esperarHasta("!document.getElementById('monitorear-todos-escritorio').disabled && document.getElementById('progreso-monitoreo').hidden", 40), 'termina, se oculta el progreso y el botón vuelve a habilitarse');
+$titulos = notificaciones($navegador);
+$textos = $navegador->evaluar("[...document.querySelectorAll('.toast .notificacion__texto')].map((t) => t.textContent)");
+$nuevas = (int) valorBd('SELECT COUNT(*) FROM alertas WHERE atendida = 0') - $pendientesAntes;
+comprobarIgual(4, $nuevas, '  4 alertas nuevas en la base (Impresora, Router, PC Recepción y Servidor de respaldo; el Servidor principal ya tenía una)');
+comprobar(in_array('Monitoreo completado', $titulos, true) && in_array('1 de 6 dispositivos responden.', $textos, true), '  notificación «Monitoreo completado · 1 de 6 dispositivos responden.»', json_encode([$titulos, $textos], JSON_UNESCAPED_UNICODE));
+comprobar(in_array('4 dispositivos no respondieron', $titulos, true), '  y una sola notificación «4 dispositivos no respondieron» con enlace a Alertas', json_encode($titulos, JSON_UNESCAPED_UNICODE));
+comprobarIgual('alertas.html', $navegador->evaluar("[...document.querySelectorAll('.toast')].find((t) => t.textContent.includes('no respondieron'))?.querySelector('a')?.getAttribute('href')"), '    el enlace lleva a alertas.html');
+comprobar($navegador->esperarHasta("document.querySelector('#barra-lateral .js-contador-alertas').textContent === '" . ($pendientesAntes + 4) . "'", 5), '  el contador del menú pasa a ' . ($pendientesAntes + 4));
+$r = $navegador->evaluar("[...document.querySelectorAll('.tabla-dispositivos tbody tr')].map((tr) => tr.querySelector('.insignia-estado').textContent + ' · ' + tr.children[6].textContent.slice(0, 5))");
+comprobar(count(array_filter($r ?? [], fn($t) => str_ends_with($t, 'Hoy, '))) === 6 && in_array('Activo · Hoy, ', $r, true), '  la tabla se actualiza: los 6 comprobados hoy (Mi PC activo)', json_encode($r, JSON_UNESCAPED_UNICODE));
+cerrarNotificaciones($navegador);
+
+$navegador->interceptar('servicios/monitoreo/1', ['codigo' => 502, 'cuerpo' => '{"ok":false,"error":"No se pudo comunicar con el Servicio de Alertas"}']);
+clic($navegador, '#monitorear-todos-escritorio');
+$navegador->esperarHasta("document.getElementById('monitorear-todos-escritorio').disabled", 3);
+$navegador->esperarHasta("[...document.querySelectorAll('#progreso-monitoreo .ficha--fallida')].some((f) => f.title.startsWith('No se pudo comprobar'))", 15);
+comprobarIgual('No se pudo comprobar: No se pudo comunicar con el Servicio de Alertas', $navegador->evaluar("[...document.querySelectorAll('#progreso-monitoreo .ficha')].find((f) => f.textContent.includes('Mi PC'))?.title"), 'si un dispositivo responde 502, su ficha queda fallida y el recorrido sigue');
+comprobar($navegador->esperarHasta("!document.getElementById('monitorear-todos-escritorio').disabled", 40), '  el recorrido termina con los demás');
+$textos = $navegador->evaluar("[...document.querySelectorAll('.toast .notificacion__texto')].map((t) => t.textContent)");
+comprobar(in_array('0 de 6 dispositivos responden. 1 no se pudo comprobar.', $textos, true), '  y el resumen indica cuántos no se pudieron comprobar', json_encode($textos, JSON_UNESCAPED_UNICODE));
+$navegador->quitarIntercepciones();
+cerrarNotificaciones($navegador);
+
+// =====================================================================
+seccion('6.3 · Dispositivos: errores al cargar (servicio caído, MySQL apagado)');
+
+$casosError = [
+    ['fallar' => true, 'No se pudo conectar con el servidor. Revisa que Apache esté encendido.', 'sin conexión'],
+    ['codigo' => 500, 'cuerpo' => '{"ok":false,"error":"Error interno del servidor"}', 'Error interno del servidor', 'MySQL apagado (500)'],
+];
+foreach ($casosError as $caso) {
+    $descripcion = array_pop($caso);
+    $mensaje = array_pop($caso);
+    $navegador->interceptar('servicios/dispositivos', $caso);
+    abrirPagina($navegador, 'dispositivos.html');
+    $navegador->esperarHasta("document.querySelector('#contenido-dispositivos .vista-error')", 8);
+    $r = $navegador->evaluar("({ rol: document.querySelector('#contenido-dispositivos .vista-error')?.getAttribute('role'), titulo: document.querySelector('.vista-error__titulo')?.textContent, texto: document.querySelector('.vista-error__texto')?.textContent, boton: document.querySelector('.vista-error button')?.textContent.trim(), pie: document.getElementById('pie-dispositivos').hidden, barra: !!document.querySelector('#barra-lateral .nav-lateral__enlace') })");
+    comprobarIgual(['rol' => 'alert', 'titulo' => 'No se pudieron cargar los dispositivos', 'texto' => $mensaje, 'boton' => 'Reintentar', 'pie' => true, 'barra' => true], $r, "$descripcion → bloque de error con el mensaje y «Reintentar» (la estructura sigue visible, nunca en blanco)");
+}
+capturar($navegador, 'dispositivos-error');
+$navegador->quitarIntercepciones();
+clic($navegador, '.vista-error button');
+comprobar($navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8), '«Reintentar», con el servicio de vuelta, carga la tabla');
+
+// =====================================================================
+seccion('6.3 · Dispositivos en celular (390 px)');
+
+recargarBaseDeDatos();
+$navegador->tamano(390, 844, true);
+abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarHasta("document.querySelectorAll('.tarjeta-dispositivo-movil').length === 6", 8);
+$r = $navegador->evaluar(<<<'JS'
+    ({
+        tabla: getComputedStyle(document.querySelector('.tabla-dispositivos')).display,
+        tarjetas: document.querySelectorAll('.tarjeta-dispositivo-movil').length,
+        altoBuscar: Math.round(document.getElementById('buscar-dispositivo').getBoundingClientRect().height),
+        altoFicha: Math.round(document.querySelector('[for="estado-activo"]').getBoundingClientRect().height),
+        botonMovil: getComputedStyle(document.getElementById('monitorear-todos-movil')).display !== 'none',
+        botonEscritorio: getComputedStyle(document.getElementById('monitorear-todos-escritorio')).display,
+        inactivaConBorde: document.querySelector('.tarjeta-dispositivo-movil--inactivo .tarjeta-dispositivo-movil__nombre')?.textContent,
+        datos: [...document.querySelector('.tarjeta-dispositivo-movil[data-id="4"] dd')?.parentElement.parentElement.querySelectorAll('dd') ?? []].map((d) => d.textContent),
+        desborde: document.documentElement.scrollWidth > innerWidth,
+    })
+JS);
+comprobarIgual(['tabla' => 'none', 'tarjetas' => 6, 'altoBuscar' => 44, 'altoFicha' => 44, 'botonMovil' => true, 'botonEscritorio' => 'none', 'inactivaConBorde' => 'Servidor principal', 'datos' => ['Sala de servidores', 'Sin resp.', '27/09 09:45'], 'desborde' => false], $r,
+    'tarjetas en lugar de tabla, controles de 44 px, «Monitorear todos» junto al tipo, borde rojo en la inactiva, datos compactos y sin desplazamiento horizontal');
+clic($navegador, '[for="estado-inactivo"]');
+comprobarIgual(['Servidor principal'], $navegador->evaluar("[...document.querySelectorAll('.tarjeta-dispositivo-movil__nombre')].map((n) => n.textContent)"), 'en celular también se filtra por estado (fichas)');
+clic($navegador, '[for="estado-todos"]');
+capturar($navegador, 'dispositivos-390');
+clic($navegador, '#agregar-dispositivo');
+esperarModal($navegador, 'modal-dispositivo', true);
+$navegador->procesarEventos(0.4);
+$r = $navegador->evaluar("(() => { const c = document.querySelector('#modal-dispositivo .modal-content').getBoundingClientRect(); return { abajo: Math.round(c.bottom), alto: innerHeight, ancho: Math.round(c.width), asa: getComputedStyle(document.querySelector('.modal-formulario__asa')).display }; })()");
+comprobarIgual(['abajo' => 844, 'alto' => 844, 'ancho' => 390, 'asa' => 'block'], $r, 'el modal de agregar es una hoja inferior a todo el ancho, con su asa (2f)');
+capturar($navegador, 'dispositivos-390-hoja');
+$navegador->tecla('Escape');
+esperarModal($navegador, 'modal-dispositivo', false);
+
+// =====================================================================
+seccion('6.3 · Seguridad: un nombre con HTML se muestra como texto');
+
+$navegador->tamano(1440, 900);
+peticion('POST', '/dispositivos', ['nombre' => XSS, 'ip' => '192.0.2.99', 'tipo' => 'servidor', 'ubicacion' => XSS]);
+$idXss = (int) valorBd("SELECT id FROM dispositivos WHERE ip = '192.0.2.99'");
+abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 7", 8);
+$r = $navegador->evaluar("(() => { const tr = document.querySelector('.tabla-dispositivos tr[data-id=\"$idXss\"]'); return { nombre: tr.querySelector('.tabla-nombre').textContent, ubicacion: tr.children[4].textContent, imagenes: document.querySelectorAll('#contenido img').length }; })()");
+comprobarIgual(['nombre' => XSS, 'ubicacion' => XSS, 'imagenes' => 0], $r, 'Dispositivos: nombre y ubicación como texto, ninguna <img> creada');
+clic($navegador, ".tabla-dispositivos tr[data-id=\"$idXss\"] [data-accion=\"eliminar\"]");
+esperarModal($navegador, 'modal-eliminar', true);
+comprobarIgual([XSS, 0], [$navegador->evaluar("document.getElementById('eliminar-nombre').textContent"), $navegador->evaluar("document.querySelectorAll('#modal-eliminar img').length")], '  también en el modal de eliminar');
+$navegador->tecla('Escape');
+esperarModal($navegador, 'modal-eliminar', false);
+clic($navegador, ".tabla-dispositivos tr[data-id=\"$idXss\"] [data-accion=\"monitorear\"]");
+$navegador->esperarHasta("[...document.querySelectorAll('.toast .notificacion__titulo')].some((t) => t.textContent.includes('no respondió'))", 8);
+comprobarIgual([XSS . ' no respondió', 0], [notificaciones($navegador)[0] ?? null, $navegador->evaluar("document.querySelectorAll('.toast img').length")], '  y en las notificaciones');
+$navegador->procesarEventos(0.5);
+comprobarIgual([], $navegador->dialogos, '  no se ejecutó ningún alert()');
 
 $navegador->cerrar();
 echo "\nCapturas: $carpetaCapturas\n";

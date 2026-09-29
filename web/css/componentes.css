@@ -596,26 +596,6 @@
     align-items: center;
 }
 
-.esqueleto-tabla__encabezado {
-    height: var(--alto-encabezado-tabla);
-    background-color: var(--color-superficie-hover);
-    border-bottom: 1px solid var(--color-borde);
-}
-
-.esqueleto-tabla__fila {
-    display: grid;
-    grid-template-columns: 90px 1fr 110px 70px;
-    gap: 16px;
-    align-items: center;
-    height: 52px;
-    padding: 0 20px;
-    border-bottom: 1px solid var(--color-borde-suave);
-}
-
-.esqueleto-tabla__fila:last-child {
-    border-bottom: 0;
-}
-
 /* ============================================================ 16 Estructura */
 
 .marcos-estructura {

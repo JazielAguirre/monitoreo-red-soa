@@ -32,17 +32,21 @@ export function esHoy(partes, ahora = new Date()) {
 }
 
 /**
- * "Hoy, 10:05" si es de hoy; "21/09/2026 10:05" si es de otro día.
+ * "Hoy, 10:05" si es de hoy; "21/09/2026 10:05" si es de otro día
+ * (con compacta, "21/09 10:05", para las tarjetas del celular).
  * Si no hay fecha, devuelve siVacio (por ejemplo "Nunca").
  */
-export function formatearFechaCorta(texto, { ahora = new Date(), siVacio = '—' } = {}) {
+export function formatearFechaCorta(texto, { ahora = new Date(), siVacio = '—', compacta = false } = {}) {
     const p = partesFecha(texto);
 
     if (p === null) {
         return siVacio;
     }
+    if (esHoy(p, ahora)) {
+        return `Hoy, ${p.hora}:${p.minuto}`;
+    }
 
-    return esHoy(p, ahora) ? `Hoy, ${p.hora}:${p.minuto}` : `${p.dia}/${p.mes}/${p.anio} ${p.hora}:${p.minuto}`;
+    return compacta ? `${p.dia}/${p.mes} ${p.hora}:${p.minuto}` : `${p.dia}/${p.mes}/${p.anio} ${p.hora}:${p.minuto}`;
 }
 
 /**

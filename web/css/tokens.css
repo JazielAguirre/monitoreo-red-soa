@@ -141,6 +141,7 @@
     --sombra-3: 0 20px 40px -8px rgba(11, 29, 46, 0.28); /* Modal */
     --sombra-notificacion: 0 12px 28px -8px rgba(11, 29, 46, 0.18);
     --sombra-menu-movil: 0 20px 40px -8px rgba(11, 29, 46, 0.4);
+    --sombra-hoja: 0 -12px 32px -8px rgba(11, 29, 46, 0.28); /* Modal como hoja inferior en celular */
 
     /* -------------------------------------------------------- Tipografía */
     --fuente-interfaz: 'Inter', system-ui, sans-serif;
@@ -185,6 +186,8 @@
     --ancho-barra-lateral: 248px;
     --alto-encabezado-movil: 56px;
     --ancho-modal: 420px;
+    --ancho-modal-formulario: 520px;
+    --alto-control-tactil: 44px;        /* Controles en celular */
     --tamano-punto: 8px;
     --tamano-punto-sm: 6px;
 

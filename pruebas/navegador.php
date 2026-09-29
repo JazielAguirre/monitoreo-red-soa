@@ -182,6 +182,7 @@ final class Navegador
     private array $eventos = [];
     private array $manejadores = [];
     private array $intercepciones = [];
+    private array $retenidas = [];
     private bool $cerrado = false;
     private array $metricas = ['width' => 1440, 'height' => 900, 'mobile' => false];
 
@@ -471,7 +472,8 @@ final class Navegador
 
     /**
      * Intercepta las peticiones de la página cuya URL contiene $fragmento:
-     * ['fallar' => true] corta la conexión; ['codigo' => 500, 'cuerpo' => '...'] responde eso.
+     * ['fallar' => true] corta la conexión; ['codigo' => 500, 'cuerpo' => '...'] responde eso;
+     * ['retener' => true] la deja en pausa hasta liberar() (para ver estados intermedios).
      * Sirve para simular un servicio caído o MySQL apagado sin tocar el sistema.
      */
     public function interceptar(string $fragmento, array $respuesta): void
@@ -480,8 +482,27 @@ final class Navegador
         $this->enviar('Fetch.enable', ['patterns' => [['urlPattern' => '*', 'requestStage' => 'Request']]]);
     }
 
+    /**
+     * Deja pasar las peticiones retenidas que contienen $fragmento y deja de retenerlas.
+     */
+    public function liberar(string $fragmento): void
+    {
+        unset($this->intercepciones[$fragmento]);
+
+        foreach ($this->retenidas as $i => [$id, $url]) {
+            if (str_contains($url, $fragmento)) {
+                $this->enviar('Fetch.continueRequest', ['requestId' => $id]);
+                unset($this->retenidas[$i]);
+            }
+        }
+    }
+
     public function quitarIntercepciones(): void
     {
+        foreach ($this->retenidas as [$id]) {
+            $this->enviarSinEsperar('Fetch.continueRequest', ['requestId' => $id]);
+        }
+        $this->retenidas = [];
         $this->intercepciones = [];
         $this->enviar('Fetch.disable');
     }
@@ -606,7 +627,9 @@ final class Navegador
                 continue;
             }
 
-            if (!empty($respuesta['fallar'])) {
+            if (!empty($respuesta['retener'])) {
+                $this->retenidas[] = [$p['requestId'], $url];
+            } elseif (!empty($respuesta['fallar'])) {
                 $this->enviarSinEsperar('Fetch.failRequest', ['requestId' => $p['requestId'], 'errorReason' => 'ConnectionRefused']);
             } else {
                 $this->enviarSinEsperar('Fetch.fulfillRequest', [
