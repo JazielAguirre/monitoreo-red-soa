@@ -9,16 +9,17 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../comun/respuesta.php';
 require_once __DIR__ . '/../comun/peticion.php';
+require_once __DIR__ . '/../comun/auth.php';
 require_once __DIR__ . '/../comun/enrutador.php';
 require_once __DIR__ . '/endpoints.php';
 
 const NOMBRE_SERVICIO = 'alertas';
 
 const RUTAS_ALERTAS = [
-    ['GET', '', 'listarAlertas'],
-    ['POST', '', 'crearAlerta'],
-    ['GET', 'conteo', 'contarAlertasPorEstado'],
-    ['PATCH', '{id}/atender', 'atenderAlerta'],
+    ['GET', '', 'listarAlertas', ACCESO_INTERFAZ],
+    ['POST', '', 'crearAlerta', ACCESO_INTERNO],
+    ['GET', 'conteo', 'contarAlertasPorEstado', ACCESO_INTERFAZ],
+    ['PATCH', '{id}/atender', 'atenderAlerta', ACCESO_INTERFAZ],
 ];
 
 configurarErrores();

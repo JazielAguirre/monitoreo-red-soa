@@ -34,6 +34,12 @@ if (!is_dir($carpetaCapturas)) {
 }
 echo "Chrome de pruebas: perfil temporal y puerto propio ({$navegador->puerto()}).\n";
 
+// Sesión para las peticiones de preparación (PHP) y para el Chrome de pruebas.
+iniciarSesionDePrueba();
+foreach (['localhost', '127.0.0.1'] as $dominio) { // una prueba abre la interfaz desde 127.0.0.1
+    $navegador->enviar('Network.setCookie', ['name' => NOMBRE_COOKIE_SESION, 'value' => $GLOBALS['cookie_sesion'], 'domain' => $dominio, 'path' => RUTA_COOKIE_SESION, 'httpOnly' => true, 'sameSite' => 'Lax']);
+}
+
 /**
  * Abre una página de web/ y limpia los errores y diálogos registrados.
  */
@@ -1192,8 +1198,8 @@ comprobarIgual(['pendientes', ''], campos(estadoAlertas($navegador), ['activa', 
 // =====================================================================
 seccion('6.6 · Alertas: marcar como atendida');
 
-peticion('POST', '/alertas', ['dispositivo_id' => 5, 'tipo' => 'sin_respuesta', 'mensaje' => 'El dispositivo Impresora Laboratorio no respondió al monitoreo.']);
-peticion('POST', '/alertas', ['dispositivo_id' => 2, 'tipo' => 'sin_respuesta', 'mensaje' => 'El dispositivo Router principal no respondió al monitoreo.']);
+peticionInterna('POST', '/alertas', ['dispositivo_id' => 5, 'tipo' => 'sin_respuesta', 'mensaje' => 'El dispositivo Impresora Laboratorio no respondió al monitoreo.']);
+peticionInterna('POST', '/alertas', ['dispositivo_id' => 2, 'tipo' => 'sin_respuesta', 'mensaje' => 'El dispositivo Router principal no respondió al monitoreo.']);
 $idRouter = (int) valorBd('SELECT id FROM alertas WHERE dispositivo_id = 2 AND atendida = 0');
 abrirPagina($navegador, 'alertas.html');
 esperarAlertas($navegador);

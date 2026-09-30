@@ -3,14 +3,17 @@
  * Enrutador de los servicios: elige la función que atiende la petición según
  * el método y los segmentos de la ruta, o responde 404 o 405 en JSON.
  *
- * Cada ruta es [método, patrón, función]. El patrón une los segmentos con "/":
+ * Cada ruta es [método, patrón, función, acceso]. El patrón une los segmentos con "/":
  * ''  →  /servicio     '{id}'  →  /servicio/5     '{id}/estado'  →  /servicio/5/estado
  * {id} solo acepta enteros positivos, y la función lo recibe como int.
+ * El acceso (ACCESO_INTERFAZ, ACCESO_INTERNO o ACCESO_PUBLICO de comun/auth.php)
+ * se comprueba solo cuando la ruta y el método coinciden, justo antes de la función.
  */
 
 declare(strict_types=1);
 
 require_once __DIR__ . '/respuesta.php';
+require_once __DIR__ . '/auth.php';
 
 /**
  * Atiende la petición con la ruta que coincide y termina.
@@ -19,7 +22,7 @@ function despachar(array $rutas, string $metodo, array $segmentos): never
 {
     $metodosPermitidos = [];
 
-    foreach ($rutas as [$metodoRuta, $patron, $funcion]) {
+    foreach ($rutas as [$metodoRuta, $patron, $funcion, $acceso]) {
         $parametros = coincidirPatron($patron, $segmentos);
 
         if ($parametros === null) {
@@ -27,6 +30,7 @@ function despachar(array $rutas, string $metodo, array $segmentos): never
         }
 
         if ($metodoRuta === $metodo) {
+            verificarAcceso($acceso);
             $funcion(...$parametros);
             // Las funciones de los endpoints terminan respondiendo; esto es un respaldo.
             throw new LogicException("La función $funcion no envió respuesta");

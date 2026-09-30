@@ -3,6 +3,8 @@
  * Cliente HTTP para que un servicio pida datos o acciones a otro servicio.
  * Usa los streams de PHP (no la extensión curl) para funcionar igual en
  * Windows y Linux, y envía la cabecera X-Servicio-Clave en cada llamada.
+ * Nunca reenvía la cookie de sesión del navegador: entre servicios la única
+ * credencial es la clave (docs/API.md, "Acceso").
  *
  * Distingue tres casos:
  * - El servicio respondió con el formato común (con cualquier código): se

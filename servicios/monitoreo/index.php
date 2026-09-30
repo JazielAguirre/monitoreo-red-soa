@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../comun/respuesta.php';
 require_once __DIR__ . '/../comun/peticion.php';
+require_once __DIR__ . '/../comun/auth.php';
 require_once __DIR__ . '/../comun/enrutador.php';
 require_once __DIR__ . '/../comun/http.php';
 require_once __DIR__ . '/endpoints.php';
@@ -16,9 +17,9 @@ require_once __DIR__ . '/endpoints.php';
 const NOMBRE_SERVICIO = 'monitoreo';
 
 const RUTAS_MONITOREO = [
-    ['GET', '', 'listarMonitoreos'],
-    ['GET', 'recientes', 'listarRecientes'],
-    ['POST', '{id}', 'monitorearDispositivo'],
+    ['GET', '', 'listarMonitoreos', ACCESO_INTERFAZ],
+    ['GET', 'recientes', 'listarRecientes', ACCESO_INTERFAZ],
+    ['POST', '{id}', 'monitorearDispositivo', ACCESO_INTERFAZ],
 ];
 
 configurarErrores();
