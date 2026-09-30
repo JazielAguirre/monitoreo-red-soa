@@ -89,9 +89,14 @@ $expira = strtotime((string) ($cookie['expires'] ?? ''));
 comprobar(is_int($expira) && abs($expira - (time() + DURACION_SESION)) < 60, '  Expires dentro de 8 horas', (string) ($cookie['expires'] ?? '(ninguno)'));
 $idSesion = $r['cookie'];
 
-$gc = trim((string) shell_exec(escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg(
-    'require ' . var_export(__DIR__ . '/../servicios/comun/auth.php', true) . '; configurarSesion(); echo ini_get("session.gc_maxlifetime");'
-)));
+// En un proceso aparte (configurarSesion() cambia ajustes de PHP). Un script temporal en
+// lugar de «php -r "…"»: en Windows, escapeshellarg() cambia las comillas dobles por espacios.
+$temporal = tempnam(sys_get_temp_dir(), 'gc');
+$script = "$temporal.php";
+file_put_contents($script, '<?php require ' . var_export(realpath(__DIR__ . '/../servicios/comun/auth.php'), true) . "; configurarSesion(); echo ini_get('session.gc_maxlifetime');");
+$gc = trim((string) shell_exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($script)));
+unlink($script);
+unlink($temporal);
 comprobarIgual((string) DURACION_SESION, $gc, 'configurarSesion() fija session.gc_maxlifetime en 8 horas');
 comprobarIgual(null, usuarioVigente(['usuario' => USUARIO_ADMIN, 'expira' => time() - 1]), 'una sesión cuya hora de expiración ya pasó no vale (usuarioVigente)');
 comprobarIgual(USUARIO_ADMIN, usuarioVigente(['usuario' => USUARIO_ADMIN, 'expira' => time() + 60]), '  y una vigente, sí');
