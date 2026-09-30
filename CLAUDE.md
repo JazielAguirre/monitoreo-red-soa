@@ -37,6 +37,7 @@ sudo /opt/lampp/lampp startmysql
 /opt/lampp/bin/php pruebas/alertas.php
 /opt/lampp/bin/php pruebas/monitoreo.php
 /opt/lampp/bin/php pruebas/auth.php       # login, cookie, 401/403, sesión sin bloqueo
+/opt/lampp/bin/php pruebas/descubrimiento.php  # escáner de red con la red simulada; nunca envía nada a la red local
 /opt/lampp/bin/php pruebas/interfaz.php   # abre su propio Chrome headless (perfil temporal); se omite si no hay Chrome
 
 # Colores fuera de tokens.css, solo en estilos (CSS, JS, style="" y <style>). Debe no imprimir nada.
@@ -76,7 +77,7 @@ web/
 ├── vendor/      bootstrap, bootstrap-icons, chart.js, fuentes Inter y JetBrains Mono
 └── *.html       login, index (dashboard), dispositivos, monitoreos, alertas, componentes
 herramientas/    base-de-datos.php (recarga schema y seed; la usan las pruebas y la demo), red.php (detecta puerta de enlace e IP propia con las funciones de servicios/descubrimiento/red.php), preparar-demo.php, ver-llamadas.php. Solo línea de comandos; no accesible por HTTP
-pruebas/         ayudas.php (peticiones con la cookie de iniciarSesionDePrueba() o con la clave en peticionInterna(), fallo simulado) + un script por servicio (dispositivos.php, ..., auth.php) + interfaz.php con navegador.php (cliente del protocolo de Chrome). Solo línea de comandos; no accesible por HTTP
+pruebas/         ayudas.php (peticiones con la cookie de iniciarSesionDePrueba() o con la clave en peticionInterna(), fallo simulado) + un script por servicio (dispositivos.php, ..., auth.php, descubrimiento.php) + interfaz.php con navegador.php (cliente del protocolo de Chrome). Solo línea de comandos; no accesible por HTTP
 Reglas SOA (no negociables)
 Cada servicio solo lee y escribe sus propias tablas.
 Excepción: herramientas/ (como schema.sql y seed.sql) son herramientas de base de datos y pueden tocar todas las tablas; preparar-demo.php mueve fechas e IPs directamente en MySQL. La regla sigue valiendo para todo lo que está en servicios/.
@@ -222,7 +223,7 @@ Actualiza esta sección al cerrar cada fase.
 
 Fase actual: Fase 9 — Descubrimiento de red, en la rama descubrimiento-red (sin push ni fusión hasta que el usuario revise). Las Fases 0–8 están completas y fusionadas a main; la etiqueta v1.0 es la versión que se presenta y no se toca. Repositorio: https://github.com/JazielAguirre/monitoreo-red-soa (remoto origin por SSH).
 Fase 9, decisiones aprobadas: ping.php se mueve a comun/ (lo usan Monitoreo y Descubrimiento; en Monitoreo solo cambia el require); escaneo en 4 lotes de la /24 pedidos uno tras otro desde la interfaz; 503 cuando no hay red local o la IP no es privada. Si el DNS inverso por UDP se complica, avisar al usuario antes de seguir (preferencia: nombre "—" y terminar lo principal). La prueba real con pings a la red actual (192.168.137.0/24) espera confirmación del usuario de que es su red; las pruebas automáticas nunca tocan la red local.
-Fase 9, subpasos: [x] 1 contrato (API.md) y plan (PLAN.md) · [x] 2 ping.php a comun/ · [x] 3 servicio Descubrimiento (probado con curl a través de Apache en el hotspot: 4 lotes en ~4.4 s, 7 equipos; el hotspot 192.168.137.1 y ASUSMV bloquean el ping y aparecen solo por ARP; nombres por DNS inverso *.mshome.net; ip neigh funciona con el entorno de XAMPP) · [ ] 4 pruebas/descubrimiento.php y red simulada · [ ] 5 interfaz y componentes.html · [ ] 6 secciones de interfaz.php · [ ] 7 README, DEMO.md (tramo del escáner 0:50–1:20 del Integrante 2; recarga del celular del Integrante 4 «opcional si hay que quedarse en 5:00»; en «El día anterior», confirmar con el profesor el tiempo disponible) y cierre.
+Fase 9, subpasos: [x] 1 contrato (API.md) y plan (PLAN.md) · [x] 2 ping.php a comun/ · [x] 3 servicio Descubrimiento (probado con curl a través de Apache en el hotspot: 4 lotes en ~4.4 s, 7 equipos; el hotspot 192.168.137.1 y ASUSMV bloquean el ping y aparecen solo por ARP; nombres por DNS inverso *.mshome.net; ip neigh funciona con el entorno de XAMPP) · [x] 4 pruebas/descubrimiento.php y red simulada (112 comprobaciones en ~12 s; 9 roturas a propósito detectadas: FAILED aceptado, multicast, pings uno a uno, cualquier IP privada, .255 en el lote, sin registrados, Dispositivos después del ping, nombres con HTML, red simulada libre) · [ ] 5 interfaz y componentes.html · [ ] 6 secciones de interfaz.php · [ ] 7 README, DEMO.md (tramo del escáner 0:50–1:20 del Integrante 2; recarga del celular del Integrante 4 «opcional si hay que quedarse en 5:00»; en «El día anterior», confirmar con el profesor el tiempo disponible) y cierre.
 Pendientes del equipo (no requieren código):
 - Ensayar docs/DEMO.md en vivo, cronometrado, y grabar el video de respaldo.
 - Repetir las 5 suites en la computadora de otro integrante (Windows: docs/WINDOWS.md; el ping en Windows solo se probó con salidas de ejemplo).
