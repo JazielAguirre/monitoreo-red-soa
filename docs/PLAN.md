@@ -216,9 +216,11 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 **Listo cuando:**
 
-- [ ] Todas las pruebas automáticas pasan en una copia recién clonada del repositorio, idealmente en la computadora de otro integrante.
-- [ ] El guion de la demo se ejecuta completo sin errores: agregar, monitorear, ver la alerta, atenderla, consultar el historial y eliminar.
-- [ ] La aplicación se ve bien en el proyector y en un celular.
+- [x] Todas las pruebas automáticas pasan en una copia recién clonada del repositorio (Linux, siguiendo el README: 1023 de 1023 comprobaciones).
+  - [ ] Pendiente del equipo: repetirlo en la computadora de otro integrante, en Windows con `docs/WINDOWS.md`.
+- [x] El guion de la demo se ejecuta completo sin errores: agregar, monitorear, ver la alerta, atenderla, consultar el historial y eliminar (ensayo automático en `pruebas/interfaz.php`, a 1280×720).
+  - [ ] Pendiente del equipo: revisar `docs/DEMO.md` y ensayarlo en vivo, cronometrado.
+- [x] La aplicación se ve bien en el proyector y en un celular (`interfaz.php` a 1024×768, 1280×720 y 390 px; celular real en las Fases 6 y 7).
 
 ## Extras (solo si sobra tiempo)
 
