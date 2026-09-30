@@ -66,7 +66,7 @@ sudo ./xampp-linux-x64-8.2.*-installer.run
 
 ```bash
 mkdir -p ~/Proyectos && cd ~/Proyectos
-git clone <URL-del-repositorio> monitoreo-red-soa
+git clone https://github.com/JazielAguirre/monitoreo-red-soa.git monitoreo-red-soa
 ln -s ~/Proyectos/monitoreo-red-soa /opt/lampp/htdocs/monitoreo-red-soa
 # Si htdocs es de root: sudo ln -s ...
 ```
@@ -127,7 +127,7 @@ Sigue en [Cargar la base de datos](#4-cargar-la-base-de-datos).
 **2. Clona el repositorio dentro de `htdocs`** (en PowerShell o Git Bash):
 
 ```powershell
-git clone <URL-del-repositorio> C:\xampp\htdocs\monitoreo-red-soa
+git clone https://github.com/JazielAguirre/monitoreo-red-soa.git C:\xampp\htdocs\monitoreo-red-soa
 ```
 
 **3. Enciende Apache y MySQL** desde el panel de XAMPP (botón *Start* de cada uno).
