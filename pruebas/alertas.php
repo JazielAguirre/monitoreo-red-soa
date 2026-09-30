@@ -57,6 +57,7 @@ function pendientesDelDispositivo(int $dispositivoId): int
 echo "Pruebas del Servicio de Alertas\n";
 echo "Recargando la base de datos (schema.sql + seed.sql)...\n";
 recargarBaseDeDatos();
+iniciarSesionDePrueba();
 
 // =====================================================================
 seccion('1. GET /alertas filtra por atendida, dispositivo y limite, de la más reciente a la más antigua');
@@ -136,7 +137,7 @@ comprobarIgual(['pendientes' => 1, 'atendidas' => 3], $r['json']['data'] ?? null
 seccion('3. POST sin alerta pendiente → 201 creada: true; una segunda vez → 200 creada: false y la misma alerta');
 
 $cuerpo = alertaValida(5, ['mensaje' => '  El dispositivo Impresora Laboratorio no respondió al monitoreo.  ']);
-$r = peticion('POST', '/alertas', $cuerpo);
+$r = peticionInterna('POST', '/alertas', $cuerpo);
 comprobarRespuesta($r, 201, 'POST /alertas para la Impresora (sin pendiente)');
 $primera = $r['json']['data']['alerta'] ?? [];
 comprobarIgual(true, $r['json']['data']['creada'] ?? null, '  creada: true');
@@ -149,12 +150,12 @@ comprobarIgual(
 );
 comprobarFechaActual($primera['fecha'] ?? null, '  fecha generada por PHP, en hora de America/Mazatlan (±60 s)');
 
-$r = peticion('POST', '/alertas', alertaValida(5, ['mensaje' => 'Otro mensaje que no debe guardarse']));
+$r = peticionInterna('POST', '/alertas', alertaValida(5, ['mensaje' => 'Otro mensaje que no debe guardarse']));
 comprobarRespuesta($r, 200, 'POST otra vez para la Impresora');
 comprobarIgual(['alerta' => $primera, 'creada' => false], $r['json']['data'] ?? null, '  creada: false y exactamente la misma alerta (el mensaje nuevo se ignora)');
 comprobarIgual(1, pendientesDelDispositivo(5), '  la Impresora tiene una sola alerta pendiente en la base');
 
-$r = peticion('POST', '/alertas', alertaValida(4));
+$r = peticionInterna('POST', '/alertas', alertaValida(4));
 comprobarRespuesta($r, 200, 'POST para el Servidor principal (ya tiene la pendiente del seed)');
 comprobarIgual([4, false], [$r['json']['data']['alerta']['id'] ?? null, $r['json']['data']['creada'] ?? null], '  devuelve la alerta 4 del seed con creada: false');
 comprobarIgual(['pendientes' => 2, 'atendidas' => 3], peticion('GET', '/alertas/conteo')['json']['data'] ?? null, 'el conteo pasa a 2 pendientes');
@@ -164,7 +165,7 @@ seccion('4. Después de atender esa alerta, un nuevo POST vuelve a crear una (20
 
 $idPrimera = $primera['id'] ?? 0;
 comprobarRespuesta(peticion('PATCH', "/alertas/$idPrimera/atender"), 200, "PATCH /alertas/$idPrimera/atender");
-$r = peticion('POST', '/alertas', alertaValida(5));
+$r = peticionInterna('POST', '/alertas', alertaValida(5));
 comprobarRespuesta($r, 201, 'POST para la Impresora otra vez');
 $segunda = $r['json']['data']['alerta'] ?? [];
 comprobar(($r['json']['data']['creada'] ?? null) === true && ($segunda['id'] ?? $idPrimera) !== $idPrimera,
@@ -207,7 +208,7 @@ comprobarRespuesta(peticion('PATCH', '/alertas/999/atender'), 404, 'PATCH /alert
 // =====================================================================
 seccion('6. Dispositivo inexistente → 404; datos faltantes o tipo inválido → 400');
 
-$r = peticion('POST', '/alertas', alertaValida(999));
+$r = peticionInterna('POST', '/alertas', alertaValida(999));
 comprobarRespuesta($r, 404, 'POST para el dispositivo 999', 'El dispositivo no existe');
 comprobarIgual(0, (int) valorBd('SELECT COUNT(*) FROM alertas WHERE dispositivo_id = 999'), '  no se guardó nada');
 
@@ -231,20 +232,20 @@ foreach ($casos as [$campo, $cambio, $mensaje, $descripcion]) {
     if ($cambio[$campo] === null) {
         unset($cuerpo[$campo]);
     }
-    comprobarErrorCampo(peticion('POST', '/alertas', $cuerpo), 400, $campo, $mensaje, "POST $descripcion");
+    comprobarErrorCampo(peticionInterna('POST', '/alertas', $cuerpo), 400, $campo, $mensaje, "POST $descripcion");
 }
-comprobarIgual('Revisa los datos de la alerta', peticion('POST', '/alertas', '{}')['json']['error'] ?? null, 'mensaje general: "Revisa los datos de la alerta"');
-comprobarIgual(['dispositivo_id', 'tipo', 'mensaje'], array_keys(peticion('POST', '/alertas', '{}')['json']['campos'] ?? []), 'cuerpo {} → los tres campos en campos');
+comprobarIgual('Revisa los datos de la alerta', peticionInterna('POST', '/alertas', '{}')['json']['error'] ?? null, 'mensaje general: "Revisa los datos de la alerta"');
+comprobarIgual(['dispositivo_id', 'tipo', 'mensaje'], array_keys(peticionInterna('POST', '/alertas', '{}')['json']['campos'] ?? []), 'cuerpo {} → los tres campos en campos');
 comprobarIgual(0, pendientesDelDispositivo(1), 'ninguno de esos POST creó alertas para Mi PC');
 
-$r = peticion('POST', '/alertas', alertaValida(1, ['mensaje' => str_repeat('é', 255)]));
+$r = peticionInterna('POST', '/alertas', alertaValida(1, ['mensaje' => str_repeat('é', 255)]));
 comprobarRespuesta($r, 201, 'mensaje de exactamente 255 caracteres con acento');
 comprobarIgual(255, mb_strlen((string) ($r['json']['data']['alerta']['mensaje'] ?? '')), '  se guarda completo');
 peticion('PATCH', '/alertas/' . ($r['json']['data']['alerta']['id'] ?? 0) . '/atender');
 
-comprobarRespuesta(peticion('POST', '/alertas', '{"dispositivo_id": 1,'), 400, 'POST con JSON cortado', 'El cuerpo de la petición no es JSON válido');
-comprobarRespuesta(peticion('POST', '/alertas', ''), 400, 'POST sin cuerpo', 'El cuerpo de la petición no es JSON válido');
-comprobarRespuesta(peticion('POST', '/alertas', '[1]'), 400, 'POST con un arreglo', 'El cuerpo de la petición debe ser un objeto JSON');
+comprobarRespuesta(peticionInterna('POST', '/alertas', '{"dispositivo_id": 1,'), 400, 'POST con JSON cortado', 'El cuerpo de la petición no es JSON válido');
+comprobarRespuesta(peticionInterna('POST', '/alertas', ''), 400, 'POST sin cuerpo', 'El cuerpo de la petición no es JSON válido');
+comprobarRespuesta(peticionInterna('POST', '/alertas', '[1]'), 400, 'POST con un arreglo', 'El cuerpo de la petición debe ser un objeto JSON');
 
 foreach (['/alertas/1', '/alertas/abc/atender', '/alertas/0/atender', '/alertas/1/atender/x', '/alertas/conteo/x', '/alertas/datos.php'] as $ruta) {
     comprobarRespuesta(peticion('GET', $ruta), 404, "GET $ruta", 'La ruta no existe');
@@ -277,7 +278,7 @@ if (!curlDisponible()) {
     avisar('Prueba de POST simultáneos omitida: la extensión curl de PHP no está activada (extension=curl en php.ini).');
 } else {
     for ($ronda = 1; $ronda <= RONDAS_SIMULTANEAS; $ronda++) {
-        $respuestas = peticionesSimultaneas(array_fill(0, PETICIONES_POR_RONDA, ['POST', '/alertas', alertaValida(1)]));
+        $respuestas = peticionesSimultaneas(array_fill(0, PETICIONES_POR_RONDA, ['POST', '/alertas', alertaValida(1)]), ['sesion' => false, 'clave' => true]);
         $codigos = array_count_values(array_column($respuestas, 'codigo'));
         $ids = array_unique(array_map(fn($r) => $r['json']['data']['alerta']['id'] ?? null, $respuestas));
         $creadas = count(array_filter($respuestas, fn($r) => ($r['json']['data']['creada'] ?? null) === true));
@@ -295,7 +296,7 @@ if (!curlDisponible()) {
 }
 
 // =====================================================================
-seccion('Límite por defecto: 50 alertas');
+seccion('8. Límite por defecto: 50 alertas');
 
 $insertar = obtenerConexion()->prepare(
     "INSERT INTO alertas (dispositivo_id, tipo, mensaje, fecha, atendida, fecha_atendida)
@@ -308,5 +309,18 @@ for ($i = 0; $i < 60; $i++) {
 $total = (int) valorBd('SELECT COUNT(*) FROM alertas');
 comprobarIgual(50, count(peticion('GET', '/alertas')['json']['data'] ?? []), "con $total alertas en la base, GET /alertas devuelve 50");
 comprobarIgual(min(100, $total), count(peticion('GET', '/alertas?limite=100')['json']['data'] ?? []), '  y con limite=100 devuelve ' . min(100, $total));
+
+// =====================================================================
+seccion('9. Acceso (Fase 7): [Interfaz] con sesión o clave; POST /alertas solo con clave');
+
+recargarBaseDeDatos();
+comprobarAccesoDeRutas([
+    ['GET', '/alertas', null],
+    ['GET', '/alertas/conteo', null],
+    ['PATCH', '/alertas/4/atender', null],
+], [
+    ['POST', '/alertas', alertaValida(5)],
+]);
+recargarBaseDeDatos();
 
 terminarPruebas();

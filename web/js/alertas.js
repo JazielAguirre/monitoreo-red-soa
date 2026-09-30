@@ -8,7 +8,7 @@
  */
 
 import { api } from './api.js';
-import { actualizarContadorAlertas, montarEstructura } from './modulos/estructura.js';
+import { actualizarContadorAlertas, iniciarPagina } from './modulos/estructura.js';
 import { formatearFechaHora } from './modulos/formatos.js';
 import { mostrarNotificacion, notificarError } from './modulos/notificaciones.js';
 import { crearError, crearVacio, mostrarBloque } from './modulos/vistas.js';
@@ -29,7 +29,7 @@ const estado = {
     peticion: 0, // para descartar respuestas que llegan tarde
 };
 
-montarEstructura();
+await iniciarPagina(); // confirma la sesión antes de pedir datos
 conectarPestanas();
 cargar();
 

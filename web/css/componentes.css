@@ -713,3 +713,12 @@
     grid-template-columns: repeat(2, minmax(0, 390px));
     align-items: start;
 }
+
+/* 32 · Inicio de sesión: cada tarjeta sobre su propio fondo con retícula. */
+.demo-login {
+    display: grid;
+    place-items: center;
+    min-height: 0;
+    padding: 32px 24px;
+    border-radius: var(--radio-lg);
+}

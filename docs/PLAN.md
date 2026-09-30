@@ -44,7 +44,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 **Archivo de fallo simulado (`pruebas/.fallo-simulado.json`).** Sirve para probar el 502 de Monitoreo cuando Dispositivos o Alertas no responde, sin apagar nada:
 
 - **Qué es:** si existe y está vigente, `comun/http.php` desvía las llamadas al servicio indicado (y, opcionalmente, a un solo método, por ejemplo el `PATCH` de Dispositivos) hacia un destino que no responde (`sin_respuesta`, un puerto de `127.0.0.1`) o que no devuelve JSON (`respuesta_invalida`, `web/index.html`). Solo admite esos dos modos, nunca una URL libre, y el puerto debe ser 1024 o mayor.
-- **Solo lo usan las pruebas:** lo crea y lo borra `pruebas/monitoreo.php` (al empezar, al terminar y ante un error fatal). Está en `.gitignore`.
+- **Solo lo usan las pruebas:** lo crean y lo borran `pruebas/monitoreo.php` y `pruebas/auth.php` (al empezar, al terminar y ante un error fatal), con las funciones de `pruebas/ayudas.php`. Está en `.gitignore`.
 - **Caduca solo:** lleva un campo `expira`; `http.php` lo ignora si ya pasó o si está a más de 60 segundos en el futuro. Si la prueba se interrumpe (Ctrl+C, `kill -9`), el sistema vuelve a funcionar en cuanto caduca (las pruebas usan 30 s), y la siguiente corrida lo borra.
 - **No puede activarse por HTTP:** ningún endpoint escribe archivos y `pruebas/` responde 404.
 
@@ -195,12 +195,12 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 **Listo cuando:**
 
-- [ ] Sin sesión, cualquier página redirige al login y cualquier endpoint [Interfaz] responde 401.
-- [ ] Un endpoint [Interno] llamado sin clave → 403, aunque haya sesión.
-- [ ] Credenciales incorrectas → siempre el mismo mensaje, exista o no el usuario.
-- [ ] "Monitorear todos" sigue funcionando con sesión: los servicios se comunican con la clave interna.
-- [ ] "Salir" cierra la sesión.
-- [ ] Todas las pruebas automáticas pasan, ajustadas para iniciar sesión.
+- [x] Sin sesión, cualquier página redirige al login y cualquier endpoint [Interfaz] responde 401.
+- [x] Un endpoint [Interno] llamado sin clave → 403, aunque haya sesión.
+- [x] Credenciales incorrectas → siempre el mismo mensaje, exista o no el usuario.
+- [x] "Monitorear todos" sigue funcionando con sesión: los servicios se comunican con la clave interna.
+- [x] "Salir" cierra la sesión.
+- [x] Todas las pruebas automáticas pasan, ajustadas para iniciar sesión.
 
 ## Fase 8 · Integración, pruebas y demo
 

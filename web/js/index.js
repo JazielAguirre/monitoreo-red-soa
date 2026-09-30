@@ -8,7 +8,7 @@
  */
 
 import { api } from './api.js';
-import { montarEstructura, actualizarContadorAlertas } from './modulos/estructura.js';
+import { iniciarPagina, actualizarContadorAlertas } from './modulos/estructura.js';
 import { compararFechas, formatearFechaCompleta, formatearFechaCorta, formatearFechaHora, formatearHora, formatearMs, pluralizar } from './modulos/formatos.js';
 import { crearError, crearVacio, mostrarBloque } from './modulos/vistas.js';
 import { elemento, icono, crearInsigniaEstado, iconoTipo, urlHistorial } from './modulos/piezas.js';
@@ -23,7 +23,7 @@ const estado = {
 };
 const progreso = crearProgreso($('progreso-monitoreo'));
 
-montarEstructura();
+await iniciarPagina(); // confirma la sesión antes de pedir datos
 $('monitorear-todos').addEventListener('click', monitorearTodosDesdeDashboard);
 cargarTodo();
 

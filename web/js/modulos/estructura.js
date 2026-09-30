@@ -6,10 +6,14 @@
  * Cada página tiene <aside id="barra-lateral"> y <header id="encabezado-movil">
  * vacíos (así el espacio queda reservado antes de que corra JavaScript) y
  * <body data-pagina="…"> para marcar la página activa.
+ *
+ * iniciarPagina() además confirma la sesión (GET /auth/sesion) antes de que la
+ * pantalla pida sus datos, muestra el usuario real y conecta "Salir".
  */
 
 import { api } from '../api.js';
-import { mostrarNotificacion } from './notificaciones.js';
+import { notificarError } from './notificaciones.js';
+import { irAlLoginSinVolver } from './sesion.js';
 
 const PAGINAS = [
     { id: 'index', href: 'index.html', icono: 'bi-grid-1x2', texto: 'Dashboard' },
@@ -17,9 +21,6 @@ const PAGINAS = [
     { id: 'monitoreos', href: 'monitoreos.html', icono: 'bi-activity', texto: 'Monitoreos' },
     { id: 'alertas', href: 'alertas.html', icono: 'bi-bell', texto: 'Alertas', contador: true },
 ];
-
-// Hasta la Fase 7 (inicio de sesión) el usuario es fijo, como en el diseño.
-const USUARIO = { nombre: 'Administrador', usuario: 'admin', iniciales: 'AD' };
 
 /**
  * Crea un elemento con clase y atributos. Los textos se asignan con textContent.
@@ -84,30 +85,86 @@ function crearNavegacion(paginaActiva) {
     return nav;
 }
 
-function avisarSalir() {
-    mostrarNotificacion({
-        tipo: 'info',
-        icono: 'bi-box-arrow-right',
-        titulo: 'Cerrar sesión',
-        texto: 'El inicio y cierre de sesión se habilitan en la Fase 7.',
-    });
+/**
+ * Iniciales para el avatar: primera letra de las dos primeras palabras del nombre
+ * ("Ana López" → "AL") o las dos primeras letras si es una sola ("Administrador" → "AD").
+ */
+export function iniciales(nombre) {
+    const palabras = String(nombre).trim().split(/\s+/).filter(Boolean);
+    const letras = palabras.length > 1 ? palabras[0][0] + palabras[1][0] : (palabras[0] ?? '').slice(0, 2);
+
+    return letras.toUpperCase();
+}
+
+/**
+ * Avatar, nombre y usuario. Sin usuario todavía (null), esqueletos del mismo tamaño.
+ */
+function crearDatosUsuario(usuario) {
+    const avatar = elemento('span', 'avatar js-usuario-avatar', { 'aria-hidden': 'true' });
+    const datos = elemento('div', 'usuario-barra__datos');
+    datos.append(elemento('span', 'usuario-barra__nombre js-usuario-nombre'), elemento('span', 'usuario-barra__rol js-usuario-usuario'));
+    llenarDatosUsuario({ avatar, datos }, usuario);
+
+    return { avatar, datos };
+}
+
+function llenarDatosUsuario({ avatar, datos }, usuario) {
+    const nombre = datos.querySelector('.js-usuario-nombre');
+    const cuenta = datos.querySelector('.js-usuario-usuario');
+
+    if (usuario === null) {
+        nombre.replaceChildren(elemento('span', 'esqueleto esqueleto--barra esqueleto--nombre-usuario'));
+        cuenta.replaceChildren(elemento('span', 'esqueleto esqueleto--barra esqueleto--cuenta-usuario'));
+        avatar.textContent = '';
+        return;
+    }
+    nombre.textContent = usuario.nombre;
+    cuenta.textContent = usuario.usuario;
+    avatar.textContent = iniciales(usuario.nombre);
+}
+
+/**
+ * Muestra el usuario de la sesión en la barra lateral y en el menú del celular.
+ */
+export function mostrarUsuario(usuario) {
+    for (const datos of document.querySelectorAll('.usuario-barra__datos')) {
+        const avatar = datos.parentElement.querySelector('.js-usuario-avatar');
+        llenarDatosUsuario({ avatar, datos }, usuario);
+    }
+}
+
+/**
+ * "Salir": POST /auth/logout y al login. Si falla, lo avisa y se queda.
+ */
+async function cerrarSesion(boton) {
+    if (boton.disabled) {
+        return;
+    }
+    boton.disabled = true;
+
+    try {
+        await api.auth.logout();
+        irAlLoginSinVolver();
+    } catch (error) {
+        boton.disabled = false;
+        notificarError(error, 'No se pudo cerrar la sesión');
+    }
 }
 
 /**
  * Llena la barra lateral: logo con el punto verde, "MENÚ", navegación y usuario al pie.
  */
-export function llenarBarraLateral(aside, paginaActiva) {
+export function llenarBarraLateral(aside, paginaActiva, usuarioActual = null) {
     const { marca } = crearMarca('Monitoreo de Red', 'SOA · Laboratorio');
     const nav = crearNavegacion(paginaActiva);
     nav.prepend(elemento('span', 'nav-lateral__titulo', { 'aria-hidden': 'true' }, 'MENÚ'));
 
     const usuario = elemento('div', 'usuario-barra');
-    const datos = elemento('div', 'usuario-barra__datos');
-    datos.append(elemento('span', 'usuario-barra__nombre', {}, USUARIO.nombre), elemento('span', 'usuario-barra__rol', {}, USUARIO.usuario));
+    const { avatar, datos } = crearDatosUsuario(usuarioActual);
     const salir = elemento('button', 'usuario-barra__salir', { type: 'button', 'aria-label': 'Salir', title: 'Salir' });
     salir.append(icono('bi-box-arrow-right'));
-    salir.addEventListener('click', avisarSalir);
-    usuario.append(elemento('span', 'avatar', { 'aria-hidden': 'true' }, USUARIO.iniciales), datos, salir);
+    salir.addEventListener('click', () => cerrarSesion(salir));
+    usuario.append(avatar, datos, salir);
 
     aside.replaceChildren(marca, nav, usuario);
     aside.setAttribute('aria-label', 'Barra lateral');
@@ -116,7 +173,7 @@ export function llenarBarraLateral(aside, paginaActiva) {
 /**
  * Llena el encabezado móvil y crea su menú desplegable (con fondo que lo cierra).
  */
-export function llenarEncabezadoMovil(encabezado, paginaActiva) {
+export function llenarEncabezadoMovil(encabezado, paginaActiva, usuarioActual = null) {
     const boton = elemento('button', 'encabezado-movil__boton', {
         type: 'button',
         'aria-label': 'Abrir el menú',
@@ -138,12 +195,11 @@ export function llenarEncabezadoMovil(encabezado, paginaActiva) {
     nav.className = 'menu-movil__nav';
 
     const usuario = elemento('div', 'menu-movil__usuario');
-    const datos = elemento('div', 'usuario-barra__datos');
-    datos.append(elemento('span', 'usuario-barra__nombre', {}, USUARIO.nombre), elemento('span', 'usuario-barra__rol', {}, USUARIO.usuario));
+    const { avatar, datos } = crearDatosUsuario(usuarioActual);
     const salir = elemento('button', 'menu-movil__salir', { type: 'button' });
     salir.append(icono('bi-box-arrow-right'), 'Salir');
-    salir.addEventListener('click', avisarSalir);
-    usuario.append(elemento('span', 'avatar', { 'aria-hidden': 'true' }, USUARIO.iniciales), datos, salir);
+    salir.addEventListener('click', () => cerrarSesion(salir));
+    usuario.append(avatar, datos, salir);
 
     menu.append(nav, usuario);
     encabezado.after(fondo, menu);
@@ -211,7 +267,7 @@ export async function actualizarContadorAlertas(conocidas = null) {
 }
 
 /**
- * Monta la estructura de la página actual y carga el contador de alertas.
+ * Monta la estructura de la página actual (con el usuario en esqueleto).
  */
 export function montarEstructura() {
     const paginaActiva = document.body.dataset.pagina;
@@ -224,6 +280,27 @@ export function montarEstructura() {
     if (encabezado) {
         llenarEncabezadoMovil(encabezado, paginaActiva);
     }
+}
+
+/**
+ * Arranque de cada pantalla: monta la estructura y confirma la sesión antes de que
+ * la pantalla pida sus datos (mientras tanto se ven sus esqueletos).
+ * - Sin sesión, api.js lleva al login y esta promesa no se resuelve.
+ * - Si la comprobación falla por otra razón (Apache apagado, error 500), la pantalla
+ *   sigue y muestra sus propios estados de error: nunca queda en blanco.
+ * Devuelve el usuario, o null si no se pudo confirmar.
+ */
+export async function iniciarPagina() {
+    montarEstructura();
+    let usuario = null;
+
+    try {
+        usuario = (await api.auth.sesion()).usuario;
+        mostrarUsuario(usuario);
+    } catch {
+        mostrarUsuario({ nombre: '—', usuario: '' }); // la pantalla mostrará su propio error
+    }
 
     actualizarContadorAlertas();
+    return usuario;
 }

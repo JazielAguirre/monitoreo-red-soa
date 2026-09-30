@@ -20,56 +20,6 @@ require_once __DIR__ . '/../servicios/comun/http.php';
 const CLAVES_MONITOREO = ['id', 'dispositivo_id', 'ip', 'estado', 'tiempo_respuesta_ms', 'fecha'];
 const CLAVES_HISTORIAL = ['items', 'total', 'pagina', 'por_pagina', 'total_paginas', 'resumen'];
 
-// ---------------------------------------------------------------- Fallo simulado
-
-/**
- * Activa un fallo simulado por unos segundos (ver ARCHIVO_FALLO_SIMULADO en comun/http.php).
- */
-function simularFallo(string $servicio, string $modo, ?string $metodo = null, ?int $puerto = null, int $segundos = 30): void
-{
-    $fallo = array_filter(
-        ['servicio' => $servicio, 'metodo' => $metodo, 'modo' => $modo, 'puerto' => $puerto, 'expira' => time() + $segundos],
-        fn($valor) => $valor !== null
-    );
-    escribirArchivoFallo($fallo);
-}
-
-function escribirArchivoFallo(array $contenido): void
-{
-    file_put_contents(ARCHIVO_FALLO_SIMULADO, json_encode($contenido));
-}
-
-function quitarFalloSimulado(): void
-{
-    if (is_file(ARCHIVO_FALLO_SIMULADO)) {
-        unlink(ARCHIVO_FALLO_SIMULADO);
-    }
-}
-
-/**
- * Un puerto de 127.0.0.1 donde nadie escucha (conexión rechazada).
- */
-function puertoCerrado(): int
-{
-    $servidor = stream_socket_server('tcp://127.0.0.1:0');
-    $puerto = (int) substr(strrchr(stream_socket_get_name($servidor, false), ':'), 1);
-    fclose($servidor);
-
-    return $puerto;
-}
-
-/**
- * Abre un socket en 127.0.0.1 que acepta conexiones pero nunca responde:
- * quien le hace una petición espera hasta agotar su tiempo.
- * Devuelve [socket, puerto]; el socket debe seguir abierto durante la prueba.
- */
-function socketQueNoResponde(): array
-{
-    $servidor = stream_socket_server('tcp://127.0.0.1:0');
-
-    return [$servidor, (int) substr(strrchr(stream_socket_get_name($servidor, false), ':'), 1)];
-}
-
 // ---------------------------------------------------------------- Cálculos de referencia
 
 /**
@@ -139,6 +89,7 @@ quitarFalloSimulado();
 register_shutdown_function('quitarFalloSimulado');
 echo "Recargando la base de datos (schema.sql + seed.sql)...\n";
 recargarBaseDeDatos();
+iniciarSesionDePrueba();
 
 // =====================================================================
 seccion('1. GET /monitoreo respeta cada filtro; desde > hasta → 400; la paginación da total y total_paginas correctos');
@@ -469,5 +420,19 @@ comprobarIgual(['2026-09-10 23:59:59', '2026-09-10 00:00:00', '2026-09-09 23:59:
     'hasta=2026-09-10 → termina en las 23:59:59 de ese día');
 comprobarIgual(['2026-09-11 00:00:00'], $fechasDe(peticion('GET', '/monitoreo?dispositivo=3&desde=2026-09-11&hasta=2026-09-11')),
     'desde=2026-09-11 → empieza en las 00:00:00 de ese día');
+
+// =====================================================================
+seccion('11. Acceso (Fase 7): los tres endpoints son [Interfaz]; Monitoreo usa la clave con los demás');
+
+recargarBaseDeDatos();
+comprobarAccesoDeRutas([
+    ['GET', '/monitoreo', null],
+    ['GET', '/monitoreo/recientes', null],
+    ['POST', '/monitoreo/1', null],
+], []);
+$r = peticion('POST', '/monitoreo/6');
+comprobarRespuesta($r, 201, 'con sesión, POST /monitoreo/6 completa el flujo (GET y PATCH a Dispositivos, POST a Alertas, con la clave)');
+comprobarIgual(true, $r['json']['data']['alerta_creada'] ?? null, '  y crea la alerta a través del endpoint [Interno] POST /alertas');
+recargarBaseDeDatos();
 
 terminarPruebas();

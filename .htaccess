@@ -10,8 +10,8 @@ RewriteEngine On
 RewriteRule ^$ %{REQUEST_URI}web/ [R=302,L]
 
 # Accesible: la interfaz y el Servicio de Autenticación.
-# dispositivos, alertas y monitoreo tienen su propio .htaccess, que reemplaza
-# estas reglas y envía todo a su index.php.
+# Cada servicio (dispositivos, alertas, monitoreo y auth) tiene su propio
+# .htaccess, que reemplaza estas reglas y envía todo a su index.php.
 RewriteRule ^web(/|$) - [L]
 RewriteRule ^servicios/auth(/|$) - [L]
 

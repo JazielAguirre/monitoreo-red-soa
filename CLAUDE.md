@@ -32,6 +32,7 @@ sudo /opt/lampp/lampp startmysql
 /opt/lampp/bin/php pruebas/dispositivos.php
 /opt/lampp/bin/php pruebas/alertas.php
 /opt/lampp/bin/php pruebas/monitoreo.php
+/opt/lampp/bin/php pruebas/auth.php       # login, cookie, 401/403, sesión sin bloqueo
 /opt/lampp/bin/php pruebas/interfaz.php   # abre su propio Chrome headless (perfil temporal); se omite si no hay Chrome
 
 # Colores fuera de tokens.css, solo en estilos (CSS, JS, style="" y <style>). Debe no imprimir nada.
@@ -56,17 +57,17 @@ Interfaz web (web/)  →  HTTP + JSON  →  Servicios (servicios/)  →  MySQL
 database/        schema.sql (recrea la BD completa), seed.sql (datos de prueba)
 docs/            PLAN.md (fases del proyecto), API.md (contrato de endpoints), diseno/ (referencia visual)
 servicios/
-├── comun/       config.php, db.php, respuesta.php, peticion.php, enrutador.php, http.php (cliente entre servicios), auth.php (.htaccess: Require all denied)
+├── comun/       config.php, db.php, respuesta.php, peticion.php, enrutador.php (acceso por ruta), http.php (cliente entre servicios), auth.php (sesión y clave de servicio) (.htaccess: Require all denied)
 ├── dispositivos/  index.php + .htaccess, endpoints.php, validacion.php, datos.php → dueño de la tabla dispositivos
 ├── alertas/       index.php + .htaccess, endpoints.php, validacion.php, datos.php → dueño de la tabla alertas
 ├── monitoreo/     index.php + .htaccess, endpoints.php, validacion.php, datos.php, clientes.php (llamadas HTTP a Dispositivos y Alertas), ping.php → dueño de la tabla monitoreos
-└── auth/          index.php               → dueño de la tabla usuarios
+└── auth/          index.php + .htaccess, endpoints.php, validacion.php, datos.php → dueño de la tabla usuarios
 web/
 ├── css/         tokens.css (variables de diseño, único archivo con colores), app.css (componentes y Bootstrap), componentes.css (solo la página de muestra)
-├── js/          api.js (único punto de acceso a la API, URL base relativa) + modulos/ (formatos, notificaciones, vistas, estructura, gráficas…) + un módulo ES por página
+├── js/          api.js (único punto de acceso a la API, URL base relativa; con 401 lleva al login) + modulos/ (formatos, notificaciones, vistas, estructura, sesion, gráficas…) + un módulo ES por página
 ├── vendor/      bootstrap, bootstrap-icons, chart.js, fuentes Inter y JetBrains Mono
 └── *.html       login, index (dashboard), dispositivos, monitoreos, alertas, componentes
-pruebas/         ayudas.php + un script por servicio (dispositivos.php, ...) + interfaz.php con navegador.php (cliente del protocolo de Chrome). Solo línea de comandos; no accesible por HTTP
+pruebas/         ayudas.php (peticiones con la cookie de iniciarSesionDePrueba() o con la clave en peticionInterna(), fallo simulado) + un script por servicio (dispositivos.php, ..., auth.php) + interfaz.php con navegador.php (cliente del protocolo de Chrome). Solo línea de comandos; no accesible por HTTP
 Reglas SOA (no negociables)
 Cada servicio solo lee y escribe sus propias tablas.
 Si un servicio necesita datos o acciones de otro, los pide por HTTP usando servicios/comun/http.php. Nunca hace require del código de otro servicio ni consultas SQL a tablas ajenas.
@@ -117,9 +118,13 @@ IPs de prueba: 127.0.0.1 siempre responde. 192.0.2.1 (rango reservado para docum
 Prueba el ping a través de Apache (con curl al endpoint), no solo con php en la terminal: Apache corre como daemon y puede tener permisos distintos a tu usuario para ejecutar ping.
 Autenticación
 Login con password_hash() / password_verify() y sesiones de PHP.
-Peticiones del navegador: requieren sesión activa. Sin sesión, el servicio responde 401 y la interfaz redirige a login.html.
-Peticiones entre servicios: no llevan sesión. Se autentican con la cabecera X-Servicio-Clave, cuyo valor está en comun/config.php.
-Se implementa en la Fase 7. Antes de eso, los servicios funcionan sin login.
+Peticiones del navegador: requieren sesión activa. Sin sesión, el servicio responde 401 y api.js lleva a login.html?volver=<pantalla actual>; tras el login se vuelve ahí solo si destinoSeguro() (web/js/modulos/sesion.js) confirma que es una pantalla de web/, si no, al Dashboard.
+Cada pantalla arranca con await iniciarPagina() (estructura.js): confirma la sesión con GET /auth/sesion antes de pedir datos (se ve el esqueleto), muestra el usuario real y conecta «Salir» (POST /auth/logout → login). componentes.html es pública y no pide datos.
+Peticiones entre servicios: no llevan sesión ni reenvían la cookie. Se autentican con la cabecera X-Servicio-Clave (CLAVE_SERVICIO en comun/config.php, 64 caracteres aleatorios), comparada con hash_equals().
+Cada ruta del enrutador declara su acceso (4.º elemento): ACCESO_INTERFAZ (sesión o clave; si no, 401), ACCESO_INTERNO (solo clave; si no, 403 aunque haya sesión) o ACCESO_PUBLICO (los tres de auth). Una clave presente pero incorrecta → 403.
+La sesión se lee con session_start(['read_and_close' => true]) (leerUsuarioDeLaSesion() en comun/auth.php): no bloquea las peticiones en paralelo. Solo POST /auth/login y POST /auth/logout escriben en ella. Leer nunca crea sesiones ni envía cookies.
+Cookie monitoreo_soa_sesion: HttpOnly, SameSite=Lax, ruta /monitoreo-red-soa/, 8 horas (DURACION_SESION; también session.gc_maxlifetime y la hora de expiración guardada en la sesión). session_regenerate_id(true) al iniciar sesión, con use_strict_mode.
+Login: mismo mensaje y tiempo similar exista o no el usuario (password_verify() contra HASH_FICTICIO si no existe).
 Diseño de la interfaz
 Tokens: colores, tipografía, espaciados, radios y sombras son variables CSS en web/css/tokens.css. Ningún otro archivo usa valores hexadecimales sueltos.
 Referencia visual: docs/diseno/. "Monitoreo de Red SOA.dc.html" es el sistema de diseño (valores finales), "Monitoreo de Red SOA · Pantallas.dc.html" y el PDF muestran las pantallas. Es solo referencia: no copies su código (usa React internamente y carga recursos desde internet).
@@ -202,7 +207,7 @@ Estado actual
 
 Actualiza esta sección al cerrar cada fase.
 
-Fase actual: 7 — Inicio de sesión (sin empezar).
+Fase actual: 8 — Integración, pruebas y demo (sin empezar).
 Completado:
 - Fase 0 — Preparación y prueba de ping: estructura del proyecto, comun/config.php y comun/respuesta.php, puntos de entrada de dispositivos, alertas y monitoreo con reescritura de URLs, esqueletos HTML, librerías en web/vendor/, repositorio git, .htaccess que solo expone web/ y los servicios, y servicios/monitoreo/ping.php probado a través de Apache (127.0.0.1 y la puerta de enlace activos, 192.0.2.1 inactivo en ~1 s, entradas inválidas → 400 sin ejecutar comandos).
 - Fase 1 — Base de datos: database/schema.sql con las 4 tablas de docs/API.md (FK con ON DELETE CASCADE, índices, utf8mb4_unicode_ci), database/seed.sql (6 dispositivos, 56 monitoreos, 1 alerta pendiente y 3 atendidas, usuario admin) y comun/db.php (PDO con EMULATE_PREPARES en false y colación utf8mb4_unicode_ci). Verificado: carga desde cero repetible, coherencia de ultimo_* con el último monitoreo, UNIQUE, FK y cascada (con ROLLBACK).
@@ -211,6 +216,7 @@ Completado:
 - Fase 4 — Servicio de Monitoreo: POST /monitoreo/{id} con el flujo de 5 pasos solo por HTTP (comun/http.php), GET /monitoreo con filtros, paginación y resumen en SQL, GET /monitoreo/recientes con ROW_NUMBER(); endpoint temporal /monitoreo/prueba eliminado; pruebas/monitoreo.php (188 comprobaciones, incluidos los 502 con el archivo de fallo simulado y la regla SOA). Las tres suites pasan.
 - Fase 5 — Sistema de diseño: tokens.css (único archivo con colores, agrupado por categoría, fuentes locales), app.css (Bootstrap por componente y componentes propios de las secciones 01–14, :focus-visible, prefers-reduced-motion) y componentes.html con componentes.css y componentes.js. Comparado con la referencia a 1440 y 390 px, sin peticiones externas, contrastes AA documentados. Aprobado por el equipo.
 - Fase 6 — Pantallas: Dashboard, Dispositivos, Monitoreos y Alertas con los servicios reales. api.js (URL base relativa) y módulos compartidos en web/js/modulos/ (formatos, notificaciones, vistas, estructura, piezas, gráficas, monitorear-todos, formulario-dispositivo, modales); estados de carga, vacío y error en cada vista; filtros en la URL; adaptaciones de celular (tarjetas en Dispositivos, filas en el Dashboard, filas compactas del historial en Monitoreos con una container query, tarjetas apiladas en Alertas); piezas en componentes.html (secciones 15–31). pruebas/interfaz.php con su propio Chrome headless (235 comprobaciones, incluidos el nombre con HTML en las cuatro pantallas y el foco visible con el teclado). Revisado por el equipo contra docs/diseno/, probado en un celular real por la WiFi y con MySQL apagado de verdad.
+- Fase 7 — Inicio de sesión: Servicio de Autenticación (login, logout, sesión) con el patrón de los demás; comun/auth.php con acceso por ruta ([Interfaz]: sesión o clave → 401; [Interno]: solo clave → 403; clave aleatoria comparada con hash_equals); sesión leída con read_and_close (sin bloqueo: 3 peticiones que esperan 3 s tardan 3 s juntas, no 9); cookie HttpOnly, SameSite=Lax, ruta del proyecto, 8 h; login con el mismo mensaje y tiempo exista o no el usuario. login.html (5a y 5b), redirección con «volver» validado, iniciarPagina() en cada pantalla, usuario real y «Salir». pruebas/auth.php (126) y las demás suites con sesión; interfaz.php entra por la pantalla real. «Monitorear todos» tarda lo mismo que antes (5.30 s contra 5.29 s). Probado a mano por el equipo en la computadora y en el celular.
 Pendientes o decisiones abiertas:
 - Con EMULATE_PREPARES en false, PDO ya devuelve INT como int, pero DECIMAL sigue como texto y TINYINT como int (1): cada servicio convierte a número y booleano antes de responder (Dispositivos lo hace en formatearDispositivo()).
 - El 1452 de POST /monitoreo (dispositivo borrado entre el paso 1 y el 3) se prueba en datos.php, no de punta a punta: provocar esa carrera por HTTP no es confiable.

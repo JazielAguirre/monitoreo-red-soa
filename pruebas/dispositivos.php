@@ -64,6 +64,7 @@ function comprobarFormaDispositivo(mixed $d, string $descripcion): bool
 echo "Pruebas del Servicio de Dispositivos\n";
 echo "Recargando la base de datos (schema.sql + seed.sql)...\n";
 recargarBaseDeDatos();
+iniciarSesionDePrueba();
 
 // =====================================================================
 seccion('1. Los 6 endpoints responden como dice API.md, con los tipos correctos');
@@ -231,7 +232,7 @@ seccion('4. Id inexistente → 404; ruta desconocida → 404; método no permiti
 comprobarRespuesta(peticion('GET', '/dispositivos/999'), 404, 'GET /dispositivos/999', 'El dispositivo no existe');
 comprobarRespuesta(peticion('PUT', '/dispositivos/999', dispositivoValido(['ip' => '10.0.0.99'])), 404, 'PUT /dispositivos/999', 'El dispositivo no existe');
 comprobarRespuesta(peticion('DELETE', '/dispositivos/999'), 404, 'DELETE /dispositivos/999', 'El dispositivo no existe');
-comprobarRespuesta(peticion('PATCH', '/dispositivos/999/estado', ['estado' => 'inactivo', 'tiempo_respuesta_ms' => null, 'fecha' => '2026-09-28 10:00:00']), 404, 'PATCH /dispositivos/999/estado', 'El dispositivo no existe');
+comprobarRespuesta(peticionInterna('PATCH', '/dispositivos/999/estado', ['estado' => 'inactivo', 'tiempo_respuesta_ms' => null, 'fecha' => '2026-09-28 10:00:00']), 404, 'PATCH /dispositivos/999/estado', 'El dispositivo no existe');
 
 foreach (['/dispositivos/abc', '/dispositivos/0', '/dispositivos/-1', '/dispositivos/01', '/dispositivos/1.5',
           '/dispositivos/99999999999', '/dispositivos/1/otra', '/dispositivos/1/estado/x', '/dispositivos/estado',
@@ -272,7 +273,7 @@ foreach ($cuerposInvalidos as [$cuerpo, $descripcion, $mensaje]) {
     comprobarRespuesta(peticion('POST', '/dispositivos', $cuerpo), 400, "POST con cuerpo $descripcion", $mensaje);
 }
 comprobarRespuesta(peticion('PUT', '/dispositivos/1', '{roto'), 400, 'PUT con JSON inválido', 'El cuerpo de la petición no es JSON válido');
-comprobarRespuesta(peticion('PATCH', '/dispositivos/1/estado', '{roto'), 400, 'PATCH con JSON inválido', 'El cuerpo de la petición no es JSON válido');
+comprobarRespuesta(peticionInterna('PATCH', '/dispositivos/1/estado', '{roto'), 400, 'PATCH con JSON inválido', 'El cuerpo de la petición no es JSON válido');
 comprobarIgual($totalDispositivos, (int) valorBd('SELECT COUNT(*) FROM dispositivos'), '  ninguna de estas peticiones creó ni cambió dispositivos');
 
 // =====================================================================
@@ -329,24 +330,24 @@ comprobarRespuesta(peticion('DELETE', '/dispositivos/4'), 404, '  borrarlo otra 
 // =====================================================================
 seccion('8. PATCH /estado: activo exige tiempo ≥ 0, inactivo exige null, la fecha es obligatoria');
 
-$r = peticion('PATCH', '/dispositivos/6/estado', ['estado' => 'activo', 'tiempo_respuesta_ms' => 0.32, 'fecha' => '2026-09-28 10:05:12']);
+$r = peticionInterna('PATCH', '/dispositivos/6/estado', ['estado' => 'activo', 'tiempo_respuesta_ms' => 0.32, 'fecha' => '2026-09-28 10:05:12']);
 comprobarRespuesta($r, 200, 'PATCH Servidor de respaldo (desconocido) → activo con 0.32');
 $d = $r['json']['data'] ?? [];
 comprobarFormaDispositivo($d, '  responde el objeto dispositivo');
 comprobarIgual(['activo', 0.32, '2026-09-28 10:05:12'], [$d['estado'] ?? '', $d['ultimo_tiempo_ms'] ?? '', $d['ultima_comprobacion'] ?? ''], '  estado, ultimo_tiempo_ms y ultima_comprobacion actualizados');
 
-$r = peticion('PATCH', '/dispositivos/6/estado', ['estado' => 'activo', 'tiempo_respuesta_ms' => 2, 'fecha' => '2026-09-28 10:10:00']);
+$r = peticionInterna('PATCH', '/dispositivos/6/estado', ['estado' => 'activo', 'tiempo_respuesta_ms' => 2, 'fecha' => '2026-09-28 10:10:00']);
 comprobarRespuesta($r, 200, 'PATCH activo con un entero (2), como el ping de Windows');
 comprobarNumero(2, $r['json']['data']['ultimo_tiempo_ms'] ?? null, '  ultimo_tiempo_ms = 2');
-$r = peticion('PATCH', '/dispositivos/6/estado', ['estado' => 'activo', 'tiempo_respuesta_ms' => 2.5, 'fecha' => '2026-09-28 10:12:00']);
+$r = peticionInterna('PATCH', '/dispositivos/6/estado', ['estado' => 'activo', 'tiempo_respuesta_ms' => 2.5, 'fecha' => '2026-09-28 10:12:00']);
 comprobarNumero(2.5, $r['json']['data']['ultimo_tiempo_ms'] ?? null, 'PATCH activo con decimal 2.5 → ultimo_tiempo_ms = 2.5');
-$r = peticion('PATCH', '/dispositivos/6/estado', ['estado' => 'activo', 'tiempo_respuesta_ms' => 0, 'fecha' => '2026-09-28 10:15:00']);
+$r = peticionInterna('PATCH', '/dispositivos/6/estado', ['estado' => 'activo', 'tiempo_respuesta_ms' => 0, 'fecha' => '2026-09-28 10:15:00']);
 comprobarRespuesta($r, 200, 'PATCH activo con 0 (ping < 1 ms)');
 comprobarNumero(0, $r['json']['data']['ultimo_tiempo_ms'] ?? null, '  ultimo_tiempo_ms = 0');
-$r = peticion('PATCH', '/dispositivos/6/estado', ['estado' => 'inactivo', 'tiempo_respuesta_ms' => null, 'fecha' => '2026-09-28 10:20:00']);
+$r = peticionInterna('PATCH', '/dispositivos/6/estado', ['estado' => 'inactivo', 'tiempo_respuesta_ms' => null, 'fecha' => '2026-09-28 10:20:00']);
 comprobarRespuesta($r, 200, 'PATCH inactivo con tiempo null');
 comprobarIgual(['inactivo', null, '2026-09-28 10:20:00'], campos($r['json']['data'] ?? null, ['estado', 'ultimo_tiempo_ms', 'ultima_comprobacion']), '  queda inactivo, con tiempo null y la nueva fecha');
-$r = peticion('PATCH', '/dispositivos/6/estado', ['estado' => 'inactivo', 'fecha' => '2026-09-28 10:25:00']);
+$r = peticionInterna('PATCH', '/dispositivos/6/estado', ['estado' => 'inactivo', 'fecha' => '2026-09-28 10:25:00']);
 comprobarRespuesta($r, 200, 'PATCH inactivo sin tiempo_respuesta_ms (cuenta como null)');
 
 $mensajeTiempo = 'El tiempo de respuesta debe ser un número mayor o igual a 0';
@@ -364,7 +365,7 @@ $casosPatch = [
 ];
 foreach ($casosPatch as [$cuerpo, $campo, $mensaje, $descripcion]) {
     $cuerpo += ['fecha' => '2026-09-28 11:00:00'];
-    comprobarErrorCampo(peticion('PATCH', '/dispositivos/1/estado', $cuerpo), 400, $campo, $mensaje, "PATCH $descripcion");
+    comprobarErrorCampo(peticionInterna('PATCH', '/dispositivos/1/estado', $cuerpo), 400, $campo, $mensaje, "PATCH $descripcion");
 }
 
 $mensajeFecha = 'Fecha no válida, usa el formato YYYY-MM-DD HH:MM:SS';
@@ -383,7 +384,7 @@ foreach ($fechasInvalidas as [$fecha, $descripcion]) {
     if ($fecha !== null) {
         $cuerpo['fecha'] = $fecha;
     }
-    comprobarErrorCampo(peticion('PATCH', '/dispositivos/1/estado', $cuerpo), 400, 'fecha', $mensajeFecha, "PATCH $descripcion");
+    comprobarErrorCampo(peticionInterna('PATCH', '/dispositivos/1/estado', $cuerpo), 400, 'fecha', $mensajeFecha, "PATCH $descripcion");
 }
 comprobarIgual(
     ['activo', '0.06'],
@@ -407,5 +408,23 @@ comprobarIgual(['Ñandú de Recepción', 'Área de cómputo'], [$r['json']['data
 comprobarIgual(bin2hex('Ñandú de Recepción'), bin2hex((string) valorBd('SELECT nombre FROM dispositivos WHERE id = ?', [$id])), '  en la base están guardados en UTF-8');
 $r = peticion('PUT', "/dispositivos/$id", ['nombre' => 'Pingüino', 'ip' => '10.0.0.80', 'tipo' => 'impresora', 'ubicacion' => 'Dirección']);
 comprobarIgual(['Pingüino', 'Dirección'], [$r['json']['data']['nombre'] ?? '', $r['json']['data']['ubicacion'] ?? ''], 'PUT "Pingüino" en "Dirección"');
+
+// =====================================================================
+seccion('10. Acceso (Fase 7): [Interfaz] con sesión o clave; PATCH /estado solo con clave');
+
+recargarBaseDeDatos();
+$estado = ['estado' => 'activo', 'tiempo_respuesta_ms' => 1.5, 'fecha' => '2026-09-28 11:00:00'];
+comprobarAccesoDeRutas([
+    ['GET', '/dispositivos', null],
+    ['POST', '/dispositivos', ['nombre' => 'Acceso', 'ip' => '192.0.2.77', 'tipo' => 'servidor', 'ubicacion' => 'Laboratorio']],
+    ['GET', '/dispositivos/1', null],
+    ['PUT', '/dispositivos/1', ['nombre' => 'Mi PC', 'ip' => '127.0.0.1', 'tipo' => 'computadora', 'ubicacion' => 'Laboratorio']],
+    ['DELETE', '/dispositivos/6', null],
+], [
+    ['PATCH', '/dispositivos/1/estado', $estado],
+]);
+comprobarRespuesta(peticion('GET', '/dispositivos/abc', null, ['sesion' => false]), 404, 'sin sesión, una ruta que no existe sigue respondiendo 404', 'La ruta no existe');
+comprobarRespuesta(peticion('PATCH', '/dispositivos', null, ['sesion' => false]), 405, '  y un método no permitido, 405', 'Método no permitido');
+recargarBaseDeDatos();
 
 terminarPruebas();

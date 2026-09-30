@@ -30,8 +30,16 @@ const DB_CLAVE = '';
 const DB_CHARSET = 'utf8mb4';
 const DB_COLACION = 'utf8mb4_unicode_ci';
 
-// Valor de la cabecera X-Servicio-Clave para peticiones entre servicios.
-const CLAVE_SERVICIO = 'clave-desarrollo-cambiar';
+// Valor de la cabecera X-Servicio-Clave para peticiones entre servicios
+// (comun/auth.php la compara con hash_equals). Largo y aleatorio: random_bytes(32).
+// Es de desarrollo y por eso vive en el repositorio; en una instalación real se
+// generaría otro valor y se guardaría fuera de git.
+const CLAVE_SERVICIO = '2c01655cd75fd3846940ab5f847feb52b51aec806aa5a7dcaf1ea91d0a38254d';
+
+// Sesión del navegador (comun/auth.php). La cookie solo viaja a este proyecto.
+const NOMBRE_COOKIE_SESION = 'monitoreo_soa_sesion';
+const RUTA_COOKIE_SESION = '/monitoreo-red-soa/';
+const DURACION_SESION = 8 * 3600; // 8 horas desde el inicio de sesión (una jornada o una demo)
 
 // Tiempo máximo de espera (segundos) de una petición entre servicios (comun/http.php).
 const TIEMPO_ESPERA_SERVICIOS = 3;

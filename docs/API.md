@@ -56,7 +56,18 @@ Este documento es la fuente de verdad de la comunicación entre la interfaz y lo
 **Acceso:** cada endpoint está marcado como **[Interfaz]** (lo llama el navegador) o **[Interno]** (solo lo llaman otros servicios). Antes de la Fase 7 todos están abiertos. Desde la Fase 7:
 
 - Los endpoints [Interfaz] aceptan sesión activa o la cabecera `X-Servicio-Clave` válida.
-- Los endpoints [Interno] solo aceptan `X-Servicio-Clave`; sin ella responden 403.
+- Los endpoints [Interno] solo aceptan `X-Servicio-Clave`; sin ella responden 403, aunque haya sesión.
+- Una `X-Servicio-Clave` presente pero incorrecta responde 403 en cualquier endpoint.
+- Las llamadas entre servicios nunca reenvían la cookie del navegador.
+
+| Caso | Código | `error` |
+|---|---|---|
+| Endpoint [Interfaz] sin sesión ni clave | 401 | "Tu sesión terminó. Inicia sesión para continuar." |
+| Endpoint [Interno] sin clave, o cualquier endpoint con una clave incorrecta | 403 | "Solo otros servicios pueden usar este endpoint" |
+
+La comprobación se hace cuando la ruta y el método existen: una ruta inexistente sigue respondiendo 404 y un método no aceptado, 405.
+
+**Sesión:** cookie `monitoreo_soa_sesion` con `HttpOnly`, `SameSite=Lax` y ruta `/monitoreo-red-soa/`. Dura 8 horas desde el inicio de sesión (la cookie y la sesión), sin renovarse con el uso. Los servicios la leen sin bloquearla (`read_and_close`), así que las peticiones en paralelo de una misma pantalla no se esperan entre sí; solo el login y el logout escriben en ella.
 
 ---
 
@@ -392,23 +403,32 @@ Solo incluye dispositivos con al menos un monitoreo, ordenados por `dispositivo_
 
 ## Autenticación (Fase 7)
 
+Los tres endpoints son públicos (no piden sesión ni clave): cada uno decide qué responder.
+
 ### `POST /auth/login`
 
 ```json
 { "usuario": "admin", "contrasena": "admin123" }
 ```
 
-**200:** `data` = `{ "usuario": { "id": 1, "usuario": "admin", "nombre": "Administrador" } }`, y se inicia la sesión de PHP.
+**200:** `data` = `{ "usuario": { "id": 1, "usuario": "admin", "nombre": "Administrador" } }`. Se inicia la sesión de PHP con un id nuevo (`session_regenerate_id(true)`) y se envía la cookie.
 
-**401:** "Usuario o contraseña incorrectos". Es el mismo mensaje si el usuario no existe o si la contraseña está mal.
+**400** si falta un campo, está vacío o no es texto: `error` "Escribe tu usuario y tu contraseña" y `campos`:
+
+| Campo | Mensaje en `campos` |
+|---|---|
+| `usuario` | "Escribe tu usuario" |
+| `contrasena` | "Escribe tu contraseña" |
+
+**401:** "Usuario o contraseña incorrectos". Es el mismo mensaje, y la respuesta tarda lo mismo, si el usuario no existe, si la contraseña está mal o si alguno es demasiado largo (usuario de más de 50 caracteres, contraseña de más de 72 bytes): sin usuario, `password_verify()` se ejecuta contra un hash ficticio.
 
 ### `POST /auth/logout`
 
-**200:** cierra la sesión.
+**200:** `data` = `null`. Borra la sesión y pide al navegador que borre la cookie. Responde 200 también si no había sesión.
 
 ### `GET /auth/sesion`
 
-**200:** el mismo `data` que el login. **401** si no hay sesión; la interfaz redirige a `login.html`.
+**200:** el mismo `data` que el login. **401** "No hay una sesión activa" si no hay sesión o ya expiró; la interfaz redirige a `login.html`.
 
 ---
 
