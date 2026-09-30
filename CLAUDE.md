@@ -218,7 +218,9 @@ Estado actual
 
 Actualiza esta sección al cerrar cada fase.
 
-Fase actual: ninguna. Las Fases 0–8 están completas y fusionadas a main; la etiqueta v1.0 es la versión que se presenta. Repositorio: https://github.com/JazielAguirre/monitoreo-red-soa (remoto origin por SSH).
+Fase actual: Fase 9 — Descubrimiento de red, en la rama descubrimiento-red (sin push ni fusión hasta que el usuario revise). Las Fases 0–8 están completas y fusionadas a main; la etiqueta v1.0 es la versión que se presenta y no se toca. Repositorio: https://github.com/JazielAguirre/monitoreo-red-soa (remoto origin por SSH).
+Fase 9, decisiones aprobadas: ping.php se mueve a comun/ (lo usan Monitoreo y Descubrimiento; en Monitoreo solo cambia el require); escaneo en 4 lotes de la /24 pedidos uno tras otro desde la interfaz; 503 cuando no hay red local o la IP no es privada. Si el DNS inverso por UDP se complica, avisar al usuario antes de seguir (preferencia: nombre "—" y terminar lo principal). La prueba real con pings a la red actual (192.168.137.0/24) espera confirmación del usuario de que es su red; las pruebas automáticas nunca tocan la red local.
+Fase 9, subpasos: [x] 1 contrato (API.md) y plan (PLAN.md) · [ ] 2 ping.php a comun/ · [ ] 3 servicio Descubrimiento · [ ] 4 pruebas/descubrimiento.php y red simulada · [ ] 5 interfaz y componentes.html · [ ] 6 secciones de interfaz.php · [ ] 7 README, DEMO.md (tramo del escáner 0:50–1:20 del Integrante 2; recarga del celular del Integrante 4 «opcional si hay que quedarse en 5:00»; en «El día anterior», confirmar con el profesor el tiempo disponible) y cierre.
 Pendientes del equipo (no requieren código):
 - Ensayar docs/DEMO.md en vivo, cronometrado, y grabar el video de respaldo.
 - Repetir las 5 suites en la computadora de otro integrante (Windows: docs/WINDOWS.md; el ping en Windows solo se probó con salidas de ejemplo).

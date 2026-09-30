@@ -12,9 +12,11 @@ Este documento define las fases del proyecto, qué se entrega en cada una y cuá
 ## Pipeline
 
 ```
-Fase 0 → Fase 1 ─┬─ Backend:  Fase 2 → Fase 3 → Fase 4 ──┬─→ Fase 7 → Fase 8
+Fase 0 → Fase 1 ─┬─ Backend:  Fase 2 → Fase 3 → Fase 4 ──┬─→ Fase 7 → Fase 8 → Fase 9
                  └─ Frontend: Fase 5 → Fase 6 ────────────┘
 ```
+
+La Fase 9 es una ampliación posterior a la versión que se presenta (`v1.0`): se trabaja en su rama y `v1.0` queda intacta como respaldo.
 
 Después de la Fase 1, el backend y el frontend pueden avanzar en paralelo. La Fase 6 empieza con datos de ejemplo que siguen `API.md` y se conecta a los servicios reales cuando estén listos.
 
@@ -29,13 +31,14 @@ Después de la Fase 1, el backend y el frontend pueden avanzar en paralelo. La F
 | 6 | Pantallas | Integrante 4 | ✅ Completa |
 | 7 | Inicio de sesión | Todo el equipo | ✅ Completa |
 | 8 | Integración, pruebas y demo | Todo el equipo | ✅ Completa (quedan el ensayo en vivo y la prueba en Windows) |
+| 9 | Descubrimiento de red | Todo el equipo | 🔄 En curso (rama `descubrimiento-red`) |
 
 ## Pruebas automáticas
 
 Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escrito en PHP de línea de comandos para que funcione igual en el XAMPP de Linux y de Windows.
 
 - `pruebas/ayudas.php`: funciones comunes para hacer peticiones a través de Apache, comprobar resultados y recargar la base de datos (`schema.sql` + `seed.sql`).
-- Un archivo por servicio: `pruebas/dispositivos.php`, `pruebas/alertas.php`, `pruebas/monitoreo.php`, `pruebas/auth.php`.
+- Un archivo por servicio: `pruebas/dispositivos.php`, `pruebas/alertas.php`, `pruebas/monitoreo.php`, `pruebas/auth.php` y, desde la Fase 9, `pruebas/descubrimiento.php`.
 - Cada script recarga la base de datos al empezar, para que los resultados no dependan de pruebas anteriores. **Borra los datos que hayas agregado a mano.**
 - Se ejecutan con `/opt/lampp/bin/php pruebas/<servicio>.php` (en Windows, `C:/xampp/php/php.exe`) y terminan con código de salida distinto de 0 si algo falla.
 - `pruebas/` no debe ser accesible por HTTP.
@@ -47,6 +50,13 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - **Solo lo usan las pruebas:** lo crean y lo borran `pruebas/monitoreo.php` y `pruebas/auth.php` (al empezar, al terminar y ante un error fatal), con las funciones de `pruebas/ayudas.php`. Está en `.gitignore`.
 - **Caduca solo:** lleva un campo `expira`; `http.php` lo ignora si ya pasó o si está a más de 60 segundos en el futuro. Si la prueba se interrumpe (Ctrl+C, `kill -9`), el sistema vuelve a funcionar en cuanto caduca (las pruebas usan 30 s), y la siguiente corrida lo borra.
 - **No puede activarse por HTTP:** ningún endpoint escribe archivos y `pruebas/` responde 404.
+
+**Archivo de red simulada (`pruebas/.red-simulada.json`, Fase 9).** Sirve para probar el Servicio de Descubrimiento a través de Apache sin depender de la red de quien corre las pruebas y sin enviar nada a la red local. Sigue el mismo modelo que el fallo simulado:
+
+- **Qué es:** si existe y está vigente, el Servicio de Descubrimiento usa como IP propia la que indica el archivo en lugar de detectarla, y lee la tabla ARP del texto que trae el archivo (en el formato del sistema operativo: `ip neigh`, `arp -a` o `arp -an`) en lugar de ejecutar el comando. Los pings son reales.
+- **Solo admite dos redes:** IP propia `127.0.0.1` (la /24 `127.0.0.0/24`, donde todas las direcciones responden) o `192.0.2.1` (la /24 de documentación `192.0.2.0/24`, donde ninguna responde). Cualquier otro valor se ignora, así que el archivo no sirve para escanear otras redes.
+- **Solo lo usa `pruebas/descubrimiento.php`**, que lo crea y lo borra (al empezar, al terminar y ante un error fatal). Está en `.gitignore`.
+- **Caduca solo** (campo `expira`, máximo 60 segundos en el futuro) y **no puede activarse por HTTP**, igual que el fallo simulado.
 
 ---
 
@@ -222,6 +232,40 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
   - [x] El equipo revisó `docs/DEMO.md` (servicios, alertas en vivo, registro de llamadas, celular, preguntas y tiempos por integrante).
   - [ ] Pendiente del equipo: ensayarlo en vivo, cronometrado.
 - [x] La aplicación se ve bien en el proyector y en un celular (`interfaz.php` a 1024×768, 1280×720 y 390 px; celular real en las Fases 6 y 7).
+
+## Fase 9 · Descubrimiento de red 🔄
+
+**Objetivo:** que el sistema encuentre los equipos conectados a la red local, aunque no estén registrados, y que el usuario elija cuáles agregar. Un servicio nuevo que muestra el bajo acoplamiento: los servicios existentes no cambian.
+
+**Uso responsable:** el escaneo solo se usa en redes propias o con permiso. En la demo, en el hotspot de un teléfono del equipo, nunca en la red de la escuela.
+
+**Tareas:**
+
+- `servicios/comun/ping.php`: el ping de Monitoreo se mueve a `comun/` sin cambios, porque ahora lo usan dos servicios y un servicio nunca hace `require` del código de otro. En Monitoreo solo cambia la línea del `require`.
+- `servicios/descubrimiento/` con el patrón de los demás (sin `datos.php`: no tiene tabla):
+  - La red se calcula en el servidor: la /24 de la IP propia, solo si es privada. El rango nunca viene del navegador.
+  - Ping en paralelo por lotes con `proc_open` y `escapeshellarg`, reutilizando `comun/ping.php`.
+  - Lectura de la tabla ARP en Linux, Windows y macOS, sin depender del idioma.
+  - Nombre por DNS inverso con límite de tiempo corto.
+  - Registrados: `GET /dispositivos` al Servicio de Dispositivos, por HTTP.
+- Los dos endpoints de la sección "Servicio de Descubrimiento" de `API.md`.
+- Pantalla Dispositivos: botón "Buscar dispositivos en la red", progreso por lote, lista de equipos y "Agregar" con el formulario prellenado. Las piezas nuevas, también en `componentes.html`.
+- `pruebas/descubrimiento.php` y secciones nuevas en `pruebas/interfaz.php`.
+- README y `docs/DEMO.md`: uso responsable y el tramo del escáner en el guion.
+
+**Listo cuando:**
+
+- [ ] `GET /descubrimiento/red` devuelve la /24 de la IP propia calculada en el servidor; sin red o con una IP que no es privada responde 503 con su mensaje, sin enviar nada.
+- [ ] `POST /descubrimiento/red/lotes/{n}` escanea el lote pedido: un lote de 64 direcciones que no responden tarda menos de 3 segundos a través de Apache (usuario `daemon`), no 64.
+- [ ] Los equipos que bloquean el ping aparecen por la tabla ARP ("Solo en ARP") con su MAC. Las entradas incompletas, fallidas, broadcast y multicast se descartan. Los parsers de Linux (`ip neigh` y `/proc/net/arp`), Windows (en inglés y en español) y macOS se prueban con salidas de ejemplo.
+- [ ] El nombre por DNS inverso nunca retrasa el lote más de 0.8 segundos; sin respuesta queda en `null`.
+- [ ] Los equipos ya registrados se marcan con su dispositivo, pidiéndolo a Dispositivos por HTTP. Si Dispositivos no responde → 502.
+- [ ] Lote fuera de rango → 404; método no permitido → 405; sin sesión → 401. Siempre en JSON.
+- [ ] **Regla SOA:** `servicios/descubrimiento/` no contiene SQL ni `require` de otros servicios (se revisa con `grep`), y en `servicios/dispositivos/`, `alertas/` y `auth/` no cambió nada (`git diff main`); en `monitoreo/` solo la línea del `require` de `ping.php`.
+- [ ] Pantalla Dispositivos: "Buscar dispositivos en la red" muestra el progreso por lote y la lista (IP, MAC, nombre, ping o solo ARP, registrado o no). "Agregar" abre el formulario con la IP y el nombre escritos. Estados de carga, vacío y error; se ve bien a 390 px y en el proyector; colores solo desde `tokens.css`; piezas nuevas en `componentes.html`.
+- [ ] `pruebas/descubrimiento.php` pasa sin depender de la red de quien la corre (red simulada), las secciones nuevas de `pruebas/interfaz.php` pasan, y las 5 suites anteriores siguen pasando.
+- [ ] Probado a través de Apache en una red propia (hotspot), con un equipo que bloquea el ping si es posible.
+- [ ] README y `docs/DEMO.md` explican el uso responsable, y el guion incluye el tramo del escáner.
 
 ## Extras (solo si sobra tiempo)
 
