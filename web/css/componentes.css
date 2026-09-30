@@ -707,3 +707,9 @@
         padding: 16px;
     }
 }
+
+/* 31 · Filas compactas: cada tarjeta, al ancho de un celular, activa la container query. */
+.demo-historial-compacto {
+    grid-template-columns: repeat(2, minmax(0, 390px));
+    align-items: start;
+}

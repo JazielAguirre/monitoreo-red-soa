@@ -9,7 +9,7 @@
 
 import { api } from './api.js';
 import { montarEstructura } from './modulos/estructura.js';
-import { fechaParaCampo, formatearFechaHora, formatearHora, formatearMs, formatearPorcentaje, haceDias, partesFecha, pluralizar } from './modulos/formatos.js';
+import { fechaParaCampo, formatearFechaCorta, formatearFechaHora, formatearHora, formatearMs, formatearPorcentaje, haceDias, partesFecha, pluralizar } from './modulos/formatos.js';
 import { crearError, crearVacio, mostrarBloque } from './modulos/vistas.js';
 import { elemento, icono, crearInsigniaEstado, iconoTipo } from './modulos/piezas.js';
 import { crearGraficaArea, destruirGrafica } from './modulos/graficas.js';
@@ -271,7 +271,7 @@ function mostrarTabla({ items, total, pagina, por_pagina: porPagina, total_pagin
     }));
     tabla.append(encabezado, cuerpo);
     envoltura.append(tabla);
-    contenedor.replaceChildren(envoltura);
+    contenedor.replaceChildren(envoltura, crearFilasCompactas(items));
     contenedor.removeAttribute('aria-busy');
 
     const desde = (pagina - 1) * porPagina + 1;
@@ -280,6 +280,43 @@ function mostrarTabla({ items, total, pagina, por_pagina: porPagina, total_pagin
     $('pagina-anterior').disabled = pagina <= 1;
     $('pagina-siguiente').disabled = pagina >= totalPaginas;
     $('paginacion').hidden = false;
+}
+
+/**
+ * La misma página del historial en filas compactas, para cuando la tarjeta es más angosta
+ * que la tabla (app.css las muestra con una container query): fecha, resultado y tiempo
+ * en la primera línea; dispositivo e IP en la segunda, salvo si el filtro ya eligió uno.
+ */
+function crearFilasCompactas(items) {
+    const lista = elemento('ul', 'lista-historial');
+    const conDispositivo = !estado.filtros.dispositivo;
+
+    lista.append(...items.map((m) => {
+        const fila = elemento('li', 'fila-historial');
+        const linea = elemento('div', 'fila-historial__linea');
+        const insignia = crearInsigniaEstado(m.estado);
+        insignia.classList.add('insignia-estado--sm');
+        linea.append(
+            elemento('span', 'fila-historial__fecha', formatearFechaCorta(m.fecha, { compacta: true })),
+            insignia,
+            elemento('span', `fila-historial__tiempo${m.estado === 'inactivo' ? ' texto-error' : ''}`, formatearMs(m.tiempo_respuesta_ms)),
+        );
+        fila.append(linea);
+
+        if (conDispositivo) {
+            const dispositivo = nombreDe(m.dispositivo_id);
+            const segunda = elemento('div', 'fila-historial__dispositivo');
+            segunda.append(
+                icono(iconoTipo(dispositivo?.tipo)),
+                elemento('span', 'fila-historial__nombre', dispositivo?.nombre ?? `Dispositivo ${m.dispositivo_id}`),
+                elemento('span', 'fila-historial__ip', m.ip),
+            );
+            fila.append(segunda);
+        }
+        return fila;
+    }));
+
+    return lista;
 }
 
 // ------------------------------------------------------------ Gráfica

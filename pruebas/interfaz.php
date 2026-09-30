@@ -1030,16 +1030,22 @@ $navegador->quitarIntercepciones();
 // =====================================================================
 seccion('6.5 · Monitoreos en celular (390 px) y seguridad');
 
+/**
+ * Filas compactas visibles del historial: [línea 1 (fecha, resultado, tiempo), línea 2 o null].
+ */
+function filasCompactas(Navegador $navegador): array
+{
+    return $navegador->evaluar("[...document.querySelectorAll('.lista-historial .fila-historial')].map((f) => [[...f.querySelector('.fila-historial__linea').children].map((c) => c.textContent), f.querySelector('.fila-historial__dispositivo')?.textContent ?? null])") ?? [];
+}
+
 $navegador->tamano(390, 844, true);
 abrirPagina($navegador, 'monitoreos.html?dispositivo=4');
 esperarMonitoreos($navegador);
 $r = $navegador->evaluar(<<<'JS'
     (() => {
         const caja = (id) => document.getElementById(id).getBoundingClientRect();
-        const tabla = document.querySelector('.tabla-historial');
         return {
             desbordePagina: document.documentElement.scrollWidth > innerWidth,
-            tablaSeDesplaza: tabla.scrollWidth > tabla.clientWidth,
             fechasJuntas: caja('filtro-desde').top === caja('filtro-hasta').top,
             dispositivoAncho: Math.round(caja('filtro-dispositivo').width) === Math.round(caja('filtro-estado').width),
             altoControl: Math.round(caja('filtro-dispositivo').height),
@@ -1047,7 +1053,32 @@ $r = $navegador->evaluar(<<<'JS'
         };
     })()
 JS);
-comprobarIgual(['desbordePagina' => false, 'tablaSeDesplaza' => true, 'fechasJuntas' => true, 'dispositivoAncho' => true, 'altoControl' => 44, 'grafica' => 190], $r, 'a 390 px: filtros apilados (Desde y Hasta juntos), controles de 44 px, la tabla se desplaza dentro de su tarjeta y la página no');
+comprobarIgual(['desbordePagina' => false, 'fechasJuntas' => true, 'dispositivoAncho' => true, 'altoControl' => 44, 'grafica' => 190], $r, 'a 390 px: filtros apilados (Desde y Hasta juntos), controles de 44 px y sin desplazamiento horizontal');
+
+abrirPagina($navegador, 'monitoreos.html?desde=2026-09-22&hasta=2026-09-29');
+esperarMonitoreos($navegador);
+$r = $navegador->evaluar(<<<'JS'
+    (() => {
+        const tiempo = document.querySelector('.fila-historial__tiempo').getBoundingClientRect();
+        const tarjeta = document.querySelector('.panel-historial').getBoundingClientRect();
+        return {
+            tabla: getComputedStyle(document.querySelector('.tabla-historial')).display,
+            filas: document.querySelectorAll('.lista-historial .fila-historial').length,
+            tiempoVisible: tiempo.right <= tarjeta.right && tiempo.width > 0,
+        };
+    })()
+JS);
+comprobarIgual(['tabla' => 'none', 'filas' => 10, 'tiempoVisible' => true], $r, 'a 390 px, el historial se muestra en filas compactas (sin tabla que se desplace) y el tiempo queda a la vista');
+$filas = filasCompactas($navegador);
+comprobarIgual([['27/09 09:45', 'Activo', '2.75 ms'], 'Impresora Laboratorio192.0.2.20'], $filas[0] ?? null, '  primera línea: fecha, resultado y tiempo; segunda: dispositivo e IP');
+comprobarIgual([['27/09 09:45', 'Inactivo', 'Sin respuesta'], 'Servidor principal192.0.2.10'], $filas[1] ?? null, '  una comprobación sin respuesta dice «Sin respuesta»');
+comprobarIgual('fila-historial__tiempo texto-error', $navegador->evaluar("document.querySelectorAll('.fila-historial__tiempo')[1].className"), '  … en rojo');
+capturar($navegador, 'monitoreos-390-todos');
+
+escribir($navegador, '#filtro-dispositivo', '4');
+esperarMonitoreos($navegador);
+$filas = filasCompactas($navegador);
+comprobarIgual([10, [null], ['27/09 09:45', 'Inactivo', 'Sin respuesta']], [count($filas), array_values(array_unique(array_column($filas, 1))), $filas[0][0] ?? null], '  con un dispositivo elegido en el filtro, se omite la segunda línea');
 capturar($navegador, 'monitoreos-390');
 
 $navegador->tamano(1440, 900);
@@ -1058,6 +1089,11 @@ abrirPagina($navegador, "monitoreos.html?dispositivo=$idXss");
 esperarMonitoreos($navegador);
 $r = $navegador->evaluar("({ opcion: document.querySelector('#filtro-dispositivo option[value=\"$idXss\"]').textContent, fila: document.querySelector('.tabla-historial tbody tr').children[1].textContent, titulo: document.getElementById('titulo-grafica').textContent, etiqueta: document.querySelector('#panel-grafica canvas')?.getAttribute('aria-label'), imagenes: document.querySelectorAll('#contenido img').length })");
 comprobarIgual(['opcion' => XSS, 'fila' => XSS, 'titulo' => 'Tiempos de respuesta · ' . XSS, 'etiqueta' => 'Tiempos de respuesta de ' . XSS . ' en sus últimas 1 comprobaciones', 'imagenes' => 0], $r, 'Monitoreos: el nombre con HTML se muestra como texto en el filtro, la tabla y la gráfica, sin crear <img>');
+$navegador->tamano(390, 844, true);
+abrirPagina($navegador, 'monitoreos.html');
+esperarMonitoreos($navegador);
+comprobarIgual([XSS, 0], [$navegador->evaluar("document.querySelector('.fila-historial__nombre').textContent"), $navegador->evaluar("document.querySelectorAll('#contenido img').length")], '  también en las filas compactas del celular');
+$navegador->tamano(1440, 900);
 $navegador->procesarEventos(0.5);
 comprobarIgual([], $navegador->dialogos, '  no se ejecutó ningún alert()');
 

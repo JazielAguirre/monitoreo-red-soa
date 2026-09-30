@@ -2991,6 +2991,88 @@ a.encabezado-movil__boton:hover {
     min-width: 760px;
 }
 
+/* Filas compactas: reemplazan a la tabla cuando la tarjeta mide menos que ella (760 px). */
+.panel-historial {
+    container: historial / inline-size;
+}
+
+.lista-historial {
+    display: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.fila-historial {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-borde-suave);
+}
+
+.fila-historial:last-child {
+    border-bottom: 0;
+}
+
+.fila-historial__linea {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fila-historial__fecha,
+.fila-historial__tiempo,
+.fila-historial__ip {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    white-space: nowrap;
+}
+
+.fila-historial__fecha {
+    font-size: var(--texto-mono-tamano);
+    font-weight: 500;
+    color: var(--color-texto);
+}
+
+.fila-historial__tiempo {
+    margin-left: auto;
+    font-size: var(--texto-mono-tamano);
+    font-weight: 500;
+}
+
+.fila-historial__dispositivo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: var(--texto-secundario-tamano);
+    color: var(--color-texto-2);
+}
+
+.fila-historial__nombre {
+    overflow: hidden;
+    font-weight: 500;
+    color: var(--color-texto);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fila-historial__ip {
+    flex: none;
+    font-size: var(--texto-pequeno-tamano);
+}
+
+@container historial (max-width: 759.98px) {
+    .tabla-historial {
+        display: none;
+    }
+
+    .lista-historial {
+        display: block;
+    }
+}
+
 .tabla-tipo--nombre {
     gap: 10px;
     font-weight: 500;
