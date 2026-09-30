@@ -9,12 +9,120 @@
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/app.css">
 </head>
-<body>
-    <h1>Dashboard</h1>
+<body data-pagina="index">
+<a class="saltar-contenido" href="#contenido">Saltar al contenido</a>
+<div class="app">
+    <aside class="barra-lateral" id="barra-lateral"></aside>
+    <header class="encabezado-movil" id="encabezado-movil"></header>
 
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="vendor/chart.js/chart.umd.min.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/index.js"></script>
+    <main class="contenido" id="contenido" tabindex="-1">
+        <div class="encabezado-pagina">
+            <div class="encabezado-pagina__textos">
+                <h1 class="encabezado-pagina__titulo">Dashboard</h1>
+                <p class="encabezado-pagina__subtitulo d-none d-sm-block">Estado general de la red del laboratorio</p>
+            </div>
+            <div class="encabezado-pagina__lado">
+                <div class="ultima-comprobacion">
+                    <span class="ultima-comprobacion__etiqueta"><i class="bi bi-clock-history" aria-hidden="true"></i>Última comprobación</span>
+                    <span class="ultima-comprobacion__valor" id="ultima-comprobacion">—</span>
+                </div>
+                <div class="encabezado-pagina__acciones">
+                    <button type="button" class="btn btn-primary boton-dashboard" id="monitorear-todos" disabled><i class="bi bi-broadcast" aria-hidden="true"></i>Monitorear todos</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="progreso-monitoreo" hidden></div>
+
+        <section aria-labelledby="titulo-indicadores">
+            <h2 class="visually-hidden" id="titulo-indicadores">Indicadores</h2>
+            <div class="row g-3 indicadores">
+                <div class="col-6 col-xl-3">
+                    <div class="tarjeta-indicador">
+                        <div class="tarjeta-indicador__cabecera"><span class="tarjeta-indicador__titulo">Total de dispositivos</span><span class="tarjeta-indicador__icono"><i class="bi bi-hdd-network" aria-hidden="true"></i></span></div>
+                        <span class="tarjeta-indicador__valor" id="indicador-total"><span class="esqueleto esqueleto--numero"></span></span>
+                        <span class="tarjeta-indicador__detalle" id="indicador-total-detalle">&nbsp;</span>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="tarjeta-indicador tarjeta-indicador--activo">
+                        <div class="tarjeta-indicador__cabecera"><span class="tarjeta-indicador__titulo">Activos</span><span class="tarjeta-indicador__icono"><i class="bi bi-check-circle" aria-hidden="true"></i></span></div>
+                        <span class="tarjeta-indicador__valor" id="indicador-activos"><span class="esqueleto esqueleto--numero"></span></span>
+                        <span class="tarjeta-indicador__detalle" id="indicador-activos-detalle">&nbsp;</span>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="tarjeta-indicador tarjeta-indicador--inactivo">
+                        <div class="tarjeta-indicador__cabecera"><span class="tarjeta-indicador__titulo">Inactivos</span><span class="tarjeta-indicador__icono"><i class="bi bi-x-circle" aria-hidden="true"></i></span></div>
+                        <span class="tarjeta-indicador__valor" id="indicador-inactivos"><span class="esqueleto esqueleto--numero"></span></span>
+                        <span class="tarjeta-indicador__detalle" id="indicador-inactivos-detalle">&nbsp;</span>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="tarjeta-indicador tarjeta-indicador--alerta">
+                        <div class="tarjeta-indicador__cabecera"><span class="tarjeta-indicador__titulo">Alertas pendientes</span><span class="tarjeta-indicador__icono"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span></div>
+                        <span class="tarjeta-indicador__valor" id="indicador-alertas"><span class="esqueleto esqueleto--numero"></span></span>
+                        <span class="tarjeta-indicador__detalle" id="indicador-alertas-detalle">&nbsp;</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="tablero">
+            <section class="panel panel--dispositivos" aria-labelledby="titulo-estado">
+                <div class="panel__cabecera">
+                    <div>
+                        <h2 class="panel__titulo" id="titulo-estado">Estado de dispositivos</h2>
+                        <p class="panel__subtitulo" id="resumen-estado">&nbsp;</p>
+                    </div>
+                    <a class="panel__enlace" href="dispositivos.html"><span class="d-none d-sm-inline">Ver dispositivos</span><span class="d-sm-none">Ver todos</span><i class="bi bi-arrow-right d-none d-sm-inline" aria-hidden="true"></i></a>
+                </div>
+                <div id="panel-estado" aria-busy="true">
+                    <div class="rejilla-estado" aria-hidden="true">
+                        <div class="tarjeta-estado tarjeta-estado--esqueleto"><span class="esqueleto esqueleto--suave esqueleto--icono"></span><span class="esqueleto" style="width: 60%"></span><span class="esqueleto esqueleto--suave esqueleto--texto" style="width: 40%"></span></div>
+                        <div class="tarjeta-estado tarjeta-estado--esqueleto"><span class="esqueleto esqueleto--suave esqueleto--icono"></span><span class="esqueleto" style="width: 70%"></span><span class="esqueleto esqueleto--suave esqueleto--texto" style="width: 40%"></span></div>
+                        <div class="tarjeta-estado tarjeta-estado--esqueleto"><span class="esqueleto esqueleto--suave esqueleto--icono"></span><span class="esqueleto" style="width: 50%"></span><span class="esqueleto esqueleto--suave esqueleto--texto" style="width: 40%"></span></div>
+                    </div>
+                    <span class="visually-hidden">Cargando dispositivos…</span>
+                </div>
+            </section>
+
+            <section class="panel panel--alertas" aria-labelledby="titulo-alertas">
+                <div class="panel__cabecera">
+                    <div class="panel__titulo-con-contador">
+                        <h2 class="panel__titulo" id="titulo-alertas">Últimas alertas</h2>
+                        <span class="contador contador--suave" id="contador-panel-alertas" hidden></span>
+                    </div>
+                    <a class="panel__enlace" href="alertas.html">Ver todas<i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                </div>
+                <div id="panel-alertas" aria-busy="true">
+                    <div aria-hidden="true">
+                        <div class="alerta-reciente"><span class="esqueleto esqueleto--suave esqueleto--icono"></span><div class="flex-grow-1 d-flex flex-column gap-2"><span class="esqueleto" style="width: 60%"></span><span class="esqueleto esqueleto--suave esqueleto--texto"></span></div></div>
+                        <div class="alerta-reciente"><span class="esqueleto esqueleto--suave esqueleto--icono"></span><div class="flex-grow-1 d-flex flex-column gap-2"><span class="esqueleto" style="width: 50%"></span><span class="esqueleto esqueleto--suave esqueleto--texto"></span></div></div>
+                    </div>
+                    <span class="visually-hidden">Cargando alertas…</span>
+                </div>
+            </section>
+
+            <section class="panel panel--grafica" aria-labelledby="titulo-grafica">
+                <div class="panel__cabecera panel__cabecera--grafica">
+                    <div>
+                        <h2 class="panel__titulo" id="titulo-grafica">Tiempos de respuesta recientes</h2>
+                        <p class="panel__subtitulo"><span class="d-none d-sm-inline">Últimas 10 comprobaciones · milisegundos (ms) · solo dispositivos que responden</span><span class="d-sm-none">Últimas 10 comprobaciones · ms</span></p>
+                    </div>
+                    <ul class="leyenda-grafica" id="leyenda-grafica" aria-label="Series de la gráfica"></ul>
+                </div>
+                <div id="panel-grafica" aria-busy="true">
+                    <div class="grafica grafica--esqueleto" aria-hidden="true"><span class="esqueleto esqueleto--suave"></span></div>
+                    <span class="visually-hidden">Cargando la gráfica…</span>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="vendor/chart.js/chart.umd.min.js"></script>
+<script type="module" src="js/index.js"></script>
 </body>
 </html>

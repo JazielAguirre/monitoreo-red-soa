@@ -534,8 +534,9 @@
 
 /* ============================================================ 11 Modal */
 
-.marco-modal {
-    /* La vista estática no está dentro de .modal, donde Bootstrap define estas variables. */
+.marco-modal,
+.hoja-demo {
+    /* Las vistas estáticas no están dentro de .modal, donde Bootstrap define estas variables. */
     --bs-modal-bg: var(--color-superficie);
     --bs-modal-color: var(--color-texto);
     --bs-modal-border-width: 0;
@@ -543,6 +544,9 @@
     --bs-modal-box-shadow: var(--sombra-3);
     --bs-modal-footer-gap: 8px;
     --bs-modal-footer-border-width: 0;
+}
+
+.marco-modal {
     position: relative;
     display: grid;
     place-items: center;
@@ -596,24 +600,71 @@
     align-items: center;
 }
 
-.esqueleto-tabla__encabezado {
-    height: var(--alto-encabezado-tabla);
-    background-color: var(--color-superficie-hover);
-    border-bottom: 1px solid var(--color-borde);
+/* ============================================================ 16 Estructura */
+
+.marcos-estructura {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: flex-start;
 }
 
-.esqueleto-tabla__fila {
+.marco-barra {
+    overflow: hidden;
+    border-radius: var(--radio-lg);
+}
+
+.marco-barra .barra-lateral {
+    position: static;
+    height: 600px;
+}
+
+/* transform hace que el menú (position: fixed) quede dentro del marco. */
+.marco-movil {
+    position: relative;
+    width: 390px;
+    max-width: 100%;
+    height: 600px;
+    overflow: hidden;
+    background-color: var(--color-fondo);
+    border: 1px solid var(--color-borde);
+    border-radius: 20px;
+    transform: translateZ(0);
+}
+
+.marco-movil .encabezado-movil {
+    display: flex;
+}
+
+/* ============================================================ 18–22 Piezas de Dispositivos */
+
+.demo-tarjetas-movil {
     display: grid;
-    grid-template-columns: 90px 1fr 110px 70px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
-    align-items: center;
-    height: 52px;
-    padding: 0 20px;
-    border-bottom: 1px solid var(--color-borde-suave);
+    align-items: start;
 }
 
-.esqueleto-tabla__fila:last-child {
-    border-bottom: 0;
+.hoja-demo {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background-color: var(--color-fondo-modal);
+}
+
+.hoja-demo .modal-dialog {
+    width: 100%;
+    max-width: none;
+}
+
+.marco-movil--hoja {
+    height: 700px;
+}
+
+.rejilla-estado--muestra {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 /* ============================================================ Pantallas medianas y celular */
@@ -627,6 +678,8 @@
 @media (max-width: 991.98px) {
     .rejilla--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .rejilla--2.rejilla-tres { grid-template-columns: 1fr; }
+    .demo-tarjetas-movil { grid-template-columns: 1fr; }
+    .rejilla-estado--muestra { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .rejilla-campos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .navegacion-muestra { grid-template-columns: 1fr; }
     .muestra-dos-columnas { grid-template-columns: 1fr; }
@@ -653,4 +706,10 @@
     .caja {
         padding: 16px;
     }
+}
+
+/* 31 · Filas compactas: cada tarjeta, al ancho de un celular, activa la container query. */
+.demo-historial-compacto {
+    grid-template-columns: repeat(2, minmax(0, 390px));
+    align-items: start;
 }

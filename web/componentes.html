@@ -632,6 +632,516 @@
             </div>
         </section>
     </div>
+
+    <!-- ============================================================ 15 Error al cargar -->
+    <section class="seccion" aria-labelledby="s15">
+        <h2 class="seccion__titulo" id="s15">
+            <span class="seccion__numero">15</span><span class="seccion__nombre">Error al cargar</span>
+            <span class="seccion__nota">En el lugar del contenido · mensaje claro · «Reintentar»</span>
+        </h2>
+        <div class="rejilla rejilla--2">
+            <div id="demo-error"></div>
+            <div class="caja d-flex flex-column gap-2 justify-content-center">
+                <p class="texto-secundario m-0">Si una vista no puede cargar sus datos (servicio caído, MySQL apagado, sin conexión), muestra este bloque con el mensaje que devuelve la API. Nunca queda una pantalla en blanco.</p>
+                <p class="texto-secundario m-0">Los errores de una acción (guardar, eliminar, monitorear) se muestran como notificación.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ 16 Barra lateral y encabezado móvil -->
+    <section class="seccion" aria-labelledby="s16">
+        <h2 class="seccion__titulo" id="s16">
+            <span class="seccion__numero">16</span><span class="seccion__nombre">Barra lateral y encabezado móvil</span>
+            <span class="seccion__nota">Generados por js/modulos/estructura.js · desde 992 px barra lateral, abajo encabezado con menú</span>
+        </h2>
+        <div class="marcos-estructura">
+            <div class="marco-barra"><aside class="barra-lateral" id="demo-barra-lateral"></aside></div>
+            <div class="marco-movil"><header class="encabezado-movil" id="demo-encabezado-movil"></header></div>
+        </div>
+        <div class="pie-muestra"><span>Barra lateral: logo con el punto verde, MENÚ, navegación con contador de alertas y usuario al pie. «Salir» se habilita en la Fase 7.</span><span>Celular: el menú se abre con ☰ y se cierra con ✕, Escape o tocando el fondo.</span></div>
+    </section>
+
+    <!-- ============================================================ 17 Encabezado de página -->
+    <section class="seccion" aria-labelledby="s17">
+        <h2 class="seccion__titulo" id="s17">
+            <span class="seccion__numero">17</span><span class="seccion__nombre">Encabezado de página</span>
+            <span class="seccion__nota">Título 22 / 30 · subtítulo · «Última comprobación» · acciones</span>
+        </h2>
+        <div class="caja">
+            <div class="encabezado-pagina">
+                <div class="encabezado-pagina__textos">
+                    <p class="encabezado-pagina__titulo" role="presentation">Dashboard</p>
+                    <p class="encabezado-pagina__subtitulo">Estado general de la red del laboratorio</p>
+                </div>
+                <div class="encabezado-pagina__lado">
+                    <div class="ultima-comprobacion">
+                        <span class="ultima-comprobacion__etiqueta"><i class="bi bi-clock-history" aria-hidden="true"></i>Última comprobación</span>
+                        <span class="ultima-comprobacion__valor">21/09/2026 · 10:05:12</span>
+                    </div>
+                    <div class="encabezado-pagina__acciones">
+                        <button type="button" class="btn btn-primary"><i class="bi bi-broadcast" aria-hidden="true"></i>Monitorear todos</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ 18 Filtros y pie de tabla -->
+    <section class="seccion" aria-labelledby="s18">
+        <h2 class="seccion__titulo" id="s18">
+            <span class="seccion__numero">18</span><span class="seccion__nombre">Filtros de la lista</span>
+            <span class="seccion__nota">Búsqueda · estado con punto y contador · tipo · «Limpiar filtros» · pie de tabla (en celular, el estado pasa a fichas)</span>
+        </h2>
+        <div class="tabla-tarjeta">
+            <div class="barra-filtros">
+                <div class="campo-icono barra-filtros__buscar">
+                    <label class="visually-hidden" for="demo-buscar">Buscar por nombre o IP</label>
+                    <i class="bi bi-search campo-icono__inicio" aria-hidden="true"></i>
+                    <input class="form-control" id="demo-buscar" type="search" placeholder="Buscar por nombre o IP" value="servidor">
+                </div>
+                <fieldset class="filtro-estado">
+                    <legend class="visually-hidden">Filtrar por estado</legend>
+                    <input type="radio" class="btn-check" name="demo-estado" id="demo-estado-todos" checked>
+                    <label class="filtro-estado__opcion" for="demo-estado-todos">Todos<span class="filtro-estado__numero">6</span></label>
+                    <input type="radio" class="btn-check" name="demo-estado" id="demo-estado-activo">
+                    <label class="filtro-estado__opcion" for="demo-estado-activo"><span class="punto-estado punto-estado--activo"></span>Activos<span class="filtro-estado__numero">4</span></label>
+                    <input type="radio" class="btn-check" name="demo-estado" id="demo-estado-inactivo">
+                    <label class="filtro-estado__opcion" for="demo-estado-inactivo"><span class="punto-estado punto-estado--inactivo"></span>Inactivos<span class="filtro-estado__numero">1</span></label>
+                    <input type="radio" class="btn-check" name="demo-estado" id="demo-estado-desconocido">
+                    <label class="filtro-estado__opcion" for="demo-estado-desconocido"><span class="punto-estado punto-estado--desconocido"></span>Sin monitorear<span class="filtro-estado__numero">1</span></label>
+                </fieldset>
+                <div class="campo-icono barra-filtros__tipo">
+                    <label class="visually-hidden" for="demo-tipo-filtro">Filtrar por tipo</label>
+                    <select class="form-select" id="demo-tipo-filtro"><option>Todos los tipos</option><option>Servidor</option></select>
+                    <i class="bi bi-chevron-down campo-icono__fin" aria-hidden="true"></i>
+                </div>
+                <button type="button" class="btn btn-link limpiar-filtros"><i class="bi bi-x-circle" aria-hidden="true"></i>Limpiar filtros</button>
+            </div>
+            <div class="pie-tabla">
+                <span>Mostrando 2 de 6 dispositivos</span>
+                <span class="pie-tabla__nota"><i class="bi bi-info-circle" aria-hidden="true"></i>El monitoreo envía un ping por dispositivo</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ 19 Tarjeta de dispositivo (celular) -->
+    <section class="seccion" aria-labelledby="s19">
+        <h2 class="seccion__titulo" id="s19">
+            <span class="seccion__numero">19</span><span class="seccion__nombre">Tarjeta de dispositivo · celular</span>
+            <span class="seccion__nota">Reemplaza a la tabla debajo de 992 px · botones de 44 px · inactivo con borde rojo · monitoreando</span>
+        </h2>
+        <div class="demo-tarjetas-movil">
+                <article class="tarjeta-dispositivo-movil">
+                    <div class="tarjeta-dispositivo-movil__cabecera">
+                        <span class="tarjeta-dispositivo-movil__icono"><i class="bi bi-pc-display" aria-hidden="true"></i></span>
+                        <div class="tarjeta-dispositivo-movil__textos"><a class="tarjeta-dispositivo-movil__nombre enlace-discreto" href="monitoreos.html?dispositivo=1">Mi PC</a><span class="tarjeta-dispositivo-movil__ip">127.0.0.1</span></div>
+                        <span class="insignia-estado insignia-estado--activo"><span class="punto-estado punto-estado--activo"></span>Activo</span>
+                    </div>
+                    <dl class="tarjeta-dispositivo-movil__datos">
+                        <div><dt>Ubicación</dt><dd>Laboratorio</dd></div>
+                        <div><dt>Respuesta</dt><dd><span class="mono">0.32 ms</span></dd></div>
+                        <div><dt>Comprobación</dt><dd>Hoy, 10:05</dd></div>
+                    </dl>
+                    <div class="tarjeta-dispositivo-movil__acciones">
+                        <button type="button" class="btn btn-secondary btn-tarjeta"><i class="bi bi-broadcast" aria-hidden="true"></i>Monitorear</button>
+                        <button type="button" class="btn btn-secondary btn-tarjeta"><i class="bi bi-pencil" aria-hidden="true"></i>Editar</button>
+                        <button type="button" class="btn btn-secondary btn-tarjeta btn-tarjeta--peligro"><i class="bi bi-trash3" aria-hidden="true"></i>Eliminar</button>
+                    </div>
+                </article>
+                <article class="tarjeta-dispositivo-movil tarjeta-dispositivo-movil--inactivo">
+                    <div class="tarjeta-dispositivo-movil__cabecera">
+                        <span class="tarjeta-dispositivo-movil__icono"><i class="bi bi-hdd-rack" aria-hidden="true"></i></span>
+                        <div class="tarjeta-dispositivo-movil__textos"><a class="tarjeta-dispositivo-movil__nombre enlace-discreto" href="monitoreos.html?dispositivo=4">Servidor principal</a><span class="tarjeta-dispositivo-movil__ip">192.168.1.10</span></div>
+                        <span class="insignia-estado insignia-estado--inactivo"><span class="punto-estado punto-estado--inactivo"></span>Inactivo</span>
+                    </div>
+                    <dl class="tarjeta-dispositivo-movil__datos">
+                        <div><dt>Ubicación</dt><dd>Sala de servidores</dd></div>
+                        <div><dt>Respuesta</dt><dd><span class="mono texto-error" aria-label="Sin respuesta">Sin resp.</span></dd></div>
+                        <div><dt>Comprobación</dt><dd>Hoy, 10:05</dd></div>
+                    </dl>
+                    <div class="tarjeta-dispositivo-movil__acciones">
+                        <button type="button" class="btn btn-secondary btn-tarjeta"><i class="bi bi-broadcast" aria-hidden="true"></i>Monitorear</button>
+                        <button type="button" class="btn btn-secondary btn-tarjeta"><i class="bi bi-pencil" aria-hidden="true"></i>Editar</button>
+                        <button type="button" class="btn btn-secondary btn-tarjeta btn-tarjeta--peligro"><i class="bi bi-trash3" aria-hidden="true"></i>Eliminar</button>
+                    </div>
+                </article>
+                <article class="tarjeta-dispositivo-movil tarjeta-dispositivo-movil--monitoreando">
+                    <div class="tarjeta-dispositivo-movil__cabecera">
+                        <span class="tarjeta-dispositivo-movil__icono"><i class="bi bi-pc-display" aria-hidden="true"></i></span>
+                        <div class="tarjeta-dispositivo-movil__textos"><a class="tarjeta-dispositivo-movil__nombre enlace-discreto" href="monitoreos.html?dispositivo=3">PC Recepción</a><span class="tarjeta-dispositivo-movil__ip">192.168.1.35</span></div>
+                        <span class="insignia-estado insignia-estado--monitoreando"><span class="punto-estado punto-estado--monitoreando punto-estado--pulso"></span>Monitoreando…</span>
+                    </div>
+                    <dl class="tarjeta-dispositivo-movil__datos">
+                        <div><dt>Ubicación</dt><dd>Recepción</dd></div>
+                        <div><dt>Respuesta</dt><dd><span class="mono texto-tenue">Enviando…</span></dd></div>
+                        <div><dt>Comprobación</dt><dd>21/09 17:48</dd></div>
+                    </dl>
+                    <div class="tarjeta-dispositivo-movil__acciones">
+                        <button type="button" class="btn btn-secondary btn-tarjeta btn-tarjeta--cargando" disabled><span class="girador girador--acento" aria-hidden="true"></span>Monitorear</button>
+                        <button type="button" class="btn btn-secondary btn-tarjeta" disabled><i class="bi bi-pencil" aria-hidden="true"></i>Editar</button>
+                        <button type="button" class="btn btn-secondary btn-tarjeta btn-tarjeta--peligro" disabled><i class="bi bi-trash3" aria-hidden="true"></i>Eliminar</button>
+                    </div>
+                </article>
+        </div>
+    </section>
+
+    <!-- ============================================================ 20 Selector de tipo -->
+    <section class="seccion" aria-labelledby="s20">
+        <h2 class="seccion__titulo" id="s20">
+            <span class="seccion__numero">20</span><span class="seccion__nombre">Selector de tipo</span>
+            <span class="seccion__nota">Radios con forma de tarjeta · 64 px · seleccionado con borde de acento</span>
+        </h2>
+        <div class="caja">
+            <fieldset class="m-0" style="max-width: 472px">
+                <legend class="form-label float-none">Tipo</legend>
+                <div class="selector-tipo" role="radiogroup">
+                        <input type="radio" class="btn-check" name="demo-tipo" id="demo-tipo-computadora" value="computadora">
+                        <label class="selector-tipo__opcion" for="demo-tipo-computadora"><i class="bi bi-pc-display" aria-hidden="true"></i>Computadora</label>
+                        <input type="radio" class="btn-check" name="demo-tipo" id="demo-tipo-servidor" value="servidor" checked>
+                        <label class="selector-tipo__opcion" for="demo-tipo-servidor"><i class="bi bi-hdd-rack" aria-hidden="true"></i>Servidor</label>
+                        <input type="radio" class="btn-check" name="demo-tipo" id="demo-tipo-impresora" value="impresora">
+                        <label class="selector-tipo__opcion" for="demo-tipo-impresora"><i class="bi bi-printer" aria-hidden="true"></i>Impresora</label>
+                        <input type="radio" class="btn-check" name="demo-tipo" id="demo-tipo-router" value="router">
+                        <label class="selector-tipo__opcion" for="demo-tipo-router"><i class="bi bi-router" aria-hidden="true"></i>Router</label>
+                </div>
+            </fieldset>
+        </div>
+    </section>
+
+    <!-- ============================================================ 21 Progreso de «Monitorear todos» -->
+    <section class="seccion" aria-labelledby="s21">
+        <h2 class="seccion__titulo" id="s21">
+            <span class="seccion__numero">21</span><span class="seccion__nombre">Progreso de «Monitorear todos»</span>
+            <span class="seccion__nota">Generado por js/modulos/monitorear-todos.js · hecha con su tiempo · actual con pulso · en espera</span>
+        </h2>
+        <div id="demo-progreso"></div>
+        <div class="acciones-demo"><button type="button" class="btn btn-secondary boton-monitorear-todos" disabled aria-busy="true"><span class="girador girador--oscuro" aria-hidden="true"></span>Monitoreando 3 de 6…</button></div>
+    </section>
+
+    <!-- ============================================================ 22 Hoja inferior (celular) -->
+    <section class="seccion" aria-labelledby="s22">
+        <h2 class="seccion__titulo" id="s22">
+            <span class="seccion__numero">22</span><span class="seccion__nombre">Hoja inferior · celular</span>
+            <span class="seccion__nota">El modal de agregar y editar, en anchos menores a 576 px (container query sobre el modal)</span>
+        </h2>
+        <div class="marco-movil marco-movil--hoja">
+            <div class="modal-formulario hoja-demo">
+                <div class="modal-dialog modal-dialog-hoja">
+                    <div class="modal-content">
+                        <div class="modal-formulario__asa" aria-hidden="true"></div>
+                        <div class="modal-formulario__cabecera">
+                            <div><p class="modal-formulario__titulo" role="presentation">Agregar dispositivo</p></div>
+                            <button type="button" class="modal-formulario__cerrar" aria-label="Cerrar"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                        </div>
+                        <div class="modal-formulario__cuerpo">
+                            <div><label class="form-label" for="demo-hoja-nombre">Nombre</label><input class="form-control" id="demo-hoja-nombre" value="Servidor de archivos"></div>
+                            <div>
+                                <label class="form-label" for="demo-hoja-ip">Dirección IP</label>
+                                <div class="campo-icono"><input class="form-control mono is-invalid" id="demo-hoja-ip" value="192.168.1.300" aria-invalid="true" aria-describedby="demo-hoja-error"><i class="bi bi-exclamation-circle-fill campo-icono__error" aria-hidden="true"></i></div>
+                                <div class="invalid-feedback" id="demo-hoja-error">Dirección IP no válida</div>
+                            </div>
+                            <fieldset class="m-0">
+                                <legend class="form-label float-none">Tipo</legend>
+                                <div class="selector-tipo" role="radiogroup">
+                        <input type="radio" class="btn-check" name="demo-hoja-tipo" id="demo-hoja-tipo-computadora" value="computadora">
+                        <label class="selector-tipo__opcion" for="demo-hoja-tipo-computadora"><i class="bi bi-pc-display" aria-hidden="true"></i>Computadora</label>
+                        <input type="radio" class="btn-check" name="demo-hoja-tipo" id="demo-hoja-tipo-servidor" value="servidor" checked>
+                        <label class="selector-tipo__opcion" for="demo-hoja-tipo-servidor"><i class="bi bi-hdd-rack" aria-hidden="true"></i>Servidor</label>
+                        <input type="radio" class="btn-check" name="demo-hoja-tipo" id="demo-hoja-tipo-impresora" value="impresora">
+                        <label class="selector-tipo__opcion" for="demo-hoja-tipo-impresora"><i class="bi bi-printer" aria-hidden="true"></i>Impresora</label>
+                        <input type="radio" class="btn-check" name="demo-hoja-tipo" id="demo-hoja-tipo-router" value="router">
+                        <label class="selector-tipo__opcion" for="demo-hoja-tipo-router"><i class="bi bi-router" aria-hidden="true"></i>Router</label>
+                                </div>
+                            </fieldset>
+                            <div><label class="form-label" for="demo-hoja-ubicacion">Ubicación</label><input class="form-control" id="demo-hoja-ubicacion" value="Sala de servidores"></div>
+                        </div>
+                        <div class="modal-footer modal-formulario__pie">
+                            <button type="button" class="btn btn-secondary">Cancelar</button>
+                            <button type="button" class="btn btn-primary">Agregar dispositivo</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ 23 Tarjeta de estado (Dashboard) -->
+    <section class="seccion" aria-labelledby="s23">
+        <h2 class="seccion__titulo" id="s23">
+            <span class="seccion__numero">23</span><span class="seccion__nombre">Tarjeta de estado de dispositivo</span>
+            <span class="seccion__nota">Dashboard · activo · inactivo con borde rojo · sin monitorear con borde punteado · monitoreando · enlaza al historial</span>
+        </h2>
+        <div class="rejilla-estado rejilla-estado--muestra">
+                <article class="tarjeta-estado tarjeta-estado--activo">
+                    <div class="tarjeta-estado__cabecera"><span class="tarjeta-estado__icono"><i class="bi bi-pc-display" aria-hidden="true"></i></span><span class="insignia-estado insignia-estado--activo"><span class="punto-estado punto-estado--activo"></span>Activo</span></div>
+                    <div class="tarjeta-estado__textos"><a class="tarjeta-estado__nombre enlace-discreto stretched-link" href="monitoreos.html?dispositivo=1">Mi PC</a><span class="tarjeta-estado__ip">127.0.0.1</span></div>
+                    <div class="tarjeta-estado__pie"><span class="tarjeta-estado__tiempo">0.32 ms</span><span class="tarjeta-estado__fecha">Hoy, 10:05</span></div>
+                </article>
+                <article class="tarjeta-estado tarjeta-estado--inactivo">
+                    <div class="tarjeta-estado__cabecera"><span class="tarjeta-estado__icono"><i class="bi bi-hdd-rack" aria-hidden="true"></i></span><span class="insignia-estado insignia-estado--inactivo"><span class="punto-estado punto-estado--inactivo"></span>Inactivo</span></div>
+                    <div class="tarjeta-estado__textos"><a class="tarjeta-estado__nombre enlace-discreto stretched-link" href="monitoreos.html?dispositivo=1">Servidor principal</a><span class="tarjeta-estado__ip">192.168.1.10</span></div>
+                    <div class="tarjeta-estado__pie"><span class="tarjeta-estado__tiempo texto-error">Sin respuesta</span><span class="tarjeta-estado__fecha">Hoy, 10:05</span></div>
+                </article>
+                <article class="tarjeta-estado tarjeta-estado--desconocido">
+                    <div class="tarjeta-estado__cabecera"><span class="tarjeta-estado__icono"><i class="bi bi-hdd-rack" aria-hidden="true"></i></span><span class="insignia-estado"><span class="punto-estado punto-estado--desconocido"></span>Sin monitorear</span></div>
+                    <div class="tarjeta-estado__textos"><a class="tarjeta-estado__nombre enlace-discreto stretched-link" href="monitoreos.html?dispositivo=1">Servidor de respaldo</a><span class="tarjeta-estado__ip">192.168.1.11</span></div>
+                    <div class="tarjeta-estado__pie"><span class="tarjeta-estado__tiempo texto-tenue">—</span><span class="tarjeta-estado__fecha">Nunca comprobado</span></div>
+                </article>
+                <article class="tarjeta-estado tarjeta-estado--monitoreando">
+                    <div class="tarjeta-estado__cabecera"><span class="tarjeta-estado__icono"><i class="bi bi-router" aria-hidden="true"></i></span><span class="insignia-estado insignia-estado--monitoreando"><span class="punto-estado punto-estado--monitoreando punto-estado--pulso"></span>Monitoreando…</span></div>
+                    <div class="tarjeta-estado__textos"><a class="tarjeta-estado__nombre enlace-discreto stretched-link" href="monitoreos.html?dispositivo=1">Router principal</a><span class="tarjeta-estado__ip">192.168.1.1</span></div>
+                    <div class="tarjeta-estado__pie"><span class="tarjeta-estado__tiempo texto-tenue">Enviando ping…</span><span class="tarjeta-estado__fecha">Hoy, 10:05</span></div>
+                </article>
+        </div>
+    </section>
+
+    <!-- ============================================================ 24 Últimas alertas (Dashboard) -->
+    <section class="seccion" aria-labelledby="s24">
+        <h2 class="seccion__titulo" id="s24">
+            <span class="seccion__numero">24</span><span class="seccion__nombre">Elemento de la lista de alertas</span>
+            <span class="seccion__nota">Dashboard · pendiente · atendida</span>
+        </h2>
+        <div class="panel panel--alertas" style="max-width: 420px">
+            <div class="panel__cabecera">
+                <div class="panel__titulo-con-contador"><p class="panel__titulo" role="presentation">Últimas alertas</p><span class="contador contador--suave">1</span></div>
+                <a class="panel__enlace" href="alertas.html">Ver todas<i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+            </div>
+            <ul class="lista-alertas">
+                <li class="alerta-reciente">
+                    <span class="alerta-reciente__icono"><i class="bi bi-wifi-off" aria-hidden="true"></i></span>
+                    <div class="alerta-reciente__cuerpo">
+                        <div class="alerta-reciente__cabecera"><span class="alerta-reciente__nombre">Servidor principal</span><span class="insignia-estado insignia-estado--sm insignia-estado--pendiente"><span class="punto-estado punto-estado--alerta"></span>Pendiente</span></div>
+                        <p class="alerta-reciente__mensaje">El dispositivo Servidor principal no respondió al monitoreo.</p>
+                        <span class="alerta-reciente__fecha">21/09/2026 10:05</span>
+                    </div>
+                </li>
+                <li class="alerta-reciente alerta-reciente--atendida">
+                    <span class="alerta-reciente__icono"><i class="bi bi-wifi-off" aria-hidden="true"></i></span>
+                    <div class="alerta-reciente__cuerpo">
+                        <div class="alerta-reciente__cabecera"><span class="alerta-reciente__nombre">PC Recepción</span><span class="insignia-estado insignia-estado--sm insignia-estado--atendida"><i class="bi bi-check2" aria-hidden="true"></i>Atendida</span></div>
+                        <p class="alerta-reciente__mensaje">El dispositivo PC Recepción no respondió al monitoreo.</p>
+                        <span class="alerta-reciente__fecha">20/09/2026 17:48</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ============================================================ 25 Gráfica de tiempos (Dashboard) -->
+    <section class="seccion" aria-labelledby="s25">
+        <h2 class="seccion__titulo" id="s25">
+            <span class="seccion__numero">25</span><span class="seccion__nombre">Gráfica de tiempos de respuesta</span>
+            <span class="seccion__nota">Chart.js con los colores de los tokens · 4 series; de la 5.ª a la 8.ª, línea punteada · sin animación con prefers-reduced-motion</span>
+        </h2>
+        <div class="panel panel--grafica">
+            <div class="panel__cabecera panel__cabecera--grafica">
+                <div><p class="panel__titulo" role="presentation">Tiempos de respuesta recientes</p><p class="panel__subtitulo">Datos de ejemplo · milisegundos (ms)</p></div>
+                <ul class="leyenda-grafica" id="demo-leyenda" aria-label="Series de la gráfica"></ul>
+            </div>
+            <div class="grafica"><canvas id="demo-grafica" role="img" aria-label="Gráfica de ejemplo con cinco series"></canvas></div>
+        </div>
+    </section>
+    <!-- ============================================================ 26 Filtros de historial (Monitoreos) -->
+    <section class="seccion" aria-labelledby="s26">
+        <h2 class="seccion__titulo" id="s26">
+            <span class="seccion__numero">26</span><span class="seccion__nombre">Filtros del historial</span>
+            <span class="seccion__nota">Monitoreos · se guardan en la URL · el error de fechas viene de la API y se muestra bajo el campo</span>
+        </h2>
+        <form class="filtros-historial" novalidate>
+            <div class="filtros-historial__campo">
+                <label class="form-label" for="demo-historial-dispositivo">Dispositivo</label>
+                <div class="campo-icono">
+                    <select class="form-select" id="demo-historial-dispositivo"><option>Todos los dispositivos</option><option selected>Servidor principal</option></select>
+                    <i class="bi bi-chevron-down campo-icono__fin" aria-hidden="true"></i>
+                </div>
+            </div>
+            <div class="filtros-historial__campo">
+                <label class="form-label" for="demo-historial-estado">Estado</label>
+                <div class="campo-icono">
+                    <select class="form-select" id="demo-historial-estado"><option>Todos los resultados</option><option>Activo</option><option>Inactivo</option></select>
+                    <i class="bi bi-chevron-down campo-icono__fin" aria-hidden="true"></i>
+                </div>
+            </div>
+            <div class="filtros-historial__campo">
+                <label class="form-label" for="demo-historial-desde">Desde</label>
+                <input class="form-control" id="demo-historial-desde" type="date" value="2026-09-27">
+            </div>
+            <div class="filtros-historial__campo">
+                <label class="form-label" for="demo-historial-hasta">Hasta</label>
+                <input class="form-control is-invalid" id="demo-historial-hasta" type="date" value="2026-09-20" aria-invalid="true" aria-describedby="demo-historial-error">
+                <div class="invalid-feedback" id="demo-historial-error">La fecha final debe ser igual o posterior a la inicial</div>
+            </div>
+            <div class="filtros-historial__acciones">
+                <button type="button" class="btn btn-link"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Restablecer filtros</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- ============================================================ 27 Gráfica y resumen de un dispositivo (Monitoreos) -->
+    <section class="seccion" aria-labelledby="s27">
+        <h2 class="seccion__titulo" id="s27">
+            <span class="seccion__numero">27</span><span class="seccion__nombre">Gráfica de un dispositivo y resumen</span>
+            <span class="seccion__nota">Monitoreos · área con puntos rojos en las comprobaciones sin respuesta · disponibilidad verde ≥ 99 %, ámbar ≥ 95 %, roja debajo</span>
+        </h2>
+        <div class="panel panel--grafica panel--grafica-historial">
+            <div class="panel__cabecera panel__cabecera--grafica">
+                <div><p class="panel__titulo" role="presentation">Tiempos de respuesta · Servidor principal</p><p class="panel__subtitulo"><span class="mono">192.168.1.10</span> · últimas 10 comprobaciones del rango</p></div>
+                <dl class="resumen-monitoreo">
+                    <div><dt>Promedio</dt><dd>1.23 ms</dd></div>
+                    <div><dt>Máximo</dt><dd>2.4 ms</dd></div>
+                    <div><dt>Disponibilidad</dt><dd class="texto-error">60 %</dd></div>
+                </dl>
+            </div>
+            <div class="grafica"><canvas id="demo-grafica-area" role="img" aria-label="Gráfica de ejemplo de un dispositivo con cuatro comprobaciones sin respuesta"></canvas></div>
+            <ul class="leyenda-grafica leyenda-grafica--historial">
+                <li class="leyenda-grafica__item"><span class="leyenda-grafica__linea leyenda-grafica__linea--acento"></span>Tiempo de respuesta (ms)</li>
+                <li class="leyenda-grafica__item"><span class="leyenda-grafica__punto"></span>Sin respuesta</li>
+            </ul>
+        </div>
+        <h3 class="texto-secundario fw-semibold text-body mt-4 mb-3">Variantes de la disponibilidad</h3>
+        <div class="panel">
+            <dl class="resumen-monitoreo">
+                <div><dt>Disponibilidad</dt><dd class="texto-activo">100 %</dd></div>
+                <div><dt>Disponibilidad</dt><dd class="texto-alerta">96.4 %</dd></div>
+                <div><dt>Disponibilidad</dt><dd class="texto-error">60 %</dd></div>
+                <div><dt>Sin datos</dt><dd>—</dd></div>
+            </dl>
+        </div>
+    </section>
+
+    <!-- ============================================================ 28 Paginación (Monitoreos) -->
+    <section class="seccion" aria-labelledby="s28">
+        <h2 class="seccion__titulo" id="s28">
+            <span class="seccion__numero">28</span><span class="seccion__nombre">Paginación del historial</span>
+            <span class="seccion__nota">Monitoreos · 10 por página · "Anterior" deshabilitado en la primera página y "Siguiente" en la última</span>
+        </h2>
+        <div class="tabla-tarjeta">
+            <nav class="paginacion" aria-label="Paginación de ejemplo">
+                <span>Mostrando 1–10 de 26 · página 1 de 3</span>
+                <div class="paginacion__botones">
+                    <button type="button" class="btn btn-secondary btn-sm" disabled><i class="bi bi-chevron-left" aria-hidden="true"></i>Anterior</button>
+                    <button type="button" class="btn btn-secondary btn-sm">Siguiente<i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+                </div>
+            </nav>
+        </div>
+    </section>
+    <!-- ============================================================ 29 Alerta (Alertas) -->
+    <section class="seccion" aria-labelledby="s29">
+        <h2 class="seccion__titulo" id="s29">
+            <span class="seccion__numero">29</span><span class="seccion__nombre">Alerta con pestañas</span>
+            <span class="seccion__nota">Alertas · pendiente con «Marcar como atendida» · atendida con su fecha de atención · en celular el botón queda debajo del texto</span>
+        </h2>
+        <div class="panel-alertas">
+            <div class="panel-alertas__pestanas">
+                <div class="nav nav-underline" role="tablist" aria-label="Pestañas de ejemplo">
+                    <button class="nav-link active" type="button" role="tab" aria-selected="true">Pendientes<span class="contador contador--suave">1</span></button>
+                    <button class="nav-link" type="button" role="tab" aria-selected="false" tabindex="-1">Atendidas<span class="contador contador--neutro">3</span></button>
+                </div>
+            </div>
+            <ul class="lista-alertas-completa">
+                <li class="alerta">
+                    <span class="alerta__icono"><i class="bi bi-wifi-off" aria-hidden="true"></i></span>
+                    <div class="alerta__cuerpo">
+                        <div class="alerta__cabecera"><p class="alerta__nombre" role="presentation">Servidor principal</p><span class="alerta__ip">192.168.1.10</span><span class="insignia-estado insignia-estado--sin-respuesta"><i class="bi bi-wifi-off" aria-hidden="true"></i>Sin respuesta</span></div>
+                        <p class="alerta__mensaje">El dispositivo Servidor principal no respondió al monitoreo.</p>
+                        <span class="alerta__fecha"><i class="bi bi-clock" aria-hidden="true"></i><span class="mono">21/09/2026 10:05</span></span>
+                    </div>
+                    <div class="alerta__acciones">
+                        <span class="insignia-estado insignia-estado--pendiente"><span class="punto-estado punto-estado--alerta"></span>Pendiente</span>
+                        <button type="button" class="btn btn-secondary alerta__boton"><i class="bi bi-check2" aria-hidden="true"></i>Marcar como atendida</button>
+                    </div>
+                </li>
+                <li class="alerta">
+                    <span class="alerta__icono"><i class="bi bi-wifi-off" aria-hidden="true"></i></span>
+                    <div class="alerta__cuerpo">
+                        <div class="alerta__cabecera"><p class="alerta__nombre" role="presentation">Router principal</p><span class="alerta__ip">192.168.1.1</span><span class="insignia-estado insignia-estado--sin-respuesta"><i class="bi bi-wifi-off" aria-hidden="true"></i>Sin respuesta</span></div>
+                        <p class="alerta__mensaje">El dispositivo Router principal no respondió al monitoreo.</p>
+                        <span class="alerta__fecha"><i class="bi bi-clock" aria-hidden="true"></i><span class="mono">21/09/2026 10:04</span></span>
+                    </div>
+                    <div class="alerta__acciones">
+                        <span class="insignia-estado insignia-estado--pendiente"><span class="punto-estado punto-estado--alerta"></span>Pendiente</span>
+                        <button type="button" class="btn btn-secondary alerta__boton" disabled aria-busy="true"><span class="girador girador--oscuro" aria-hidden="true"></span>Marcando…</button>
+                    </div>
+                </li>
+                <li class="alerta alerta--atendida">
+                    <span class="alerta__icono"><i class="bi bi-wifi-off" aria-hidden="true"></i></span>
+                    <div class="alerta__cuerpo">
+                        <div class="alerta__cabecera"><p class="alerta__nombre" role="presentation">PC Recepción</p><span class="alerta__ip">192.168.1.35</span><span class="insignia-estado insignia-estado--sin-respuesta"><i class="bi bi-wifi-off" aria-hidden="true"></i>Sin respuesta</span></div>
+                        <p class="alerta__mensaje">El dispositivo PC Recepción no respondió al monitoreo.</p>
+                        <span class="alerta__fecha"><i class="bi bi-clock" aria-hidden="true"></i><span class="mono">20/09/2026 17:48</span><span class="alerta__atendida">Atendida el 20/09/2026 18:02</span></span>
+                    </div>
+                    <div class="alerta__acciones">
+                        <span class="insignia-estado insignia-estado--atendida"><i class="bi bi-check2" aria-hidden="true"></i>Atendida</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ============================================================ 30 Vacíos de Alertas -->
+    <section class="seccion" aria-labelledby="s30">
+        <h2 class="seccion__titulo" id="s30">
+            <span class="seccion__numero">30</span><span class="seccion__nombre">Alertas sin elementos</span>
+            <span class="seccion__nota">Pendientes vacía: vacío positivo con «Ver atendidas» (si hay atendidas) · Atendidas vacía: vacío neutro sin acción</span>
+        </h2>
+        <div class="rejilla rejilla--2">
+            <div class="panel-alertas">
+                <div class="estado-vacio bloque-sin-borde">
+                    <span class="estado-vacio__icono"><i class="bi bi-check2-circle" aria-hidden="true"></i></span>
+                    <h3 class="estado-vacio__titulo">Toda la red responde</h3>
+                    <p class="estado-vacio__texto">No hay alertas pendientes. Cuando un dispositivo deje de responder, aparecerá aquí.</p>
+                    <button type="button" class="btn btn-secondary btn-sm">Ver atendidas</button>
+                </div>
+            </div>
+            <div class="panel-alertas">
+                <div class="estado-vacio estado-vacio--neutro bloque-sin-borde">
+                    <span class="estado-vacio__icono"><i class="bi bi-inbox" aria-hidden="true"></i></span>
+                    <h3 class="estado-vacio__titulo">Aún no hay alertas atendidas</h3>
+                    <p class="estado-vacio__texto">Las alertas que marques como atendidas se guardan aquí.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- ============================================================ 31 Filas compactas del historial (Monitoreos) -->
+    <section class="seccion" aria-labelledby="s31">
+        <h2 class="seccion__titulo" id="s31">
+            <span class="seccion__numero">31</span><span class="seccion__nombre">Filas compactas del historial</span>
+            <span class="seccion__nota">Monitoreos · reemplazan a la tabla cuando su tarjeta mide menos de 760 px (container query) · sin la segunda línea si el filtro ya eligió un dispositivo</span>
+        </h2>
+        <div class="rejilla rejilla--2 demo-historial-compacto">
+            <div class="tabla-tarjeta panel-historial">
+                <div class="panel-historial__cabecera"><p class="panel__titulo" role="presentation">Todos los dispositivos</p><span class="texto-secundario">3 comprobaciones</span></div>
+                <ul class="lista-historial">
+                    <li class="fila-historial">
+                        <div class="fila-historial__linea"><span class="fila-historial__fecha">Hoy, 10:05</span><span class="insignia-estado insignia-estado--activo insignia-estado--sm"><span class="punto-estado punto-estado--activo"></span>Activo</span><span class="fila-historial__tiempo">0.32 ms</span></div>
+                        <div class="fila-historial__dispositivo"><i class="bi bi-pc-display" aria-hidden="true"></i><span class="fila-historial__nombre">Mi PC</span><span class="fila-historial__ip">127.0.0.1</span></div>
+                    </li>
+                    <li class="fila-historial">
+                        <div class="fila-historial__linea"><span class="fila-historial__fecha">Hoy, 10:05</span><span class="insignia-estado insignia-estado--inactivo insignia-estado--sm"><span class="punto-estado punto-estado--inactivo"></span>Inactivo</span><span class="fila-historial__tiempo texto-error">Sin respuesta</span></div>
+                        <div class="fila-historial__dispositivo"><i class="bi bi-hdd-rack" aria-hidden="true"></i><span class="fila-historial__nombre">Servidor principal</span><span class="fila-historial__ip">192.168.1.10</span></div>
+                    </li>
+                    <li class="fila-historial">
+                        <div class="fila-historial__linea"><span class="fila-historial__fecha">21/09 17:48</span><span class="insignia-estado insignia-estado--activo insignia-estado--sm"><span class="punto-estado punto-estado--activo"></span>Activo</span><span class="fila-historial__tiempo">&lt; 1 ms</span></div>
+                        <div class="fila-historial__dispositivo"><i class="bi bi-pc-display" aria-hidden="true"></i><span class="fila-historial__nombre">Mi PC</span><span class="fila-historial__ip">127.0.0.1</span></div>
+                    </li>
+                </ul>
+            </div>
+            <div class="tabla-tarjeta panel-historial">
+                <div class="panel-historial__cabecera"><p class="panel__titulo" role="presentation">Servidor principal elegido</p><span class="texto-secundario">3 comprobaciones</span></div>
+                <ul class="lista-historial">
+                    <li class="fila-historial">
+                        <div class="fila-historial__linea"><span class="fila-historial__fecha">Hoy, 10:05</span><span class="insignia-estado insignia-estado--inactivo insignia-estado--sm"><span class="punto-estado punto-estado--inactivo"></span>Inactivo</span><span class="fila-historial__tiempo texto-error">Sin respuesta</span></div>
+                    </li>
+                    <li class="fila-historial">
+                        <div class="fila-historial__linea"><span class="fila-historial__fecha">Hoy, 10:00</span><span class="insignia-estado insignia-estado--activo insignia-estado--sm"><span class="punto-estado punto-estado--activo"></span>Activo</span><span class="fila-historial__tiempo">1.2 ms</span></div>
+                    </li>
+                    <li class="fila-historial">
+                        <div class="fila-historial__linea"><span class="fila-historial__fecha">Hoy, 09:55</span><span class="insignia-estado insignia-estado--activo insignia-estado--sm"><span class="punto-estado punto-estado--activo"></span>Activo</span><span class="fila-historial__tiempo">0.92 ms</span></div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
 </main>
 
 <!-- Modal real (se abre con "Abrir el modal real"). -->
@@ -653,20 +1163,9 @@
     </div>
 </div>
 
-<!-- Notificaciones reales, arriba a la derecha. -->
-<div class="toast-container notificaciones position-fixed" aria-live="polite" aria-atomic="false"></div>
-
-<template id="plantilla-notificacion">
-    <div class="toast" role="status" aria-live="polite" aria-atomic="true">
-        <div class="notificacion">
-            <span class="notificacion__icono"><i class="bi" aria-hidden="true"></i></span>
-            <div class="notificacion__cuerpo"><span class="notificacion__titulo"></span><span class="notificacion__texto"></span></div>
-            <button type="button" class="notificacion__cerrar" data-bs-dismiss="toast" aria-label="Cerrar notificación"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
-        </div>
-    </div>
-</template>
 
 <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="js/componentes.js"></script>
+<script src="vendor/chart.js/chart.umd.min.js"></script>
+<script type="module" src="js/componentes.js"></script>
 </body>
 </html>

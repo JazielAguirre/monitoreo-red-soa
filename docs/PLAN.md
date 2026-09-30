@@ -39,6 +39,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - Cada script recarga la base de datos al empezar, para que los resultados no dependan de pruebas anteriores. **Borra los datos que hayas agregado a mano.**
 - Se ejecutan con `/opt/lampp/bin/php pruebas/<servicio>.php` (en Windows, `C:/xampp/php/php.exe`) y terminan con código de salida distinto de 0 si algo falla.
 - `pruebas/` no debe ser accesible por HTTP.
+- `pruebas/interfaz.php` prueba las pantallas con un Chrome headless propio (`pruebas/navegador.php`, cliente del protocolo de depuración escrito en PHP): perfil temporal, puerto elegido por Chrome, nunca se conecta al Chrome del usuario, y se cierra y borra el perfil al terminar, también ante un error o Ctrl+C. Emula 390 px y `prefers-reduced-motion`, y simula servicios caídos interceptando las peticiones de la página. Si no hay Chrome, Chromium o Edge, se omite con un aviso.
 
 **Archivo de fallo simulado (`pruebas/.fallo-simulado.json`).** Sirve para probar el 502 de Monitoreo cuando Dispositivos o Alertas no responde, sin apagar nada:
 
@@ -173,12 +174,12 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 **Listo cuando:**
 
-- [ ] Todas las pantallas funcionan con los servicios reales y coinciden con `docs/diseno/`.
-- [ ] Cada vista tiene sus estados de carga, vacío y error. Con MySQL apagado se ve un error claro, nunca una pantalla en blanco.
-- [ ] "Monitorear todos" comprueba los dispositivos uno por uno, con progreso visible, y al final muestra una notificación con el resumen.
-- [ ] El contador de alertas del menú se actualiza después de monitorear y después de atender una alerta.
-- [ ] Probado en un celular real, entrando por la IP de la computadora en la red local.
-- [ ] Se puede usar solo con el teclado: foco visible y los modales se cierran con Escape.
+- [x] Todas las pantallas funcionan con los servicios reales y coinciden con `docs/diseno/`.
+- [x] Cada vista tiene sus estados de carga, vacío y error. Con MySQL apagado se ve un error claro, nunca una pantalla en blanco.
+- [x] "Monitorear todos" comprueba los dispositivos uno por uno, con progreso visible, y al final muestra una notificación con el resumen.
+- [x] El contador de alertas del menú se actualiza después de monitorear y después de atender una alerta.
+- [x] Probado en un celular real, entrando por la IP de la computadora en la red local.
+- [x] Se puede usar solo con el teclado: foco visible y los modales se cierran con Escape.
 
 ## Fase 7 · Inicio de sesión
 

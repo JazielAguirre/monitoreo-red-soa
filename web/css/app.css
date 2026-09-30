@@ -571,6 +571,443 @@ a:focus-visible {
     box-shadow: inset 0 0 0 2px var(--color-base-icono);
 }
 
+/* ============================================================ Estructura de la aplicación */
+
+.saltar-contenido {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 1100;
+    padding: 8px 12px;
+    font-weight: 500;
+    color: var(--color-superficie);
+    background-color: var(--color-base-2);
+    border-radius: var(--radio);
+    transform: translateY(-200%);
+}
+
+.saltar-contenido:focus {
+    color: var(--color-superficie);
+    transform: none;
+}
+
+.app {
+    display: flex;
+    min-height: 100vh;
+}
+
+.contenido {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+    padding: 28px 32px 40px;
+}
+
+.contenido:focus {
+    outline: 0;
+}
+
+/* Barra lateral (escritorio). */
+.barra-lateral {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    gap: 28px;
+    width: var(--ancho-barra-lateral);
+    height: 100vh;
+    padding: 22px 14px 18px;
+    overflow-y: auto;
+    background-color: var(--color-base);
+}
+
+.barra-lateral .nav-lateral {
+    gap: 2px;
+    padding: 0;
+    background: none;
+}
+
+.marca {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 8px;
+}
+
+.marca__logo {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+    color: var(--color-base-icono);
+    background-color: var(--color-base-2);
+    border-radius: var(--radio-icono);
+}
+
+/* El punto verde del logo. */
+.marca__logo::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    background-color: var(--color-activo);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--color-base-2);
+}
+
+.marca__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.marca__titulo {
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 600;
+    color: var(--color-superficie);
+}
+
+.marca__subtitulo {
+    font-size: var(--texto-pequeno-tamano);
+    color: var(--color-base-texto-2);
+}
+
+.usuario-barra {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: auto;
+    padding: 16px 8px 0;
+    border-top: 1px solid var(--color-borde-barra);
+}
+
+.avatar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    font-size: var(--texto-pequeno-tamano);
+    font-weight: 600;
+    color: var(--color-base-texto-claro);
+    background-color: var(--color-base-2);
+    border-radius: 50%;
+}
+
+.usuario-barra__datos {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.usuario-barra__nombre {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--color-superficie);
+}
+
+.usuario-barra__rol {
+    font-size: var(--texto-pequeno-tamano);
+    color: var(--color-base-texto-2);
+}
+
+.usuario-barra__salir {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 16px;
+    color: var(--color-base-texto-2);
+    background: none;
+    border: 0;
+    border-radius: var(--radio);
+    cursor: pointer;
+}
+
+.usuario-barra__salir:hover {
+    color: var(--color-superficie);
+    background-color: var(--color-hover-barra);
+}
+
+.usuario-barra__salir:focus-visible,
+.encabezado-movil__boton:focus-visible,
+.menu-movil__salir:focus-visible {
+    outline: 0;
+    box-shadow: inset 0 0 0 2px var(--color-base-icono);
+}
+
+/* Encabezado y menú del celular. */
+.encabezado-movil {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    height: var(--alto-encabezado-movil);
+    padding: 0 8px 0 6px;
+    background-color: var(--color-base);
+}
+
+.encabezado-movil__boton {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    font-size: 22px;
+    color: var(--color-superficie);
+    background: none;
+    border: 0;
+    border-radius: var(--radio);
+    cursor: pointer;
+}
+
+a.encabezado-movil__boton {
+    font-size: 19px;
+    color: var(--color-base-texto);
+}
+
+a.encabezado-movil__boton:hover {
+    color: var(--color-superficie);
+}
+
+.encabezado-movil .marca__logo {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+    border-radius: var(--radio);
+}
+
+.encabezado-movil .marca__logo::after {
+    top: 4px;
+    right: 4px;
+    width: 6px;
+    height: 6px;
+    box-shadow: 0 0 0 1.5px var(--color-base-2);
+}
+
+.encabezado-movil__titulo {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-superficie);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contador--mini {
+    position: absolute;
+    top: 8px;
+    right: 7px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+}
+
+.menu-movil__fondo {
+    position: fixed;
+    inset: var(--alto-encabezado-movil) 0 0 0;
+    z-index: 1028;
+    background-color: var(--color-fondo-modal);
+}
+
+.menu-movil {
+    position: fixed;
+    top: var(--alto-encabezado-movil);
+    right: 0;
+    left: 0;
+    z-index: 1029;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 12px 16px;
+    background-color: var(--color-base);
+    border-radius: 0 0 16px 16px;
+    box-shadow: var(--sombra-menu-movil);
+}
+
+.menu-movil[hidden],
+.menu-movil__fondo[hidden] {
+    display: none;
+}
+
+.menu-movil__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.menu-movil .nav-lateral__enlace {
+    gap: 14px;
+    height: 48px;
+    padding: 0 14px;
+    font-size: 15px;
+    border-radius: var(--radio-icono);
+}
+
+.menu-movil .nav-lateral__enlace > .bi {
+    font-size: 17px;
+}
+
+.menu-movil .nav-lateral__enlace > .contador {
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+}
+
+.menu-movil__usuario {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    padding: 14px 6px 0;
+    border-top: 1px solid var(--color-borde-barra);
+}
+
+.menu-movil__usuario .usuario-barra__nombre {
+    font-size: var(--texto-cuerpo-tamano);
+}
+
+.menu-movil__salir {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 12px;
+    font-size: var(--texto-secundario-tamano);
+    font-weight: 500;
+    color: var(--color-base-texto-claro);
+    background: none;
+    border: 1px solid var(--color-borde-barra-fuerte);
+    border-radius: var(--radio);
+    cursor: pointer;
+}
+
+/* Encabezado de página: título, subtítulo, "Última comprobación" y acciones. */
+.encabezado-pagina {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px 24px;
+}
+
+.encabezado-pagina__textos {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.encabezado-pagina__titulo {
+    margin: 0;
+    font-size: var(--texto-titulo-pagina-tamano);
+    line-height: var(--texto-titulo-pagina-alto);
+    font-weight: 600;
+}
+
+.encabezado-pagina__subtitulo {
+    margin: 0;
+    font-size: var(--texto-cuerpo-tamano);
+    color: var(--color-texto-2);
+}
+
+.encabezado-pagina__lado {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+}
+
+.encabezado-pagina__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.ultima-comprobacion {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.ultima-comprobacion__etiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--texto-pequeno-tamano);
+    color: var(--color-texto-2);
+}
+
+.ultima-comprobacion__valor {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: var(--texto-mono-tamano);
+    font-weight: 500;
+}
+
+@media (max-width: 991.98px) {
+    .app {
+        flex-direction: column;
+    }
+
+    .barra-lateral {
+        display: none;
+    }
+
+    .encabezado-movil {
+        display: flex;
+    }
+
+    .contenido {
+        gap: 16px;
+        padding: 20px 16px 32px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .encabezado-pagina__lado,
+    .encabezado-pagina__acciones {
+        width: 100%;
+    }
+
+    .ultima-comprobacion {
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .ultima-comprobacion__etiqueta {
+        font-size: 12.5px;
+    }
+
+    .encabezado-pagina__acciones > .btn {
+        flex: 1;
+        height: 44px;
+        font-size: 15px;
+    }
+}
+
 /* ============================================================ Pestañas (Bootstrap .nav-underline) */
 
 .nav-underline {
@@ -936,6 +1373,12 @@ a:focus-visible {
     color: var(--color-inactivo-texto);
 }
 
+/* La visibilidad del mensaje la controla el atributo hidden (el campo puede estar
+   dentro de .campo-icono y no ser hermano del mensaje, como espera Bootstrap). */
+.invalid-feedback:not([hidden]) {
+    display: block;
+}
+
 /* El select usa su propio chevron (ícono) en lugar de la imagen de Bootstrap. */
 .form-select {
     padding-right: 36px;
@@ -1209,6 +1652,58 @@ a:focus-visible {
     font-size: 24px;
 }
 
+/* ============================================================ Error al cargar (con "Reintentar") */
+
+.vista-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 36px 24px;
+    text-align: center;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+}
+
+.vista-error__icono {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+    color: var(--color-inactivo-texto);
+    background-color: var(--color-inactivo-fondo);
+    border-radius: 50%;
+}
+
+.vista-error__titulo {
+    margin: 8px 0 0;
+    font-size: var(--texto-titulo-tarjeta-tamano);
+    line-height: var(--texto-titulo-tarjeta-alto);
+    font-weight: 600;
+}
+
+.vista-error__texto {
+    max-width: 360px;
+    margin: 0;
+    font-size: var(--texto-secundario-tamano);
+    line-height: 19px;
+    color: var(--color-texto-2);
+    text-wrap: pretty;
+}
+
+.vista-error > .btn {
+    margin-top: 6px;
+}
+
+/* Estado vacío o error dentro de una tarjeta que ya tiene borde. */
+.bloque-sin-borde {
+    background-color: transparent;
+    border: 0;
+    border-radius: 0;
+}
+
 /* ============================================================ Esqueleto de carga */
 
 .esqueleto {
@@ -1245,12 +1740,1622 @@ a:focus-visible {
     border-radius: var(--radio-pastilla);
 }
 
+.esqueleto-tabla__encabezado {
+    height: var(--alto-encabezado-tabla);
+    background-color: var(--color-superficie-hover);
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.esqueleto-tabla__fila {
+    display: grid;
+    grid-template-columns: 90px 1fr 110px 70px;
+    gap: 16px;
+    align-items: center;
+    height: 52px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--color-borde-suave);
+}
+
+.esqueleto-tabla__fila:last-child {
+    border-bottom: 0;
+}
+
 @keyframes esqueleto {
     from {
         opacity: 1;
     }
     to {
         opacity: 0.55;
+    }
+}
+
+/* ============================================================ Dispositivos: filtros, tabla y pie */
+
+.contenido--dispositivos {
+    gap: 20px;
+}
+
+.barra-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.barra-filtros__buscar {
+    width: 280px;
+}
+
+.barra-filtros__fila {
+    display: contents;
+}
+
+.barra-filtros__tipo {
+    min-width: 180px;
+}
+
+.limpiar-filtros {
+    --bs-btn-padding-x: 10px;
+    --bs-btn-font-size: 13.5px;
+}
+
+/* Filtro de estado: grupo segmentado con punto y contador (en celular, fichas). */
+.filtro-estado {
+    display: flex;
+    min-width: 0;
+    height: var(--alto-control);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-borde-control);
+    border-radius: var(--radio);
+}
+
+.filtro-estado__opcion {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 12px;
+    font-size: var(--texto-secundario-tamano);
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--color-desconocido-texto);
+    background-color: var(--color-superficie);
+    border-left: 1px solid var(--color-borde-control);
+    cursor: pointer;
+    user-select: none;
+}
+
+.filtro-estado > .filtro-estado__opcion:first-of-type {
+    border-left: 0;
+}
+
+.filtro-estado__opcion:hover {
+    color: var(--color-texto);
+    background-color: var(--color-superficie-hover);
+}
+
+.filtro-estado__numero {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: 11.5px;
+    color: var(--color-texto-2);
+}
+
+.btn-check:checked + .filtro-estado__opcion {
+    color: var(--color-superficie);
+    background-color: var(--color-base-2);
+}
+
+.btn-check:checked + .filtro-estado__opcion .filtro-estado__numero {
+    color: var(--color-base-texto);
+}
+
+.btn-check:focus-visible + .filtro-estado__opcion {
+    box-shadow: inset 0 0 0 2px var(--color-acento);
+}
+
+.panel-dispositivos .table > thead > tr > th {
+    border-top: 0;
+}
+
+.tabla-ubicacion {
+    display: inline-block;
+    max-width: 180px;
+    overflow: hidden;
+    font-size: 13.5px;
+    color: var(--color-desconocido-texto);
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.texto-tenue {
+    color: var(--color-texto-2);
+}
+
+.texto-error {
+    color: var(--color-inactivo-texto);
+}
+
+.enlace-discreto {
+    color: inherit;
+}
+
+.enlace-discreto:hover {
+    color: var(--color-acento);
+}
+
+.pie-tabla {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 14px 20px;
+    font-size: var(--texto-secundario-tamano);
+    color: var(--color-texto-2);
+    border-top: 1px solid var(--color-borde-suave);
+}
+
+.pie-tabla__nota {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.esqueleto-lista {
+    border-top: 0;
+}
+
+/* Tarjetas de dispositivo (celular). */
+.lista-tarjetas-dispositivo {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+}
+
+.tarjeta-dispositivo-movil {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+}
+
+.tarjeta-dispositivo-movil--inactivo {
+    border-color: var(--color-inactivo-borde);
+}
+
+.tarjeta-dispositivo-movil--monitoreando {
+    background-color: var(--color-acento-tenue);
+    border-color: var(--color-acento-borde-fuerte);
+}
+
+.tarjeta-dispositivo-movil__cabecera {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tarjeta-dispositivo-movil__icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+    color: var(--color-base-2);
+    background-color: var(--color-fondo);
+    border-radius: var(--radio-icono);
+}
+
+.tarjeta-dispositivo-movil__textos {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.tarjeta-dispositivo-movil__nombre {
+    overflow: hidden;
+    font-size: 15px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tarjeta-dispositivo-movil__ip {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: 12.5px;
+    color: var(--color-texto-2);
+}
+
+.tarjeta-dispositivo-movil__datos {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 8px;
+    margin: 0;
+    padding: 10px 0;
+    border-top: 1px solid var(--color-borde-suave);
+    border-bottom: 1px solid var(--color-borde-suave);
+}
+
+.tarjeta-dispositivo-movil__datos > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.tarjeta-dispositivo-movil__datos dt {
+    font-size: var(--texto-encabezado-tamano);
+    font-weight: 400;
+    color: var(--color-texto-2);
+}
+
+.tarjeta-dispositivo-movil__datos dd {
+    margin: 0;
+    overflow: hidden;
+    font-size: 12.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tarjeta-dispositivo-movil__acciones {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    gap: 8px;
+}
+
+.btn-tarjeta {
+    --bs-btn-padding-x: 8px;
+    --bs-btn-font-size: 13.5px;
+    gap: 7px;
+    height: var(--alto-control-tactil);
+}
+
+.btn-tarjeta--peligro {
+    --bs-btn-color: var(--color-peligro);
+    --bs-btn-hover-color: var(--color-peligro);
+    --bs-btn-hover-bg: var(--color-inactivo-fondo);
+    --bs-btn-hover-border-color: var(--color-inactivo-borde);
+}
+
+.btn-tarjeta--cargando:disabled {
+    background-color: var(--color-acento-fondo);
+    border-color: var(--color-acento-borde);
+    opacity: 1;
+}
+
+/* Fichas del progreso que aún no se comprueban, y su tiempo. */
+.ficha--espera .bi {
+    font-size: 8px;
+}
+
+.ficha__ms {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: 11.5px;
+}
+
+.ficha .bi-check2,
+.ficha .bi-x-lg,
+.ficha .bi-exclamation-lg {
+    font-size: 12px;
+}
+
+/* ============================================================ Modal de formulario y selector de tipo */
+
+.modal-formulario {
+    --bs-modal-width: var(--ancho-modal-formulario);
+    /* Contenedor para la versión "hoja inferior": se decide por el ancho del modal
+       (en la pantalla, el de la ventana; en componentes.html, el del marco de 390 px). */
+    container: hoja / inline-size;
+}
+
+.modal-formulario__asa {
+    display: none;
+    width: 36px;
+    height: 4px;
+    margin: 8px auto 0;
+    background-color: var(--color-borde-control);
+    border-radius: var(--radio-pastilla);
+}
+
+.modal-formulario__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 20px 24px 16px;
+}
+
+.modal-formulario__titulo {
+    margin: 0;
+    font-size: var(--texto-titulo-tarjeta-tamano);
+    line-height: var(--texto-titulo-tarjeta-alto);
+    font-weight: 600;
+}
+
+.modal-formulario__subtitulo {
+    margin: 4px 0 0;
+    font-size: var(--texto-secundario-tamano);
+    color: var(--color-texto-2);
+}
+
+.modal-formulario__cerrar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 14px;
+    color: var(--color-texto-2);
+    background: none;
+    border: 0;
+    border-radius: var(--radio);
+    cursor: pointer;
+}
+
+.modal-formulario__cerrar:hover {
+    color: var(--color-texto);
+    background-color: var(--color-fondo);
+}
+
+.modal-formulario__cerrar:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--color-foco-anillo);
+}
+
+.modal-formulario__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 4px 24px 24px;
+}
+
+.modal-formulario__error {
+    margin: 0;
+    padding: 10px 12px;
+    font-size: var(--texto-secundario-tamano);
+    font-weight: 500;
+    color: var(--color-inactivo-texto);
+    background-color: var(--color-inactivo-fondo);
+    border: 1px solid var(--color-inactivo-borde);
+    border-radius: var(--radio);
+}
+
+.modal-formulario__pie {
+    padding: 16px 24px;
+    border-top: 1px solid var(--color-borde-suave);
+}
+
+.selector-tipo {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    border-radius: var(--radio);
+}
+
+.selector-tipo.is-invalid {
+    box-shadow: 0 0 0 3px var(--color-error-anillo);
+}
+
+.selector-tipo__opcion {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    height: 64px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--color-desconocido-texto);
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde-control);
+    border-radius: var(--radio);
+    cursor: pointer;
+    user-select: none;
+}
+
+.selector-tipo__opcion > .bi {
+    font-size: 18px;
+}
+
+.selector-tipo__opcion:hover {
+    color: var(--color-texto);
+    background-color: var(--color-superficie-hover);
+}
+
+.btn-check:checked + .selector-tipo__opcion {
+    color: var(--color-base-2);
+    background-color: var(--color-acento-fondo);
+    border-color: var(--color-acento);
+    box-shadow: 0 0 0 1px var(--color-acento);
+}
+
+.btn-check:focus-visible + .selector-tipo__opcion {
+    box-shadow: 0 0 0 3px var(--color-foco-anillo);
+}
+
+/* ============================================================ Dispositivos en celular */
+
+@media (max-width: 991.98px) {
+    .tabla-dispositivos {
+        display: none;
+    }
+
+    .lista-tarjetas-dispositivo {
+        display: flex;
+    }
+
+    .contenido--dispositivos {
+        gap: 14px;
+    }
+
+    .panel-dispositivos {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        overflow: visible;
+        background: none;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .panel-dispositivos .pie-tabla {
+        padding: 4px 0 0;
+        border-top: 0;
+    }
+
+    .lista-tarjetas-dispositivo {
+        padding: 0;
+    }
+
+    .panel-dispositivos .estado-vacio,
+    .panel-dispositivos .vista-error {
+        background-color: var(--color-superficie);
+        border: 1px solid var(--color-borde);
+        border-radius: var(--radio-lg);
+    }
+
+    .barra-filtros {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        padding: 0;
+        border: 0;
+    }
+
+    .barra-filtros__buscar,
+    .filtro-estado,
+    .limpiar-filtros {
+        grid-column: 1 / -1;
+        width: auto;
+    }
+
+    .barra-filtros .form-control,
+    .barra-filtros .form-select,
+    .barra-filtros .btn {
+        height: var(--alto-control-tactil);
+    }
+
+    .barra-filtros__buscar .form-control {
+        padding-left: 40px;
+        font-size: 15px;
+    }
+
+    .limpiar-filtros {
+        justify-self: start;
+    }
+
+    /* El filtro de estado pasa a fichas desplazables (2e). */
+    .filtro-estado {
+        gap: 8px;
+        height: auto;
+        margin: 0 -16px;
+        padding: 0 16px;
+        overflow-x: auto;
+        border: 0;
+        border-radius: 0;
+        scrollbar-width: none;
+    }
+
+    .filtro-estado__opcion {
+        flex: none;
+        height: var(--alto-control-tactil);
+        padding: 0 14px;
+        font-size: 13.5px;
+        border: 1px solid var(--color-borde-control);
+        border-radius: var(--radio-pastilla);
+    }
+
+    .filtro-estado > .filtro-estado__opcion:first-of-type {
+        border-left: 1px solid var(--color-borde-control);
+    }
+
+    .btn-check:checked + .filtro-estado__opcion {
+        border-color: var(--color-base-2);
+    }
+
+    .filtro-estado__numero {
+        font-size: var(--texto-pequeno-tamano);
+    }
+
+    .encabezado-pagina--dispositivos {
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+
+    .encabezado-pagina--dispositivos .encabezado-pagina__acciones {
+        width: auto;
+    }
+
+    .encabezado-pagina--dispositivos .encabezado-pagina__acciones > .btn {
+        flex: none;
+        height: var(--alto-control-tactil);
+        padding: 0 14px;
+        font-size: var(--texto-cuerpo-tamano);
+    }
+
+    .encabezado-pagina--dispositivos .encabezado-pagina__subtitulo {
+        font-size: var(--texto-secundario-tamano);
+    }
+}
+
+/* El modal de formulario es una hoja inferior en el celular (2f). */
+@container hoja (max-width: 575.98px) {
+    .modal-dialog-hoja {
+        display: flex;
+        align-items: flex-end;
+        min-height: 100%;
+        margin: 0;
+    }
+
+    .modal-dialog-hoja .modal-content {
+        border-radius: 16px 16px 0 0;
+        box-shadow: var(--sombra-hoja);
+    }
+
+    .modal.fade .modal-dialog-hoja {
+        transform: translateY(40px);
+    }
+
+    .modal.show .modal-dialog-hoja {
+        transform: none;
+    }
+
+    .modal-formulario__asa {
+        display: block;
+    }
+
+    .modal-formulario__cabecera {
+        align-items: center;
+        padding: 8px 8px 4px 20px;
+    }
+
+    .modal-formulario__titulo {
+        font-size: 17px;
+    }
+
+    .modal-formulario__subtitulo {
+        display: none;
+    }
+
+    .modal-formulario__cerrar {
+        width: 44px;
+        height: 44px;
+        font-size: 16px;
+    }
+
+    .modal-formulario__cuerpo {
+        gap: 16px;
+        padding: 8px 20px 20px;
+    }
+
+    .modal-formulario .form-control {
+        height: var(--alto-control-tactil);
+        font-size: 15px;
+    }
+
+    .modal-formulario .form-label {
+        font-size: 13.5px;
+    }
+
+    .selector-tipo {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .selector-tipo__opcion {
+        flex-direction: row;
+        gap: 8px;
+        height: 48px;
+        font-size: var(--texto-cuerpo-tamano);
+    }
+
+    .selector-tipo__opcion > .bi {
+        font-size: 16px;
+    }
+
+    .modal-formulario__pie {
+        display: grid;
+        grid-template-columns: 1fr 1.4fr;
+        padding: 16px 20px 20px;
+    }
+
+    .modal-formulario__pie > .btn {
+        height: var(--alto-control-tactil);
+        font-size: 15px;
+    }
+}
+
+/* ============================================================ Dashboard */
+
+.boton-dashboard {
+    min-width: 198px;
+}
+
+.tablero {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-areas:
+        "dispositivos alertas"
+        "grafica grafica";
+    gap: 16px;
+    align-items: start;
+}
+
+.panel--dispositivos { grid-area: dispositivos; }
+.panel--alertas { grid-area: alertas; }
+.panel--grafica { grid-area: grafica; }
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+    padding: 20px 24px 24px;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-1);
+}
+
+.panel--alertas {
+    gap: 6px;
+    padding-bottom: 12px;
+}
+
+.panel--grafica {
+    gap: 14px;
+    padding-bottom: 16px;
+}
+
+.panel__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px 24px;
+}
+
+.panel__cabecera--grafica {
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.panel__titulo {
+    margin: 0;
+    font-size: var(--texto-titulo-tarjeta-tamano);
+    line-height: var(--texto-titulo-tarjeta-alto);
+    font-weight: 600;
+}
+
+.panel__subtitulo {
+    margin: 2px 0 0;
+    font-size: var(--texto-secundario-tamano);
+    color: var(--color-texto-2);
+}
+
+.panel__titulo-con-contador {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.panel__enlace {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--texto-secundario-tamano);
+    font-weight: 500;
+}
+
+/* Tarjetas de estado de dispositivo (1b). */
+.rejilla-estado {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.tarjeta-estado {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-icono);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.tarjeta-estado--inactivo {
+    border-color: var(--color-inactivo-borde);
+}
+
+.tarjeta-estado--desconocido {
+    border: 1px dashed var(--color-borde-control);
+}
+
+.tarjeta-estado--monitoreando {
+    background-color: var(--color-acento-tenue);
+    border-color: var(--color-acento-borde-fuerte);
+}
+
+.tarjeta-estado:has(.stretched-link:hover) {
+    box-shadow: var(--sombra-2);
+}
+
+.tarjeta-estado--esqueleto {
+    gap: 10px;
+    min-height: 132px;
+}
+
+.tarjeta-estado--esqueleto .esqueleto--icono {
+    width: 32px;
+    height: 32px;
+}
+
+.tarjeta-estado__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.tarjeta-estado__icono,
+.fila-estado__icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+    color: var(--color-base-2);
+    background-color: var(--color-fondo);
+    border-radius: var(--radio);
+}
+
+.tarjeta-estado__textos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.tarjeta-estado__nombre {
+    overflow: hidden;
+    font-size: var(--texto-cuerpo-tamano);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tarjeta-estado__ip,
+.fila-estado__ip {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: 12.5px;
+    color: var(--color-texto-2);
+}
+
+.tarjeta-estado__pie {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-borde-suave);
+}
+
+.tarjeta-estado__tiempo {
+    white-space: nowrap;
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: var(--texto-mono-tamano);
+    font-weight: 500;
+}
+
+.tarjeta-estado__fecha {
+    min-width: 0;
+    overflow: hidden;
+    font-size: var(--texto-pequeno-tamano);
+    color: var(--color-texto-2);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Filas de estado (celular, 1c). */
+.lista-estado {
+    display: none;
+    flex-direction: column;
+}
+
+.fila-estado {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 60px;
+    border-top: 1px solid var(--color-borde-suave);
+}
+
+.fila-estado:first-child {
+    border-top: 0;
+}
+
+.fila-estado__icono {
+    width: 36px;
+    height: 36px;
+}
+
+.fila-estado__textos {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.fila-estado__nombre {
+    overflow: hidden;
+    font-size: var(--texto-cuerpo-tamano);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fila-estado__ip {
+    font-size: var(--texto-pequeno-tamano);
+}
+
+.fila-estado__lado {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.fila-estado__tiempo {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: var(--texto-pequeno-tamano);
+}
+
+.insignia-estado--sm {
+    gap: 6px;
+    padding: 2px 9px 2px 7px;
+    font-size: 11.5px;
+}
+
+.insignia-estado--sm .punto-estado {
+    width: 7px;
+    height: 7px;
+}
+
+/* Últimas alertas. */
+.lista-alertas {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.alerta-reciente {
+    display: flex;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--color-borde-suave);
+}
+
+.alerta-reciente:last-child {
+    border-bottom: 0;
+}
+
+.alerta-reciente__icono {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    color: var(--color-inactivo-texto);
+    background-color: var(--color-inactivo-fondo);
+    border-radius: var(--radio);
+}
+
+.alerta-reciente--atendida .alerta-reciente__icono {
+    color: var(--color-texto-2);
+    background-color: var(--color-desconocido-fondo);
+}
+
+.alerta-reciente__cuerpo {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.alerta-reciente__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.alerta-reciente__nombre {
+    overflow: hidden;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.alerta-reciente__mensaje {
+    margin: 0;
+    font-size: var(--texto-secundario-tamano);
+    line-height: var(--texto-secundario-alto);
+    color: var(--color-desconocido-texto);
+    text-wrap: pretty;
+}
+
+.alerta-reciente--atendida .alerta-reciente__mensaje {
+    color: var(--color-texto-2);
+}
+
+.alerta-reciente__fecha {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: var(--texto-pequeno-tamano);
+    color: var(--color-texto-2);
+}
+
+/* Gráfica y su leyenda. */
+.leyenda-grafica {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin: 0;
+    padding: 4px 0 0;
+    font-size: 12.5px;
+    color: var(--color-desconocido-texto);
+    list-style: none;
+}
+
+.leyenda-grafica__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.leyenda-grafica__linea {
+    width: 14px;
+    height: 3px;
+    background-color: var(--color-serie);
+    border-radius: 2px;
+}
+
+.leyenda-grafica__item--punteada .leyenda-grafica__linea {
+    background: repeating-linear-gradient(90deg, var(--color-serie) 0 4px, transparent 4px 6px);
+}
+
+.grafica {
+    position: relative;
+    height: 250px;
+}
+
+.grafica--esqueleto {
+    display: flex;
+    align-items: stretch;
+}
+
+.grafica--esqueleto .esqueleto {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radio);
+}
+
+@media (max-width: 1199.98px) {
+    .tablero {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "dispositivos"
+            "grafica"
+            "alertas";
+    }
+
+    .rejilla-estado {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Dashboard en celular (1c). */
+@media (max-width: 575.98px) {
+    .boton-dashboard {
+        min-width: 0;
+    }
+
+    .panel {
+        gap: 12px;
+        padding: 16px 16px 4px;
+    }
+
+    .panel--grafica {
+        padding-bottom: 12px;
+    }
+
+    .panel__enlace {
+        font-size: var(--texto-secundario-tamano);
+    }
+
+    .rejilla-estado {
+        display: none;
+    }
+
+    .lista-estado {
+        display: flex;
+    }
+
+    .panel__cabecera--grafica {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .leyenda-grafica {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px 12px;
+        padding: 0;
+    }
+
+    .grafica {
+        height: 190px;
+    }
+
+    .indicadores {
+        --bs-gutter-x: 12px;
+        --bs-gutter-y: 12px;
+    }
+
+    .indicadores .tarjeta-indicador {
+        gap: 8px;
+        padding: 14px;
+    }
+
+    .indicadores .tarjeta-indicador__cabecera {
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+    }
+
+    .indicadores .tarjeta-indicador__icono {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+        border-radius: var(--radio);
+    }
+
+    .indicadores .tarjeta-indicador__titulo {
+        font-size: var(--texto-pequeno-tamano);
+        line-height: 15px;
+    }
+
+    .indicadores .tarjeta-indicador__valor {
+        font-size: 26px;
+        line-height: 32px;
+    }
+
+    .indicadores .tarjeta-indicador__detalle {
+        display: none;
+    }
+}
+
+/* ============================================================ Monitoreos (3a) */
+
+.contenido--monitoreos {
+    gap: 20px;
+}
+
+.filtros-historial {
+    display: grid;
+    grid-template-columns: 260px 200px 170px 170px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+    padding: 16px 20px;
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-1);
+}
+
+.filtros-historial .form-label {
+    display: block;
+}
+
+.filtros-historial input[type="date"] {
+    padding: 0 10px;
+}
+
+/* El botón del calendario se alcanza con Tab y muestra el anillo de foco de Chrome
+   (no se puede cambiar su color); aquí solo se redondea. */
+.filtros-historial input[type="date"]::-webkit-calendar-picker-indicator {
+    border-radius: var(--radio-sm);
+}
+
+.filtros-historial__acciones {
+    display: flex;
+    justify-content: flex-end;
+    align-self: end;
+}
+
+.filtros-historial__acciones .btn-link {
+    --bs-btn-padding-x: 10px;
+    --bs-btn-font-size: 13.5px;
+}
+
+.resumen-monitoreo {
+    display: flex;
+    gap: 28px;
+    margin: 0;
+}
+
+.resumen-monitoreo > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.resumen-monitoreo dt {
+    font-size: var(--texto-pequeno-tamano);
+    font-weight: 400;
+    color: var(--color-texto-2);
+}
+
+.resumen-monitoreo dd {
+    margin: 0;
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: var(--texto-titulo-tarjeta-tamano);
+    font-weight: 600;
+}
+
+.texto-activo {
+    color: var(--color-activo-texto);
+}
+
+.texto-alerta {
+    color: var(--color-alerta-texto);
+}
+
+.leyenda-grafica__linea--acento {
+    --color-serie: var(--color-acento);
+}
+
+.leyenda-grafica__punto {
+    width: 9px;
+    height: 9px;
+    background-color: var(--color-inactivo);
+    border-radius: 50%;
+}
+
+.leyenda-grafica--historial[hidden] {
+    display: none;
+}
+
+.panel-historial__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.panel-historial .table > thead > tr > th {
+    border-top: 0;
+}
+
+.panel-historial .table > tbody > tr > td {
+    height: 52px;
+}
+
+.tabla-historial .table {
+    min-width: 760px;
+}
+
+/* Filas compactas: reemplazan a la tabla cuando la tarjeta mide menos que ella (760 px). */
+.panel-historial {
+    container: historial / inline-size;
+}
+
+.lista-historial {
+    display: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.fila-historial {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-borde-suave);
+}
+
+.fila-historial:last-child {
+    border-bottom: 0;
+}
+
+.fila-historial__linea {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fila-historial__fecha,
+.fila-historial__tiempo,
+.fila-historial__ip {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    white-space: nowrap;
+}
+
+.fila-historial__fecha {
+    font-size: var(--texto-mono-tamano);
+    font-weight: 500;
+    color: var(--color-texto);
+}
+
+.fila-historial__tiempo {
+    margin-left: auto;
+    font-size: var(--texto-mono-tamano);
+    font-weight: 500;
+}
+
+.fila-historial__dispositivo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: var(--texto-secundario-tamano);
+    color: var(--color-texto-2);
+}
+
+.fila-historial__nombre {
+    overflow: hidden;
+    font-weight: 500;
+    color: var(--color-texto);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fila-historial__ip {
+    flex: none;
+    font-size: var(--texto-pequeno-tamano);
+}
+
+@container historial (max-width: 759.98px) {
+    .tabla-historial {
+        display: none;
+    }
+
+    .lista-historial {
+        display: block;
+    }
+}
+
+.tabla-tipo--nombre {
+    gap: 10px;
+    font-weight: 500;
+    color: var(--color-texto);
+}
+
+.tabla-tipo--nombre > .bi {
+    color: var(--color-desconocido-texto);
+}
+
+.texto-tenue-ip {
+    color: var(--color-desconocido-texto);
+}
+
+.actualizando {
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+}
+
+.paginacion {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 12px 20px;
+    font-size: var(--texto-secundario-tamano);
+    color: var(--color-texto-2);
+    border-top: 1px solid var(--color-borde-suave);
+}
+
+.paginacion[hidden] {
+    display: none;
+}
+
+.paginacion__botones {
+    display: flex;
+    gap: 8px;
+}
+
+@media (max-width: 1199.98px) {
+    .filtros-historial {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filtros-historial__acciones {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .contenido--monitoreos {
+        gap: 16px;
+    }
+
+    .filtros-historial {
+        gap: 12px;
+        padding: 16px;
+    }
+
+    /* Dispositivo y Estado a todo el ancho; Desde y Hasta juntos en una fila. */
+    .filtros-historial__campo:nth-child(-n + 2) {
+        grid-column: 1 / -1;
+    }
+
+    .filtros-historial .form-control,
+    .filtros-historial .form-select {
+        height: var(--alto-control-tactil);
+    }
+
+    .resumen-monitoreo {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .resumen-monitoreo > div {
+        align-items: flex-start;
+    }
+
+    .panel-historial__cabecera {
+        padding: 14px 16px;
+    }
+
+    .paginacion {
+        padding: 12px 16px;
+    }
+
+    .paginacion__botones {
+        width: 100%;
+    }
+
+    .paginacion__botones > .btn {
+        flex: 1;
+        height: var(--alto-control-tactil);
+    }
+}
+
+/* ============================================================ Alertas (4a, 4b) */
+
+.panel-alertas {
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-1);
+    overflow: hidden;
+}
+
+.panel-alertas__pestanas {
+    padding: 0 24px;
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.panel-alertas__pestanas .nav-underline {
+    --bs-nav-underline-gap: 28px;
+    --bs-nav-link-padding-y: 14px;
+    border-bottom: 0;
+}
+
+#lista-alertas:focus {
+    outline: 0;
+}
+
+.panel-alertas__nota {
+    margin: 0;
+    font-size: var(--texto-secundario-tamano);
+}
+
+.lista-alertas-completa {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.alerta {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px;
+    border-top: 1px solid var(--color-borde-suave);
+}
+
+.alerta:first-child {
+    border-top: 0;
+}
+
+.alerta__icono {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+    color: var(--color-inactivo-texto);
+    background-color: var(--color-inactivo-fondo);
+    border-radius: var(--radio-icono);
+}
+
+.alerta--atendida .alerta__icono {
+    color: var(--color-texto-2);
+    background-color: var(--color-desconocido-fondo);
+}
+
+.alerta__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.alerta__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    min-width: 0;
+}
+
+.alerta__nombre {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: 15px;
+    line-height: 22px;
+    font-weight: 600;
+}
+
+.alerta__ip {
+    font-family: var(--fuente-mono);
+    font-variant-numeric: slashed-zero;
+    font-size: 12.5px;
+    color: var(--color-texto-2);
+}
+
+.alerta--atendida .insignia-estado--sin-respuesta {
+    --insignia-texto: var(--color-desconocido-texto);
+    border-color: var(--color-borde);
+}
+
+.alerta__mensaje {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: var(--texto-cuerpo-tamano);
+    line-height: 20px;
+    color: var(--color-desconocido-texto);
+    text-wrap: pretty;
+}
+
+.alerta__fecha {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    font-size: 12.5px;
+    color: var(--color-texto-2);
+}
+
+/* "· Atendida el …" en la misma línea; en celular, en su propia línea y sin el punto. */
+.alerta__atendida::before {
+    content: "·";
+    margin-right: 8px;
+}
+
+.alerta__acciones {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.alerta__boton {
+    white-space: nowrap;
+}
+
+.alerta--esqueleto .esqueleto--icono {
+    width: 40px;
+    height: 40px;
+}
+
+.alerta--esqueleto .alerta__cuerpo {
+    gap: 10px;
+}
+
+.alerta__esqueleto-boton {
+    width: 180px;
+    height: 38px;
+    border-radius: var(--radio);
+}
+
+/* En celular (sin diseño de referencia): la tarjeta se apila y el botón queda debajo del texto. */
+@media (max-width: 575.98px) {
+    .panel-alertas__pestanas {
+        padding: 0 16px;
+    }
+
+    .alerta {
+        grid-template-columns: 40px minmax(0, 1fr);
+        align-items: start;
+        gap: 12px 14px;
+        padding: 16px;
+    }
+
+    .alerta__acciones {
+        grid-column: 1 / -1;
+        justify-content: space-between;
+    }
+
+    .alerta--atendida .alerta__acciones {
+        grid-column: 2;
+    }
+
+    .alerta__atendida {
+        flex-basis: 100%;
+    }
+
+    .alerta__atendida::before {
+        content: none;
+    }
+
+    .alerta__boton {
+        height: var(--alto-control-tactil);
+    }
+
+    .alerta__esqueleto-boton {
+        display: none;
     }
 }
 

@@ -27,8 +27,43 @@ $GLOBALS['pruebas_avisos'] = [];
 /**
  * Recrea la base con schema.sql y seed.sql usando el cliente mysql de XAMPP.
  * Se puede indicar otro binario con la variable de entorno MYSQL_BIN.
+ *
+ * La primera llamada también programa otra recarga al terminar el script (aunque
+ * las pruebas fallen, lancen una excepción o se interrumpan con Ctrl+C), para que
+ * la base quede con el seed limpio y se pueda usar a mano.
  */
 function recargarBaseDeDatos(): void
+{
+    static $restauracionProgramada = false;
+
+    if (!$restauracionProgramada) {
+        $restauracionProgramada = true;
+        register_shutdown_function(function (): void {
+            cargarSchemaYSeed();
+            echo "Base de datos restaurada (schema.sql + seed.sql).\n";
+        });
+        terminarAlInterrumpir();
+    }
+
+    cargarSchemaYSeed();
+}
+
+/**
+ * Con Ctrl+C (o SIGTERM) el script termina con exit(), así se ejecutan las
+ * funciones de cierre (restaurar la base, cerrar el Chrome de las pruebas).
+ */
+function terminarAlInterrumpir(): void
+{
+    if (function_exists('pcntl_async_signals')) {
+        pcntl_async_signals(true);
+        pcntl_signal(SIGINT, fn() => exit(130));
+        pcntl_signal(SIGTERM, fn() => exit(143));
+    } elseif (function_exists('sapi_windows_set_ctrl_handler')) {
+        sapi_windows_set_ctrl_handler(fn() => exit(130));
+    }
+}
+
+function cargarSchemaYSeed(): void
 {
     $raiz = dirname(__DIR__);
 

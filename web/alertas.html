@@ -9,11 +9,40 @@
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/app.css">
 </head>
-<body>
-    <h1>Alertas</h1>
+<body data-pagina="alertas">
+<a class="saltar-contenido" href="#contenido">Saltar al contenido</a>
+<div class="app">
+    <aside class="barra-lateral" id="barra-lateral"></aside>
+    <header class="encabezado-movil" id="encabezado-movil"></header>
 
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/alertas.js"></script>
+    <main class="contenido" id="contenido" tabindex="-1">
+        <div class="encabezado-pagina">
+            <div class="encabezado-pagina__textos">
+                <h1 class="encabezado-pagina__titulo">Alertas</h1>
+                <p class="encabezado-pagina__subtitulo">Se generan cuando un dispositivo deja de responder al monitoreo</p>
+            </div>
+        </div>
+
+        <section class="panel-alertas" aria-label="Lista de alertas">
+            <div class="panel-alertas__pestanas">
+                <div class="nav nav-underline" role="tablist" aria-label="Estado de las alertas">
+                    <button class="nav-link active" id="pestana-pendientes" type="button" role="tab" aria-selected="true" aria-controls="lista-alertas" data-pestana="pendientes">Pendientes<span class="contador contador--neutro" id="contador-pendientes" hidden></span></button>
+                    <button class="nav-link" id="pestana-atendidas" type="button" role="tab" aria-selected="false" aria-controls="lista-alertas" data-pestana="atendidas" tabindex="-1">Atendidas<span class="contador contador--neutro" id="contador-atendidas" hidden></span></button>
+                </div>
+            </div>
+            <div id="lista-alertas" role="tabpanel" aria-labelledby="pestana-pendientes" aria-busy="true" tabindex="-1">
+                <div aria-hidden="true">
+                    <div class="alerta alerta--esqueleto"><span class="esqueleto esqueleto--suave esqueleto--icono"></span><div class="alerta__cuerpo"><span class="esqueleto" style="width: 40%"></span><span class="esqueleto esqueleto--suave esqueleto--texto" style="width: 65%"></span><span class="esqueleto esqueleto--suave esqueleto--texto" style="width: 20%"></span></div><span class="esqueleto esqueleto--suave alerta__esqueleto-boton"></span></div>
+                    <div class="alerta alerta--esqueleto"><span class="esqueleto esqueleto--suave esqueleto--icono"></span><div class="alerta__cuerpo"><span class="esqueleto" style="width: 30%"></span><span class="esqueleto esqueleto--suave esqueleto--texto" style="width: 55%"></span><span class="esqueleto esqueleto--suave esqueleto--texto" style="width: 20%"></span></div><span class="esqueleto esqueleto--suave alerta__esqueleto-boton"></span></div>
+                </div>
+                <span class="visually-hidden">Cargando alertas…</span>
+            </div>
+        </section>
+        <p class="texto-secundario panel-alertas__nota" id="nota-limite" hidden></p>
+    </main>
+</div>
+
+<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script type="module" src="js/alertas.js"></script>
 </body>
 </html>
