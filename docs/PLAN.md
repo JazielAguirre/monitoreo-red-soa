@@ -195,12 +195,12 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 **Listo cuando:**
 
-- [ ] Sin sesión, cualquier página redirige al login y cualquier endpoint [Interfaz] responde 401.
-- [ ] Un endpoint [Interno] llamado sin clave → 403, aunque haya sesión.
-- [ ] Credenciales incorrectas → siempre el mismo mensaje, exista o no el usuario.
-- [ ] "Monitorear todos" sigue funcionando con sesión: los servicios se comunican con la clave interna.
-- [ ] "Salir" cierra la sesión.
-- [ ] Todas las pruebas automáticas pasan, ajustadas para iniciar sesión.
+- [x] Sin sesión, cualquier página redirige al login y cualquier endpoint [Interfaz] responde 401.
+- [x] Un endpoint [Interno] llamado sin clave → 403, aunque haya sesión.
+- [x] Credenciales incorrectas → siempre el mismo mensaje, exista o no el usuario.
+- [x] "Monitorear todos" sigue funcionando con sesión: los servicios se comunican con la clave interna.
+- [x] "Salir" cierra la sesión.
+- [x] Todas las pruebas automáticas pasan, ajustadas para iniciar sesión.
 
 ## Fase 8 · Integración, pruebas y demo
 
