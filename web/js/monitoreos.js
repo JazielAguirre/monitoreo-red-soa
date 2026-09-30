@@ -8,7 +8,7 @@
  */
 
 import { api } from './api.js';
-import { montarEstructura } from './modulos/estructura.js';
+import { iniciarPagina } from './modulos/estructura.js';
 import { fechaParaCampo, formatearFechaCorta, formatearFechaHora, formatearHora, formatearMs, formatearPorcentaje, haceDias, partesFecha, pluralizar } from './modulos/formatos.js';
 import { crearError, crearVacio, mostrarBloque } from './modulos/vistas.js';
 import { elemento, icono, crearInsigniaEstado, iconoTipo } from './modulos/piezas.js';
@@ -25,7 +25,7 @@ const estado = {
     peticion: 0, // para descartar respuestas que llegan tarde
 };
 
-montarEstructura();
+await iniciarPagina(); // confirma la sesión antes de pedir datos
 iniciar();
 
 function filtrosPorDefecto() {

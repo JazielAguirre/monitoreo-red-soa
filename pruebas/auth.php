@@ -3,6 +3,8 @@
  * Pruebas del Servicio de Autenticación y de la protección de los servicios
  * (docs/PLAN.md, Fase 7; docs/API.md, "Acceso" y "Autenticación").
  * Recarga la base de datos al empezar y la restaura al terminar.
+ * Las secciones de la interfaz (11 a 14) usan un Chrome headless propio, como
+ * pruebas/interfaz.php; si no hay Chrome, se omiten con un aviso.
  *
  *   /opt/lampp/bin/php pruebas/auth.php
  */
@@ -10,6 +12,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/ayudas.php';
+require_once __DIR__ . '/navegador.php';
 require_once __DIR__ . '/../servicios/comun/auth.php';
 
 const USUARIO_ADMIN = ['id' => 1, 'usuario' => 'admin', 'nombre' => 'Administrador'];
@@ -259,4 +262,136 @@ comprobarRespuesta($r, 200, 'POST /auth/logout sin sesión también responde 200
 comprobarIgual([], $r['cookies'], '  sin Set-Cookie');
 comprobarRespuesta(peticion('POST', '/auth/logout', null, ['sesion' => cookieCon('../../etc/passwd')]), 200, 'con una cookie con caracteres no válidos, 200 (no un 500)');
 
+// =====================================================================
+// Interfaz: redirecciones, «volver», confirmación de la sesión y «Salir»
+// =====================================================================
+
+$ejecutable = Navegador::buscarEjecutable();
+if ($ejecutable === null) {
+    avisar('Pruebas de la interfaz omitidas: no se encontró Chrome, Chromium ni Edge (se puede indicar con CHROME_BIN).');
+    terminarPruebas();
+}
+
+recargarBaseDeDatos();
+iniciarSesionDePrueba();
+$navegador = new Navegador($ejecutable);
+$navegador->tamano(1440, 900);
+$raizWeb = parse_url(URL_INTERFAZ, PHP_URL_PATH) . '/';
+
+/**
+ * Abre una pantalla de web/ y espera a que termine de navegar (también las redirecciones).
+ */
+function abrir(Navegador $navegador, string $pagina): void
+{
+    $navegador->abrir(URL_INTERFAZ . "/$pagina");
+    $navegador->procesarEventos(0.6);
+}
+
+function rutaActual(Navegador $navegador): string
+{
+    return (string) $navegador->evaluar('location.origin + location.pathname + location.search');
+}
+
+/**
+ * En login.html, escribe las credenciales del seed, envía y espera a salir del login.
+ */
+function entrarPorLaPantalla(Navegador $navegador): void
+{
+    $navegador->esperarHasta("document.getElementById('entrar')", 5);
+    $navegador->evaluar("(() => { const $ = (id) => document.getElementById(id); $('usuario').value = 'admin'; $('contrasena').value = 'admin123'; $('entrar').click(); })()");
+    $navegador->esperarHasta("!location.pathname.endsWith('/login.html')", 8);
+    $navegador->procesarEventos(0.6);
+}
+
+function borrarCookies(Navegador $navegador): void
+{
+    $navegador->enviar('Network.clearBrowserCookies');
+}
+
+// =====================================================================
+seccion('11. Sin sesión, cada pantalla lleva al login recordando dónde estaba');
+
+$pantallas = ['index.html', 'dispositivos.html', 'monitoreos.html?dispositivo=4', 'alertas.html'];
+foreach ($pantallas as $pantalla) {
+    abrir($navegador, $pantalla);
+    $navegador->esperarHasta("location.pathname.endsWith('/login.html')", 8);
+    comprobarIgual(URL_INTERFAZ . '/login.html?volver=' . rawurlencode($raizWeb . $pantalla), rutaActual($navegador), "$pantalla → login.html?volver=…");
+}
+abrir($navegador, 'componentes.html');
+comprobarIgual(URL_INTERFAZ . '/componentes.html', rutaActual($navegador), 'componentes.html (muestra del sistema de diseño) es pública: no pide login');
+
+abrir($navegador, 'monitoreos.html?dispositivo=4');
+$navegador->esperarHasta("location.pathname.endsWith('/login.html')", 8);
+entrarPorLaPantalla($navegador);
+comprobarIgual(URL_INTERFAZ . '/monitoreos.html?dispositivo=4', rutaActual($navegador), 'después del login vuelve a esa pantalla, con sus filtros');
+comprobarIgual('Administrador', $navegador->evaluar("document.querySelector('#barra-lateral .js-usuario-nombre')?.textContent"), '  ya con sesión (nombre real en la barra lateral)');
+
+abrir($navegador, 'login.html?volver=' . rawurlencode($raizWeb . 'alertas.html'));
+$navegador->esperarHasta("location.pathname.endsWith('/alertas.html')", 8);
+comprobarIgual(URL_INTERFAZ . '/alertas.html', rutaActual($navegador), 'con sesión, login.html lleva directo a «volver» si es válido');
+abrir($navegador, 'login.html');
+$navegador->esperarHasta("location.pathname.endsWith('/index.html')", 8);
+comprobarIgual(URL_INTERFAZ . '/index.html', rutaActual($navegador), '  y, sin «volver», al Dashboard');
+
+// =====================================================================
+seccion('12. «volver» solo acepta pantallas de web/: cualquier otra cosa lleva al Dashboard');
+
+$maliciosos = [
+    '//evil.com', 'https://evil.com', 'http://evil.com/monitoreo-red-soa/web/index.html', '/\evil.com', '\\\\evil.com',
+    'javascript:alert(1)', 'data:text/html,hola', '/monitoreo-red-soa/web/../../phpmyadmin/', '/monitoreo-red-soa/web/%2e%2e/%2e%2e/dashboard/',
+    '/otra-app/', $raizWeb . 'login.html', ' https://evil.com',
+];
+foreach ($maliciosos as $volver) {
+    borrarCookies($navegador);
+    abrir($navegador, 'login.html?volver=' . rawurlencode($volver));
+    entrarPorLaPantalla($navegador);
+    comprobarIgual(URL_INTERFAZ . '/index.html', rutaActual($navegador), "volver=$volver → Dashboard");
+}
+comprobarIgual([], $navegador->dialogos, 'ningún «volver» ejecutó JavaScript (sin alert())');
+
+// =====================================================================
+seccion('13. Cada pantalla confirma la sesión antes de pedir datos (esqueleto mientras tanto)');
+
+foreach (['index.html' => '#panel-estado', 'dispositivos.html' => '#contenido-dispositivos', 'monitoreos.html' => '#contenido-historial', 'alertas.html' => '#lista-alertas'] as $pantalla => $contenedor) {
+    $navegador->interceptar('auth/sesion', ['retener' => true]);
+    abrir($navegador, $pantalla);
+    $pedidas = $navegador->evaluar("performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.includes('/servicios/') && !n.includes('/auth/sesion')).length");
+    $r = $navegador->evaluar("({ ocupado: document.querySelector('$contenedor')?.getAttribute('aria-busy'), esqueletos: document.querySelectorAll('$contenedor .esqueleto, $contenedor [class*=\"esqueleto\"]').length > 0 })");
+    comprobarIgual([0, ['ocupado' => 'true', 'esqueletos' => true]], [$pedidas, $r], "$pantalla: mientras GET /auth/sesion no responde, no pide datos y muestra el esqueleto");
+    $navegador->liberar('auth/sesion');
+    $navegador->quitarIntercepciones();
+    comprobar($navegador->esperarHasta("!document.querySelector('$contenedor').hasAttribute('aria-busy')", 10), '  al confirmar la sesión, carga sus datos');
+}
+
+$navegador->interceptar('auth/sesion', ['codigo' => 500, 'cuerpo' => '{"ok":false,"error":"Error interno del servidor"}']);
+abrir($navegador, 'dispositivos.html');
+comprobar($navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8), 'si GET /auth/sesion falla por otra razón (500), la pantalla sigue y carga (nunca queda en blanco)');
+$navegador->quitarIntercepciones();
+
+// Sesión que se pierde a mitad de uso (vencida o cerrada en otra pestaña).
+abrir($navegador, 'dispositivos.html');
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8);
+peticion('POST', '/auth/logout', null, ['sesion' => false]); // no afecta al navegador
+borrarCookies($navegador);
+$navegador->evaluar("document.querySelector('.tabla-dispositivos tr[data-id=\"1\"] [data-accion=\"monitorear\"]').click()");
+$navegador->esperarHasta("location.pathname.endsWith('/login.html')", 8);
+comprobarIgual(URL_INTERFAZ . '/login.html?volver=' . rawurlencode($raizWeb . 'dispositivos.html'), rutaActual($navegador), 'un 401 a mitad de uso (al monitorear) lleva al login con «volver»');
+comprobarIgual(0, $navegador->evaluar("document.querySelectorAll('.toast').length"), '  sin mostrar antes una notificación de error');
+
+// =====================================================================
+seccion('14. «Salir» cierra la sesión');
+
+entrarPorLaPantalla($navegador);
+comprobarIgual(URL_INTERFAZ . '/dispositivos.html', rutaActual($navegador), 'de vuelta en Dispositivos después del login');
+$navegador->evaluar("document.querySelector('#barra-lateral .usuario-barra__salir').click()");
+$navegador->esperarHasta("location.pathname.endsWith('/login.html')", 8);
+$navegador->procesarEventos(0.5);
+comprobarIgual(URL_INTERFAZ . '/login.html', rutaActual($navegador), '«Salir» lleva al login, sin «volver»');
+$cookies = array_filter($navegador->enviar('Network.getCookies', ['urls' => [URL_INTERFAZ . '/']])['cookies'] ?? [], fn($c) => $c['name'] === NOMBRE_COOKIE_SESION);
+comprobarIgual([], array_values($cookies), '  y el navegador ya no tiene la cookie de sesión');
+abrir($navegador, 'index.html');
+$navegador->esperarHasta("location.pathname.endsWith('/login.html')", 8);
+comprobar(str_contains(rutaActual($navegador), '/login.html?volver='), '  volver al Dashboard pide el login otra vez');
+
+$navegador->cerrar();
 terminarPruebas();

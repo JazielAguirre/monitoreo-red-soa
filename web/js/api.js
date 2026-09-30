@@ -4,8 +4,14 @@
  *
  * La URL base se calcula desde la ubicación de este archivo, nunca con "localhost":
  * desde el celular, "localhost" sería el propio celular.
- * El manejo del 401 (redirigir a login.html) se agrega en la Fase 7.
+ *
+ * Con un 401 (sin sesión o sesión vencida) lleva a login.html?volver=<pantalla actual>
+ * y la promesa no se resuelve: la pantalla no alcanza a mostrar un error. Las
+ * excepciones son POST /auth/login (su 401 es "Usuario o contraseña incorrectos")
+ * y la propia pantalla de login, que decide qué hacer.
  */
+
+import { estoyEnElLogin, irAlLogin } from './modulos/sesion.js';
 
 const URL_SERVICIOS = new URL('../../servicios/', import.meta.url);
 const TIEMPO_MAXIMO_MS = 15000;
@@ -52,6 +58,11 @@ async function peticion(metodo, ruta, { cuerpo = null, consulta = null } = {}) {
         clearTimeout(temporizador);
     }
 
+    if (respuesta.status === 401 && ruta !== 'auth/login' && !estoyEnElLogin()) {
+        irAlLogin();
+        return new Promise(() => {}); // la página se va al login; no hay nada que mostrar
+    }
+
     return interpretarRespuesta(respuesta);
 }
 
@@ -87,6 +98,11 @@ async function interpretarRespuesta(respuesta) {
 }
 
 export const api = {
+    auth: {
+        login: (credenciales) => peticion('POST', 'auth/login', { cuerpo: credenciales }),
+        logout: () => peticion('POST', 'auth/logout'),
+        sesion: () => peticion('GET', 'auth/sesion'),
+    },
     dispositivos: {
         listar: (filtros = {}) => peticion('GET', 'dispositivos', { consulta: filtros }),
         obtener: (id) => peticion('GET', `dispositivos/${id}`),

@@ -9,11 +9,49 @@
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/app.css">
 </head>
-<body>
-    <h1>Iniciar sesión</h1>
+<body class="pagina-login">
+<main class="login">
+    <form class="login__tarjeta" id="formulario-login" novalidate>
+        <div class="login__marca">
+            <span class="marca__logo login__logo" aria-hidden="true"><i class="bi bi-diagram-3-fill"></i></span>
+            <div class="login__textos">
+                <h1 class="login__titulo">Monitoreo de Red SOA</h1>
+                <p class="login__subtitulo">Inicia sesión para administrar la red</p>
+            </div>
+        </div>
 
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/login.js"></script>
+        <div class="login__aviso login__aviso--error" id="aviso-error" role="alert" hidden>
+            <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i><span id="aviso-error-texto"></span>
+        </div>
+        <div class="login__aviso login__aviso--exito" id="aviso-exito" role="status" hidden>
+            <i class="bi bi-check-circle-fill" aria-hidden="true"></i><span id="aviso-exito-texto"></span>
+        </div>
+
+        <div class="login__campo">
+            <label class="form-label" for="usuario">Usuario</label>
+            <div class="campo-icono">
+                <i class="bi bi-person campo-icono__inicio" aria-hidden="true"></i>
+                <input class="form-control" id="usuario" name="usuario" type="text" placeholder="Tu usuario" autocomplete="username" autocapitalize="none" spellcheck="false" aria-describedby="error-usuario" autofocus>
+            </div>
+            <div class="invalid-feedback" id="error-usuario" hidden></div>
+        </div>
+
+        <div class="login__campo">
+            <label class="form-label" for="contrasena">Contraseña</label>
+            <div class="campo-icono campo-icono--con-boton">
+                <i class="bi bi-lock campo-icono__inicio" aria-hidden="true"></i>
+                <input class="form-control" id="contrasena" name="contrasena" type="password" placeholder="Tu contraseña" autocomplete="current-password" aria-describedby="error-contrasena">
+                <button class="campo-icono__boton" id="mostrar-contrasena" type="button" aria-label="Mostrar contraseña" title="Mostrar contraseña" aria-pressed="false" aria-controls="contrasena">
+                    <i class="bi bi-eye" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="invalid-feedback" id="error-contrasena" hidden></div>
+        </div>
+
+        <button class="btn btn-primary login__boton" id="entrar" type="submit">Iniciar sesión</button>
+    </form>
+</main>
+
+<script type="module" src="js/login.js"></script>
 </body>
 </html>

@@ -6,7 +6,7 @@
 
 import { mostrarNotificacion } from './modulos/notificaciones.js';
 import { crearError, mostrarBloque } from './modulos/vistas.js';
-import { actualizarContadorAlertas, llenarBarraLateral, llenarEncabezadoMovil } from './modulos/estructura.js';
+import { llenarBarraLateral, llenarEncabezadoMovil } from './modulos/estructura.js';
 import { crearProgreso } from './modulos/monitorear-todos.js';
 import { crearGraficaArea, crearGraficaLineas, estiloSerie } from './modulos/graficas.js';
 
@@ -42,8 +42,9 @@ if (contenedorError) {
 const barraDemo = document.getElementById('demo-barra-lateral');
 const encabezadoDemo = document.getElementById('demo-encabezado-movil');
 if (barraDemo && encabezadoDemo) {
-    llenarBarraLateral(barraDemo, 'index');
-    llenarEncabezadoMovil(encabezadoDemo, 'index');
+    const usuarioDemo = { nombre: 'Administrador', usuario: 'admin' };
+    llenarBarraLateral(barraDemo, 'index', usuarioDemo);
+    llenarEncabezadoMovil(encabezadoDemo, 'index', usuarioDemo);
     // El menú se muestra abierto, como en 1d, sin mover el foco (no debe desplazar la página).
     const marco = encabezadoDemo.parentElement;
     marco.querySelector('.menu-movil').hidden = false;
@@ -52,7 +53,12 @@ if (barraDemo && encabezadoDemo) {
     boton.setAttribute('aria-expanded', 'true');
     boton.setAttribute('aria-label', 'Cerrar el menú');
     boton.firstElementChild.className = 'bi bi-x-lg';
-    actualizarContadorAlertas();
+    // Contador fijo: esta página es pública (sin sesión) y no pide datos a la API.
+    for (const contador of document.querySelectorAll('.js-contador-alertas')) {
+        contador.textContent = '1';
+        contador.hidden = false;
+        contador.setAttribute('aria-label', '1 alerta pendiente');
+    }
 }
 
 // Progreso como en 2d: dos comprobados, el tercero en curso y el resto en espera.

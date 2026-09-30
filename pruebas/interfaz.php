@@ -34,11 +34,9 @@ if (!is_dir($carpetaCapturas)) {
 }
 echo "Chrome de pruebas: perfil temporal y puerto propio ({$navegador->puerto()}).\n";
 
-// Sesión para las peticiones de preparación (PHP) y para el Chrome de pruebas.
+// Sesión para las peticiones de preparación que hace PHP. El Chrome de pruebas inicia
+// la suya a través de la pantalla de login (sección 7.2).
 iniciarSesionDePrueba();
-foreach (['localhost', '127.0.0.1'] as $dominio) { // una prueba abre la interfaz desde 127.0.0.1
-    $navegador->enviar('Network.setCookie', ['name' => NOMBRE_COOKIE_SESION, 'value' => $GLOBALS['cookie_sesion'], 'domain' => $dominio, 'path' => RUTA_COOKIE_SESION, 'httpOnly' => true, 'sameSite' => 'Lax']);
-}
 
 /**
  * Abre una página de web/ y limpia los errores y diálogos registrados.
@@ -114,6 +112,148 @@ function conModulo(Navegador $navegador, string $modulo, string $codigo): mixed
 {
     return $navegador->evaluar("import('./js/$modulo').then(async (m) => { $codigo })");
 }
+
+/**
+ * Llena el formulario de login.html y lo envía, como una persona.
+ */
+function enviarLogin(Navegador $navegador, string $usuario, string $contrasena): void
+{
+    escribir($navegador, '#usuario', $usuario);
+    escribir($navegador, '#contrasena', $contrasena);
+    clic($navegador, '#entrar');
+}
+
+/**
+ * Inicia sesión en el Chrome de pruebas a través de la pantalla de login real y
+ * espera a llegar al Dashboard.
+ */
+function iniciarSesionEnLaPantalla(Navegador $navegador, string $base = URL_INTERFAZ): bool
+{
+    abrirPagina($navegador, 'login.html', $base);
+    $navegador->esperarHasta("document.getElementById('entrar')", 5);
+    enviarLogin($navegador, 'admin', 'admin123');
+
+    return $navegador->esperarHasta("location.pathname.endsWith('/index.html') && document.querySelector('.js-usuario-nombre')?.textContent === 'Administrador'", 10);
+}
+
+/**
+ * Estado visible de login.html.
+ */
+function estadoLogin(Navegador $navegador): array
+{
+    return $navegador->evaluar(<<<'JS'
+        (() => {
+            const $ = (id) => document.getElementById(id);
+            return {
+                error: $('aviso-error').hidden ? null : $('aviso-error-texto').textContent,
+                exito: $('aviso-exito').hidden ? null : $('aviso-exito-texto').textContent,
+                invalidos: ['usuario', 'contrasena'].filter((c) => $(c).classList.contains('is-invalid')),
+                mensajes: ['usuario', 'contrasena'].map((c) => ($(`error-${c}`).hidden ? null : $(`error-${c}`).textContent)),
+                boton: [$('entrar').textContent.trim(), $('entrar').disabled],
+            };
+        })()
+    JS) ?? [];
+}
+
+// =====================================================================
+seccion('7.2 · Pantalla de inicio de sesión (5a y 5b)');
+
+$navegador->tamano(1440, 900);
+abrirPagina($navegador, 'index.html');
+comprobar($navegador->esperarHasta("location.pathname.endsWith('/login.html')", 8), 'sin sesión, el Dashboard lleva al login');
+comprobarIgual('?volver=%2Fmonitoreo-red-soa%2Fweb%2Findex.html', $navegador->evaluar('location.search'), '  recordando la pantalla en «volver»');
+$navegador->procesarEventos(0.4);
+$r = $navegador->evaluar(<<<'JS'
+    (() => {
+        const tarjeta = document.querySelector('.login__tarjeta').getBoundingClientRect();
+        const token = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+        return {
+            titulo: document.querySelector('h1').textContent,
+            subtitulo: document.querySelector('.login__subtitulo').textContent,
+            etiquetas: [...document.querySelectorAll('label')].map((l) => l.textContent),
+            marcadores: [document.getElementById('usuario').placeholder, document.getElementById('contrasena').placeholder],
+            autocompletar: [document.getElementById('usuario').autocomplete, document.getElementById('contrasena').autocomplete],
+            tipo: document.getElementById('contrasena').type,
+            ancho: Math.round(tarjeta.width),
+            centrada: Math.abs((tarjeta.left + tarjeta.right) / 2 - innerWidth / 2) < 2,
+            foco: document.activeElement.id,
+            fondo: getComputedStyle(document.body).backgroundColor === getComputedStyle(document.querySelector('.marca__logo')).backgroundColor,
+            novalidate: document.getElementById('formulario-login').noValidate,
+        };
+    })()
+JS);
+comprobarIgual([
+    'titulo' => 'Monitoreo de Red SOA', 'subtitulo' => 'Inicia sesión para administrar la red', 'etiquetas' => ['Usuario', 'Contraseña'],
+    'marcadores' => ['Tu usuario', 'Tu contraseña'], 'autocompletar' => ['username', 'current-password'], 'tipo' => 'password',
+    'ancho' => 400, 'centrada' => true, 'foco' => 'usuario', 'fondo' => true, 'novalidate' => true,
+], $r, 'como 5a: logo, título, subtítulo, campos con etiqueta y autocompletar, tarjeta de 400 px centrada sobre el fondo azul marino, foco en Usuario');
+comprobarIgual(['error' => null, 'exito' => null, 'invalidos' => [], 'mensajes' => [null, null], 'boton' => ['Iniciar sesión', false]], estadoLogin($navegador), '  sin avisos ni errores al abrir');
+capturar($navegador, 'login-1440');
+
+clic($navegador, '#mostrar-contrasena');
+comprobarIgual(['text', 'true', 'Mostrar contraseña', 'bi bi-eye-slash'], [$navegador->evaluar("document.getElementById('contrasena').type"), $navegador->evaluar("document.getElementById('mostrar-contrasena').getAttribute('aria-pressed')"), $navegador->evaluar("document.getElementById('mostrar-contrasena').getAttribute('aria-label')"), $navegador->evaluar("document.querySelector('#mostrar-contrasena i').className")], 'el ojo muestra la contraseña (aria-pressed="true"; la etiqueta no cambia)');
+clic($navegador, '#mostrar-contrasena');
+comprobarIgual(['password', 'false'], [$navegador->evaluar("document.getElementById('contrasena').type"), $navegador->evaluar("document.getElementById('mostrar-contrasena').getAttribute('aria-pressed')")], '  y la vuelve a ocultar');
+
+clic($navegador, '#entrar');
+$navegador->esperarHasta("!document.getElementById('error-usuario').hidden", 5);
+comprobarIgual(['error' => null, 'exito' => null, 'invalidos' => ['usuario', 'contrasena'], 'mensajes' => ['Escribe tu usuario', 'Escribe tu contraseña'], 'boton' => ['Iniciar sesión', false]], estadoLogin($navegador), 'vacío: los mensajes de la API bajo cada campo (sin globos del navegador)');
+
+$navegador->interceptar('auth/login', ['retener' => true]);
+enviarLogin($navegador, 'admin', 'mala123');
+$navegador->procesarEventos(0.2);
+comprobarIgual(['Entrando…', true], estadoLogin($navegador)['boton'] ?? null, 'al enviar: «Entrando…» con el botón deshabilitado');
+comprobarIgual(1, $navegador->evaluar("document.querySelectorAll('#entrar .girador').length"), '  y un spinner');
+capturar($navegador, 'login-entrando');
+$navegador->liberar('auth/login');
+$navegador->quitarIntercepciones();
+$navegador->esperarHasta("!document.getElementById('aviso-error').hidden", 5);
+comprobarIgual(['error' => 'Usuario o contraseña incorrectos', 'exito' => null, 'invalidos' => ['usuario', 'contrasena'], 'mensajes' => [null, null], 'boton' => ['Iniciar sesión', false]], estadoLogin($navegador), 'contraseña incorrecta (5b): el aviso arriba y los dos campos en rojo, sin decir cuál falló');
+comprobarIgual(['alert', 'contrasena'], [$navegador->evaluar("document.getElementById('aviso-error').getAttribute('role')"), $navegador->evaluar('document.activeElement.id')], '  el aviso es role="alert" y el foco vuelve a la contraseña');
+capturar($navegador, 'login-error');
+enviarLogin($navegador, 'noexiste', 'mala123');
+$navegador->esperarHasta("document.getElementById('entrar').textContent.trim() === 'Iniciar sesión' && !document.getElementById('aviso-error').hidden", 5);
+comprobarIgual('Usuario o contraseña incorrectos', estadoLogin($navegador)['error'] ?? null, '  usuario que no existe: el mismo mensaje');
+escribir($navegador, '#usuario', 'admin');
+comprobarIgual([null, []], campos(estadoLogin($navegador), ['error', 'invalidos']), '  al escribir de nuevo, se quitan el aviso y el rojo');
+
+$navegador->interceptar('auth/login', ['fallar' => true]);
+enviarLogin($navegador, 'admin', 'admin123');
+$navegador->esperarHasta("!document.getElementById('aviso-error').hidden", 5);
+comprobarIgual('No se pudo conectar con el servidor. Revisa que Apache esté encendido.', estadoLogin($navegador)['error'] ?? null, 'sin conexión: el aviso lo dice (y no marca los campos)');
+$navegador->quitarIntercepciones();
+
+$navegador->evaluar("document.activeElement.blur(); document.getElementById('usuario').focus()");
+$recorrido = [];
+foreach (range(1, 3) as $i) {
+    $navegador->tecla('Tab');
+    $navegador->procesarEventos(0.2);
+    $recorrido[] = $navegador->evaluar("(() => { const el = document.activeElement; const e = getComputedStyle(el); return [el.id, e.boxShadow !== 'none' || e.outlineStyle !== 'none']; })()");
+}
+comprobarIgual([['contrasena', true], ['mostrar-contrasena', true], ['entrar', true]], $recorrido, 'con el teclado: Usuario → Contraseña → ojo → «Iniciar sesión», todos con foco visible');
+
+enviarLogin($navegador, 'admin', 'admin123');
+$navegador->esperarHasta("!document.getElementById('aviso-exito').hidden", 5);
+comprobarIgual('Sesión iniciada. Abriendo el dashboard…', estadoLogin($navegador)['exito'] ?? null, 'credenciales correctas: «Sesión iniciada. Abriendo el dashboard…»');
+comprobar($navegador->esperarHasta("location.pathname.endsWith('/index.html')", 8), '  y vuelve a la pantalla de «volver» (el Dashboard)');
+comprobar(esperarEstructura($navegador), '  que carga con la sesión');
+comprobarIgual(['Administrador', 'admin', 'AD'], [$navegador->evaluar("document.querySelector('#barra-lateral .js-usuario-nombre').textContent"), $navegador->evaluar("document.querySelector('#barra-lateral .js-usuario-usuario').textContent"), $navegador->evaluar("document.querySelector('#barra-lateral .js-usuario-avatar').textContent")], 'la barra lateral muestra el nombre, el usuario y las iniciales reales (GET /auth/sesion)');
+
+$navegador->tamano(390, 844, true);
+abrirPagina($navegador, 'login.html');
+comprobar($navegador->esperarHasta("location.pathname.endsWith('/index.html')", 8), 'con sesión, login.html lleva al Dashboard');
+$navegador->evaluar("fetch('../servicios/auth/logout', { method: 'POST' })");
+$navegador->procesarEventos(0.5);
+abrirPagina($navegador, 'login.html');
+$navegador->procesarEventos(0.5);
+$r = $navegador->evaluar("(() => { const t = document.querySelector('.login__tarjeta').getBoundingClientRect(); return { ancho: Math.round(t.width), alto: Math.round(document.getElementById('usuario').getBoundingClientRect().height), desborde: document.documentElement.scrollWidth > innerWidth }; })()");
+comprobarIgual(['ancho' => 358, 'alto' => 44, 'desborde' => false], $r, 'a 390 px: tarjeta con 16 px a cada lado, campos de 44 px, sin desplazamiento horizontal');
+capturar($navegador, 'login-390');
+comprobarIgual([], array_values(array_filter($navegador->erroresJs, fn($e) => !str_contains($e, 'status of 401'))), 'login.html sin errores de JavaScript (los 401 esperados no cuentan)');
+
+$navegador->tamano(1440, 900);
+comprobar(iniciarSesionEnLaPantalla($navegador), 'inicio de sesión a través de la pantalla para el resto de las pruebas (localhost)');
+comprobar(iniciarSesionEnLaPantalla($navegador, str_replace('://localhost/', '://127.0.0.1/', URL_INTERFAZ)), '  y desde 127.0.0.1 (otra cookie: otro origen)');
 
 // =====================================================================
 seccion('6.1 · Formatos (formatos.js)');
@@ -277,8 +417,6 @@ capturar($navegador, 'estructura-1440');
 $navegador->tecla('Tab');
 comprobarIgual('saltar-contenido', $navegador->evaluar('document.activeElement.className'), 'el primer Tab lleva a «Saltar al contenido»');
 
-$navegador->evaluar("document.querySelector('.usuario-barra__salir').click()");
-comprobar($navegador->esperarHasta("document.querySelector('.toast .notificacion__titulo')?.textContent === 'Cerrar sesión'", 3), '«Salir» avisa que el cierre de sesión llega en la Fase 7');
 
 $navegador->tamano(390, 844, true);
 abrirPagina($navegador, 'dispositivos.html');
@@ -1372,6 +1510,26 @@ foreach ($paginasTeclado as $pagina => $espera) {
     comprobar(count($recorridos) >= 5 && $sinFoco === [], "$pagina: los " . count($recorridos) . ' elementos que se alcanzan con Tab muestran el foco', implode(', ', $sinFoco));
 }
 $navegador->evaluar('document.activeElement.blur()');
+
+// =====================================================================
+seccion('7.2 · «Salir» cierra la sesión (barra lateral y menú del celular)');
+
+$navegador->tamano(1440, 900);
+abrirPagina($navegador, 'alertas.html');
+esperarEstructura($navegador);
+clic($navegador, '#barra-lateral .usuario-barra__salir');
+comprobar($navegador->esperarHasta("location.pathname.endsWith('/login.html')", 8), '«Salir» de la barra lateral lleva al login');
+comprobarIgual('', $navegador->evaluar('location.search'), '  sin «volver»');
+abrirPagina($navegador, 'alertas.html');
+comprobar($navegador->esperarHasta("location.pathname.endsWith('/login.html') && location.search.includes('alertas.html')", 8), '  la sesión quedó cerrada: Alertas vuelve a pedir el login');
+
+$navegador->tamano(390, 844, true);
+comprobar(iniciarSesionEnLaPantalla($navegador), 'otra vez con sesión, en el celular');
+clic($navegador, '#encabezado-movil .encabezado-movil__boton');
+comprobarIgual(['Administrador', 'admin'], [$navegador->evaluar("document.querySelector('#menu-movil .js-usuario-nombre').textContent"), $navegador->evaluar("document.querySelector('#menu-movil .js-usuario-usuario').textContent")], '  el menú del celular también muestra el usuario real');
+clic($navegador, '#menu-movil .menu-movil__salir');
+comprobar($navegador->esperarHasta("location.pathname.endsWith('/login.html') && location.search === ''", 8), '«Salir» del menú del celular lleva al login');
+$navegador->tamano(1440, 900);
 
 $navegador->cerrar();
 echo "\nCapturas: $carpetaCapturas\n";

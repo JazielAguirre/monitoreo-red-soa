@@ -7,7 +7,7 @@
  */
 
 import { api } from './api.js';
-import { montarEstructura, actualizarContadorAlertas } from './modulos/estructura.js';
+import { iniciarPagina, actualizarContadorAlertas } from './modulos/estructura.js';
 import { formatearFechaCorta, formatearMs, normalizarBusqueda, pluralizar } from './modulos/formatos.js';
 import { mostrarNotificacion, notificarError } from './modulos/notificaciones.js';
 import { crearError, crearVacio, mostrarBloque } from './modulos/vistas.js';
@@ -37,7 +37,7 @@ const contenido = $('contenido-dispositivos');
 const botonesTodos = [$('monitorear-todos-escritorio'), $('monitorear-todos-movil')];
 const progreso = crearProgreso($('progreso-monitoreo'));
 
-montarEstructura();
+await iniciarPagina(); // confirma la sesión antes de pedir datos
 conectarControles();
 cargar();
 

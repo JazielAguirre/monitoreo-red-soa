@@ -1142,6 +1142,85 @@
             </div>
         </div>
     </section>
+    <!-- ============================================================ 32 Inicio de sesión -->
+    <section class="seccion" aria-labelledby="s32">
+        <h2 class="seccion__titulo" id="s32">
+            <span class="seccion__numero">32</span><span class="seccion__nombre">Inicio de sesión</span>
+            <span class="seccion__nota">5a y 5b · normal · credenciales incorrectas (mismo mensaje exista o no el usuario, los dos campos en rojo) · entrando · sesión iniciada</span>
+        </h2>
+        <div class="rejilla rejilla--2 demo-login-rejilla">
+            <div class="pagina-login demo-login">
+                <form class="login__tarjeta" novalidate onsubmit="return false">
+                    <div class="login__marca">
+                        <span class="marca__logo login__logo" aria-hidden="true"><i class="bi bi-diagram-3-fill"></i></span>
+                        <div class="login__textos"><p class="login__titulo" role="presentation">Monitoreo de Red SOA</p><p class="login__subtitulo">Inicia sesión para administrar la red</p></div>
+                    </div>
+                    <div class="login__campo">
+                        <label class="form-label" for="demo-login-usuario-a">Usuario</label>
+                        <div class="campo-icono"><i class="bi bi-person campo-icono__inicio" aria-hidden="true"></i><input class="form-control" id="demo-login-usuario-a" type="text" placeholder="Tu usuario" value=""></div>
+                    </div>
+                    <div class="login__campo">
+                        <label class="form-label" for="demo-login-contrasena-a">Contraseña</label>
+                        <div class="campo-icono campo-icono--con-boton"><i class="bi bi-lock campo-icono__inicio" aria-hidden="true"></i><input class="form-control" id="demo-login-contrasena-a" type="password" placeholder="Tu contraseña" value=""><button class="campo-icono__boton" type="button" aria-label="Mostrar contraseña" aria-pressed="false"><i class="bi bi-eye" aria-hidden="true"></i></button></div>
+                    </div>
+                    <button class="btn btn-primary login__boton" type="button">Iniciar sesión</button>
+                </form>
+            </div>
+            <div class="pagina-login demo-login">
+                <form class="login__tarjeta" novalidate onsubmit="return false">
+                    <div class="login__marca">
+                        <span class="marca__logo login__logo" aria-hidden="true"><i class="bi bi-diagram-3-fill"></i></span>
+                        <div class="login__textos"><p class="login__titulo" role="presentation">Monitoreo de Red SOA</p><p class="login__subtitulo">Inicia sesión para administrar la red</p></div>
+                    </div>
+                    <div class="login__aviso login__aviso--error" role="presentation"><i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i><span>Usuario o contraseña incorrectos</span></div>
+                    <div class="login__campo">
+                        <label class="form-label" for="demo-login-usuario-b">Usuario</label>
+                        <div class="campo-icono"><i class="bi bi-person campo-icono__inicio" aria-hidden="true"></i><input class="form-control is-invalid" id="demo-login-usuario-b" type="text" placeholder="Tu usuario" value="admin"></div>
+                    </div>
+                    <div class="login__campo">
+                        <label class="form-label" for="demo-login-contrasena-b">Contraseña</label>
+                        <div class="campo-icono campo-icono--con-boton"><i class="bi bi-lock campo-icono__inicio" aria-hidden="true"></i><input class="form-control is-invalid" id="demo-login-contrasena-b" type="password" placeholder="Tu contraseña" value="lab2025"><button class="campo-icono__boton" type="button" aria-label="Mostrar contraseña" aria-pressed="false"><i class="bi bi-eye" aria-hidden="true"></i></button></div>
+                    </div>
+                    <button class="btn btn-primary login__boton" type="button">Iniciar sesión</button>
+                </form>
+            </div>
+            <div class="pagina-login demo-login">
+                <form class="login__tarjeta" novalidate onsubmit="return false">
+                    <div class="login__marca">
+                        <span class="marca__logo login__logo" aria-hidden="true"><i class="bi bi-diagram-3-fill"></i></span>
+                        <div class="login__textos"><p class="login__titulo" role="presentation">Monitoreo de Red SOA</p><p class="login__subtitulo">Inicia sesión para administrar la red</p></div>
+                    </div>
+                    <div class="login__campo">
+                        <label class="form-label" for="demo-login-usuario-c">Usuario</label>
+                        <div class="campo-icono"><i class="bi bi-person campo-icono__inicio" aria-hidden="true"></i><input class="form-control" id="demo-login-usuario-c" type="text" placeholder="Tu usuario" value="admin"></div>
+                    </div>
+                    <div class="login__campo">
+                        <label class="form-label" for="demo-login-contrasena-c">Contraseña</label>
+                        <div class="campo-icono campo-icono--con-boton"><i class="bi bi-lock campo-icono__inicio" aria-hidden="true"></i><input class="form-control" id="demo-login-contrasena-c" type="password" placeholder="Tu contraseña" value="admin123"><button class="campo-icono__boton" type="button" aria-label="Mostrar contraseña" aria-pressed="false"><i class="bi bi-eye" aria-hidden="true"></i></button></div>
+                    </div>
+                    <button class="btn btn-primary login__boton" type="button" disabled aria-busy="true"><span class="girador" aria-hidden="true"></span>Entrando…</button>
+                </form>
+            </div>
+            <div class="pagina-login demo-login">
+                <form class="login__tarjeta" novalidate onsubmit="return false">
+                    <div class="login__marca">
+                        <span class="marca__logo login__logo" aria-hidden="true"><i class="bi bi-diagram-3-fill"></i></span>
+                        <div class="login__textos"><p class="login__titulo" role="presentation">Monitoreo de Red SOA</p><p class="login__subtitulo">Inicia sesión para administrar la red</p></div>
+                    </div>
+                    <div class="login__aviso login__aviso--exito" role="presentation"><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Sesión iniciada. Abriendo el dashboard…</span></div>
+                    <div class="login__campo">
+                        <label class="form-label" for="demo-login-usuario-d">Usuario</label>
+                        <div class="campo-icono"><i class="bi bi-person campo-icono__inicio" aria-hidden="true"></i><input class="form-control" id="demo-login-usuario-d" type="text" placeholder="Tu usuario" value="admin"></div>
+                    </div>
+                    <div class="login__campo">
+                        <label class="form-label" for="demo-login-contrasena-d">Contraseña</label>
+                        <div class="campo-icono campo-icono--con-boton"><i class="bi bi-lock campo-icono__inicio" aria-hidden="true"></i><input class="form-control" id="demo-login-contrasena-d" type="password" placeholder="Tu contraseña" value="admin123"><button class="campo-icono__boton" type="button" aria-label="Mostrar contraseña" aria-pressed="false"><i class="bi bi-eye" aria-hidden="true"></i></button></div>
+                    </div>
+                    <button class="btn btn-primary login__boton" type="button" disabled aria-busy="true"><span class="girador" aria-hidden="true"></span>Entrando…</button>
+                </form>
+            </div>
+        </div>
+    </section>
 </main>
 
 <!-- Modal real (se abre con "Abrir el modal real"). -->

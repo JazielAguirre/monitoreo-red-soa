@@ -712,14 +712,36 @@ a:focus-visible {
 }
 
 .usuario-barra__nombre {
+    overflow: hidden;
     font-size: 13.5px;
     font-weight: 500;
     color: var(--color-superficie);
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .usuario-barra__rol {
+    overflow: hidden;
     font-size: var(--texto-pequeno-tamano);
     color: var(--color-base-texto-2);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Mientras se confirma la sesión, el nombre y el usuario son esqueletos sobre el fondo oscuro. */
+.esqueleto--barra {
+    background-color: var(--color-borde-barra-fuerte);
+}
+
+.esqueleto--nombre-usuario {
+    width: 96px;
+    margin: 4px 0;
+}
+
+.esqueleto--cuenta-usuario {
+    width: 44px;
+    height: 8px;
+    margin: 3px 0;
 }
 
 .usuario-barra__salir {
@@ -3356,6 +3378,177 @@ a.encabezado-movil__boton:hover {
 
     .alerta__esqueleto-boton {
         display: none;
+    }
+}
+
+/* ============================================================ Inicio de sesión (5a, 5b) */
+
+.pagina-login {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-color: var(--color-base);
+    background-image: radial-gradient(var(--color-reticula-login) 1px, transparent 1px);
+    background-size: 24px 24px;
+}
+
+.login {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 24px 16px;
+}
+
+.login__tarjeta {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 400px;
+    padding: 36px 32px 32px;
+    background-color: var(--color-superficie);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-login);
+}
+
+.login__marca {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+}
+
+.login__logo {
+    width: 52px;
+    height: 52px;
+    font-size: 24px;
+    background-color: var(--color-base);
+    border-radius: 14px;
+}
+
+.login__logo::after {
+    top: 9px;
+    right: 9px;
+    width: 9px;
+    height: 9px;
+    box-shadow: 0 0 0 2px var(--color-base);
+}
+
+.login__textos {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.login__titulo {
+    margin: 0;
+    font-size: var(--texto-display-tamano);
+    line-height: var(--texto-display-alto);
+    font-weight: 600;
+    letter-spacing: var(--texto-display-espaciado);
+    color: var(--color-texto);
+}
+
+.login__subtitulo {
+    margin: 0;
+    font-size: var(--texto-cuerpo-tamano);
+    color: var(--color-texto-2);
+}
+
+.login__aviso {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    font-weight: 500;
+    border: 1px solid;
+    border-radius: var(--radio);
+}
+
+.login__aviso[hidden] {
+    display: none;
+}
+
+.login__aviso > .bi {
+    flex: none;
+    font-size: 15px;
+}
+
+.login__aviso--error {
+    color: var(--color-inactivo-texto);
+    background-color: var(--color-inactivo-fondo);
+    border-color: var(--color-inactivo-borde);
+}
+
+.login__aviso--exito {
+    color: var(--color-activo-texto);
+    background-color: var(--color-activo-fondo);
+    border-color: var(--color-activo-borde);
+}
+
+.login__campo .form-label {
+    display: block;
+}
+
+.login__campo .form-control {
+    height: var(--alto-control-tactil);
+    font-size: 15px;
+}
+
+.login__campo .campo-icono__inicio {
+    font-size: 16px;
+}
+
+.login__campo .campo-icono:has(> .campo-icono__inicio) > .form-control {
+    padding-left: 38px;
+}
+
+/* Botón dentro del campo (mostrar u ocultar la contraseña). */
+.campo-icono--con-boton > .form-control {
+    padding-right: 44px;
+}
+
+.campo-icono__boton {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    font-size: 16px;
+    color: var(--color-texto-2);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radio-sm);
+}
+
+.campo-icono__boton:hover {
+    color: var(--color-texto);
+}
+
+.campo-icono__boton:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--color-foco-anillo);
+}
+
+.login__boton {
+    --bs-btn-disabled-opacity: 1; /* "Entrando…" conserva el color, como en el diseño */
+    height: var(--alto-control-tactil);
+    font-size: 15px;
+}
+
+@media (max-width: 575.98px) {
+    .login__tarjeta {
+        padding: 28px 20px 24px;
+    }
+
+    .login__titulo {
+        font-size: var(--texto-titulo-pagina-tamano);
+        line-height: var(--texto-titulo-pagina-alto);
     }
 }
 

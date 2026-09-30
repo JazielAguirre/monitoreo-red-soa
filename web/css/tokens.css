@@ -142,6 +142,8 @@
     --sombra-notificacion: 0 12px 28px -8px rgba(11, 29, 46, 0.18);
     --sombra-menu-movil: 0 20px 40px -8px rgba(11, 29, 46, 0.4);
     --sombra-hoja: 0 -12px 32px -8px rgba(11, 29, 46, 0.28); /* Modal como hoja inferior en celular */
+    --color-reticula-login: rgba(182, 196, 211, 0.09);  /* Puntos del fondo del inicio de sesión (5a) */
+    --sombra-login: 0 20px 40px -8px rgba(0, 0, 0, 0.4); /* Tarjeta del inicio de sesión sobre el fondo oscuro */
 
     /* -------------------------------------------------------- Tipografía */
     --fuente-interfaz: 'Inter', system-ui, sans-serif;
