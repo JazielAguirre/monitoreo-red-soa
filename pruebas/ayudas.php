@@ -18,6 +18,7 @@ if (PHP_SAPI !== 'cli') {
 require_once __DIR__ . '/../servicios/comun/config.php';
 require_once __DIR__ . '/../servicios/comun/db.php';
 require_once __DIR__ . '/../servicios/comun/http.php'; // ARCHIVO_FALLO_SIMULADO
+require_once __DIR__ . '/../herramientas/base-de-datos.php'; // cargarSchemaYSeed()
 
 $GLOBALS['pruebas_correctas'] = 0;
 $GLOBALS['pruebas_fallidas'] = [];
@@ -63,45 +64,6 @@ function terminarAlInterrumpir(): void
     } elseif (function_exists('sapi_windows_set_ctrl_handler')) {
         sapi_windows_set_ctrl_handler(fn() => exit(130));
     }
-}
-
-function cargarSchemaYSeed(): void
-{
-    $raiz = dirname(__DIR__);
-
-    foreach (['database/schema.sql', 'database/seed.sql'] as $archivo) {
-        $baseDatos = $archivo === 'database/seed.sql' ? ' ' . escapeshellarg(DB_NOMBRE) : '';
-        $comando = comandoMysql() . $baseDatos . ' < ' . escapeshellarg("$raiz/$archivo") . ' 2>&1';
-
-        exec($comando, $salida, $codigo);
-
-        if ($codigo !== 0) {
-            fwrite(STDERR, "No se pudo cargar $archivo:\n" . implode("\n", $salida) . "\n");
-            exit(2);
-        }
-    }
-}
-
-/**
- * Arma el comando del cliente mysql con los datos de config.php.
- */
-function comandoMysql(): string
-{
-    $binario = getenv('MYSQL_BIN') ?: (PHP_OS_FAMILY === 'Windows'
-        ? 'C:/xampp/mysql/bin/mysql.exe'
-        : '/opt/lampp/bin/mysql');
-
-    $comando = escapeshellarg($binario)
-        . ' --default-character-set=utf8mb4'
-        . ' -h ' . escapeshellarg(DB_HOST)
-        . ' -P ' . (int) DB_PUERTO
-        . ' -u ' . escapeshellarg(DB_USUARIO);
-
-    if (DB_CLAVE !== '') {
-        $comando .= ' -p' . escapeshellarg(DB_CLAVE);
-    }
-
-    return $comando;
 }
 
 /**

@@ -489,6 +489,27 @@ final class Navegador
     }
 
     /**
+     * Espera a que una petición que contiene $fragmento quede retenida. Hace falta
+     * cuando la página la envía más tarde (por ejemplo, después de confirmar la
+     * sesión): liberar() antes de tiempo la dejaría en pausa para siempre.
+     */
+    public function esperarRetenida(string $fragmento, float $espera = 10): bool
+    {
+        $limite = microtime(true) + $espera;
+
+        do {
+            foreach ($this->retenidas as [, $url]) {
+                if (str_contains($url, $fragmento)) {
+                    return true;
+                }
+            }
+            $this->procesarEventos(0.05);
+        } while (microtime(true) < $limite);
+
+        return false;
+    }
+
+    /**
      * Deja pasar las peticiones retenidas que contienen $fragmento y deja de retenerlas.
      */
     public function liberar(string $fragmento): void

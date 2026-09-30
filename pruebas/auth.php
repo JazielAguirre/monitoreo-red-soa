@@ -355,6 +355,7 @@ seccion('13. Cada pantalla confirma la sesión antes de pedir datos (esqueleto m
 foreach (['index.html' => '#panel-estado', 'dispositivos.html' => '#contenido-dispositivos', 'monitoreos.html' => '#contenido-historial', 'alertas.html' => '#lista-alertas'] as $pantalla => $contenedor) {
     $navegador->interceptar('auth/sesion', ['retener' => true]);
     abrir($navegador, $pantalla);
+    $navegador->esperarRetenida('auth/sesion');
     $pedidas = $navegador->evaluar("performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.includes('/servicios/') && !n.includes('/auth/sesion')).length");
     $r = $navegador->evaluar("({ ocupado: document.querySelector('$contenedor')?.getAttribute('aria-busy'), esqueletos: document.querySelectorAll('$contenedor .esqueleto, $contenedor [class*=\"esqueleto\"]').length > 0 })");
     comprobarIgual([0, ['ocupado' => 'true', 'esqueletos' => true]], [$pedidas, $r], "$pantalla: mientras GET /auth/sesion no responde, no pide datos y muestra el esqueleto");

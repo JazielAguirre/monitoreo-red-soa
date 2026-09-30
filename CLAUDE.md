@@ -24,6 +24,10 @@ bash
 sudo /opt/lampp/lampp startapache
 sudo /opt/lampp/lampp startmysql
 
+# Preparar la demo: recarga la base, mueve las fechas a hace 10 min, pone las IPs de la red y comprueba todo
+/opt/lampp/bin/php herramientas/preparar-demo.php            # --router=IP --pc=IP, o --sin-red
+/opt/lampp/bin/php herramientas/ver-llamadas.php             # llamadas entre servicios en vivo
+
 # Recrear la base de datos desde cero y cargar datos de prueba
 /opt/lampp/bin/mysql -u root < database/schema.sql
 /opt/lampp/bin/mysql -u root monitoreo_red_soa < database/seed.sql
@@ -70,12 +74,14 @@ web/
 ├── js/          api.js (único punto de acceso a la API, URL base relativa; con 401 lleva al login) + modulos/ (formatos, notificaciones, vistas, estructura, sesion, gráficas…) + un módulo ES por página
 ├── vendor/      bootstrap, bootstrap-icons, chart.js, fuentes Inter y JetBrains Mono
 └── *.html       login, index (dashboard), dispositivos, monitoreos, alertas, componentes
+herramientas/    base-de-datos.php (recarga schema y seed; la usan las pruebas y la demo), red.php (detecta puerta de enlace e IP propia), preparar-demo.php, ver-llamadas.php. Solo línea de comandos; no accesible por HTTP
 pruebas/         ayudas.php (peticiones con la cookie de iniciarSesionDePrueba() o con la clave en peticionInterna(), fallo simulado) + un script por servicio (dispositivos.php, ..., auth.php) + interfaz.php con navegador.php (cliente del protocolo de Chrome). Solo línea de comandos; no accesible por HTTP
 Reglas SOA (no negociables)
 Cada servicio solo lee y escribe sus propias tablas.
+Excepción: herramientas/ (como schema.sql y seed.sql) son herramientas de base de datos y pueden tocar todas las tablas; preparar-demo.php mueve fechas e IPs directamente en MySQL. La regla sigue valiendo para todo lo que está en servicios/.
 Si un servicio necesita datos o acciones de otro, los pide por HTTP usando servicios/comun/http.php. Nunca hace require del código de otro servicio ni consultas SQL a tablas ajenas.
 Ejemplo: Monitoreo obtiene la IP con GET /dispositivos/{id}, actualiza el estado con PATCH /dispositivos/{id}/estado y crea alertas con POST /alertas.
-comun/http.php: llamarServicio() usa streams de PHP (no curl), espera TIEMPO_ESPERA_SERVICIOS (config.php) y envía X-Servicio-Clave. Si el otro servicio no responde o no devuelve el JSON del formato común, lanza ErrorDeComunicacion, que el index.php responde como 502 "No se pudo comunicar con el Servicio de {nombre}".
+comun/http.php: llamarServicio() usa streams de PHP (no curl), espera TIEMPO_ESPERA_SERVICIOS (config.php) y envía X-Servicio-Clave. Cada llamada se anota en llamadas-servicios.log, en la carpeta del error_log de PHP (XAMPP: /opt/lampp/logs o C:\xampp\php\logs, donde Apache ya puede escribir): «Monitoreo → Dispositivos: PATCH /dispositivos/7/estado (200, 12 ms)», precedida por la petición que la originó. Sirve para la demo (herramientas/ver-llamadas.php) porque el log de Apache no distingue al navegador de la laptop (127.0.0.1) de los servicios y anota cada petición al terminar. Si no se puede escribir, se ignora. Si el otro servicio no responde o no devuelve el JSON del formato común, lanza ErrorDeComunicacion, que el index.php responde como 502 "No se pudo comunicar con el Servicio de {nombre}".
 Archivo de fallo simulado (pruebas/.fallo-simulado.json, leído por comun/http.php): solo lo usan las pruebas para simular que Dispositivos o Alertas no responde. Caduca solo (máximo 60 s), solo admite modos fijos hacia 127.0.0.1 o web/index.html, y no puede activarse por HTTP (ningún endpoint escribe archivos y pruebas/ responde 404). Detalle en docs/PLAN.md, "Pruebas automáticas".
 La interfaz nunca accede a la base de datos: todo pasa por web/js/api.js.
 Seguridad en la interfaz: los datos de la API se insertan con textContent o pasan por escaparHtml() de web/js/modulos/formatos.js; nunca directo en innerHTML. Las fechas de la API se separan con partesFecha(), nunca con new Date(texto) (Safari del iPhone las toma como inválidas). Los formularios usan novalidate: los mensajes de validación vienen solo de la API.
@@ -215,7 +221,8 @@ Actualiza esta sección al cerrar cada fase.
 Fase actual: 8 — Integración, pruebas y demo, en la rama preparacion-demo (no se fusiona a main hasta que el equipo revise el guion).
 Progreso de la Fase 8 (un commit por subpaso):
 - 8.1 hecho: web/.htaccess con Cache-Control: no-cache (mod_headers activo en XAMPP; 304 al revalidar; vendor/ sin cambios), favicon.svg en las 6 páginas (títulos de pestaña ya estaban), revisión a 1024×768 y 1280×720: tabla de Dispositivos con columnas que se ocultan por container query, filtros de Monitoreos en una fila de 4 entre 1200 y 1399 px, fecha compacta en las tarjetas del Dashboard. interfaz.php 298 comprobaciones (caché, títulos, favicon y proyector).
-- Siguiente: 8.2 preparar-demo.php, 8.3 README y Windows, 8.4 guion y ensayo.
+- 8.2 hecho: herramientas/preparar-demo.php (recarga, fechas movidas para que la última ronda sea de hace 10 min conservando las distancias, IPs detectadas con /proc/net/route o route print y el truco UDP, o indicadas, o plan sin red 192.0.2.30 / 127.0.0.2; resumen con la URL del celular; comprobación previa con ✓/✗ y «Qué hacer»), herramientas/base-de-datos.php y red.php, registro de llamadas entre servicios en comun/http.php con herramientas/ver-llamadas.php. monitoreo.php 221 comprobaciones. Arreglada una prueba inestable del Dashboard (fallaba 1 de cada varias corridas): desde la Fase 7 las pantallas piden sus datos después de GET /auth/sesion, y la prueba liberaba una petición retenida antes de que saliera; navegador.php suma esperarRetenida().
+- Siguiente: 8.3 README y Windows, 8.4 guion y ensayo.
 Completado:
 - Fase 0 — Preparación y prueba de ping: estructura del proyecto, comun/config.php y comun/respuesta.php, puntos de entrada de dispositivos, alertas y monitoreo con reescritura de URLs, esqueletos HTML, librerías en web/vendor/, repositorio git, .htaccess que solo expone web/ y los servicios, y servicios/monitoreo/ping.php probado a través de Apache (127.0.0.1 y la puerta de enlace activos, 192.0.2.1 inactivo en ~1 s, entradas inválidas → 400 sin ejecutar comandos).
 - Fase 1 — Base de datos: database/schema.sql con las 4 tablas de docs/API.md (FK con ON DELETE CASCADE, índices, utf8mb4_unicode_ci), database/seed.sql (6 dispositivos, 56 monitoreos, 1 alerta pendiente y 3 atendidas, usuario admin) y comun/db.php (PDO con EMULATE_PREPARES en false y colación utf8mb4_unicode_ci). Verificado: carga desde cero repetible, coherencia de ultimo_* con el último monitoreo, UNIQUE, FK y cascada (con ROLLBACK).

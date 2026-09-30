@@ -499,6 +499,7 @@ recargarBaseDeDatos();
 $navegador->tamano(1440, 900);
 $navegador->interceptar('servicios/dispositivos', ['retener' => true]);
 abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarRetenida('servicios/dispositivos'); // sale después de confirmar la sesión
 $r = $navegador->evaluar("({ ocupado: document.getElementById('contenido-dispositivos').getAttribute('aria-busy'), esqueletos: document.querySelectorAll('#contenido-dispositivos .esqueleto').length, monitorearTodos: document.getElementById('monitorear-todos-escritorio').disabled })");
 comprobarIgual(['ocupado' => 'true', 'esqueletos' => 16, 'monitorearTodos' => true], $r, 'mientras llegan los datos: esqueleto (aria-busy) y "Monitorear todos" deshabilitado');
 $navegador->liberar('servicios/dispositivos');
@@ -807,6 +808,7 @@ recargarBaseDeDatos();
 $navegador->tamano(1440, 900);
 $navegador->interceptar('servicios/dispositivos', ['retener' => true]);
 abrirPagina($navegador, 'index.html');
+$navegador->esperarRetenida('servicios/dispositivos'); // sale después de confirmar la sesión
 comprobarIgual([4, 'true'], [$navegador->evaluar("document.querySelectorAll('.indicadores .esqueleto').length"), $navegador->evaluar("document.getElementById('panel-estado').getAttribute('aria-busy')")], 'mientras cargan: esqueleto en los indicadores y en el estado de dispositivos');
 $navegador->liberar('servicios/dispositivos');
 $navegador->quitarIntercepciones();
@@ -1023,6 +1025,7 @@ recargarBaseDeDatos();
 $navegador->tamano(1440, 900);
 $navegador->interceptar('servicios/monitoreo?', ['retener' => true]);
 abrirPagina($navegador, 'monitoreos.html');
+$navegador->esperarRetenida('servicios/monitoreo?'); // sale después de confirmar la sesión
 $navegador->esperarHasta("document.getElementById('filtro-dispositivo').options.length > 1", 8);
 comprobarIgual(['true', 3, 'true'], [
     $navegador->evaluar("document.getElementById('contenido-historial').getAttribute('aria-busy')"),
@@ -1330,7 +1333,7 @@ recargarBaseDeDatos();
 $navegador->tamano(1440, 900);
 $navegador->interceptar('servicios/alertas?', ['retener' => true]);
 abrirPagina($navegador, 'alertas.html');
-$navegador->procesarEventos(0.5);
+$navegador->esperarRetenida('servicios/alertas?'); // sale después de confirmar la sesión
 comprobarIgual(['true', 2], [$navegador->evaluar("document.getElementById('lista-alertas').getAttribute('aria-busy')"), $navegador->evaluar("document.querySelectorAll('#lista-alertas .alerta--esqueleto').length")], 'mientras carga: esqueleto de dos alertas');
 $navegador->liberar('servicios/alertas?');
 $navegador->quitarIntercepciones();

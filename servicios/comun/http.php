@@ -49,7 +49,28 @@ final class ErrorDeComunicacion extends RuntimeException
  */
 function llamarServicio(string $servicio, string $metodo, string $url, ?array $cuerpo = null): array
 {
-    $url = aplicarFalloSimulado($servicio, $metodo, $url);
+    $inicio = hrtime(true);
+
+    try {
+        $respuesta = enviarPeticion($servicio, $metodo, aplicarFalloSimulado($servicio, $metodo, $url), $cuerpo);
+    } catch (ErrorDeComunicacion $error) {
+        $motivo = str_starts_with($error->getMessage(), "[$servicio] Sin respuesta") ? 'sin respuesta' : 'respuesta inesperada';
+        registrarLlamada($servicio, $metodo, $url, $motivo, $inicio);
+        throw $error;
+    }
+
+    registrarLlamada($servicio, $metodo, $url, (string) $respuesta['codigo'], $inicio);
+
+    return $respuesta;
+}
+
+/**
+ * Envía la petición y valida el formato común de la respuesta.
+ *
+ * @throws ErrorDeComunicacion
+ */
+function enviarPeticion(string $servicio, string $metodo, string $url, ?array $cuerpo): array
+{
 
     $contexto = stream_context_create(['http' => [
         'method' => $metodo,
@@ -143,4 +164,88 @@ function leerFalloSimulado(): ?array
         || ($modo === 'sin_respuesta' && is_int($puerto) && $puerto >= 1024 && $puerto <= 65535);
 
     return $vigente && $metodoValido && $modoValido ? $fallo : null;
+}
+
+// ---------------------------------------------------------------- Registro de llamadas
+
+/**
+ * Registro legible de las llamadas entre servicios, para ver la arquitectura en
+ * acción durante la demo (herramientas/ver-llamadas.php lo muestra en vivo):
+ *
+ *   [10:05:12] Navegador → Monitoreo: POST /monitoreo/7
+ *   [10:05:12]   Monitoreo → Dispositivos: GET /dispositivos/7 (200, 8 ms)
+ *   [10:05:13]   Monitoreo → Dispositivos: PATCH /dispositivos/7/estado (200, 12 ms)
+ *   [10:05:13]   Monitoreo → Alertas: POST /alertas (201, 10 ms)
+ *
+ * El log de Apache no sirve para esto: el navegador de la laptop y los servicios
+ * aparecen con la misma IP (127.0.0.1), y cada petición se anota al terminar, así
+ * que la del navegador sale después de sus propias llamadas.
+ *
+ * Va en la carpeta de registros de PHP (junto al error_log de php.ini), donde
+ * Apache ya puede escribir en Linux y en Windows. Si no se puede escribir, se
+ * ignora: el registro nunca debe hacer fallar una petición.
+ */
+function registrarLlamada(string $servicio, string $metodo, string $url, string $resultado, int $inicio): void
+{
+    static $origenAnotado = false;
+
+    try {
+        $hora = date('H:i:s');
+        $lineas = '';
+        if (!$origenAnotado) {
+            $origenAnotado = true;
+            $lineas .= "[$hora] " . origenDeLaPeticion() . ' → ' . nombreDeEsteServicio() . ': '
+                . ($_SERVER['REQUEST_METHOD'] ?? '¿?') . ' ' . rutaDeServicio((string) ($_SERVER['REQUEST_URI'] ?? '')) . "\n";
+        }
+        $milisegundos = (int) round((hrtime(true) - $inicio) / 1e6);
+        $lineas .= "[$hora]   " . nombreDeEsteServicio() . " → $servicio: $metodo " . rutaDeServicio($url) . " ($resultado, $milisegundos ms)\n";
+
+        @file_put_contents(archivoRegistroLlamadas(), $lineas, FILE_APPEND | LOCK_EX);
+    } catch (Throwable) {
+        // El registro es solo para mirar; si falla, la petición sigue.
+    }
+}
+
+/**
+ * Ruta del archivo de registro: llamadas-servicios.log en la carpeta del error_log
+ * de PHP (XAMPP: /opt/lampp/logs o C:\xampp\php\logs), o la carpeta temporal.
+ */
+function archivoRegistroLlamadas(): string
+{
+    $errorLog = (string) ini_get('error_log');
+    $carpeta = $errorLog !== '' && $errorLog !== 'syslog' ? dirname($errorLog) : sys_get_temp_dir();
+
+    return $carpeta . DIRECTORY_SEPARATOR . 'llamadas-servicios.log';
+}
+
+/**
+ * "Navegador" si la petición llegó con sesión; "Servicio" si trae la clave de servicio.
+ */
+function origenDeLaPeticion(): string
+{
+    return isset($_SERVER['HTTP_X_SERVICIO_CLAVE']) ? 'Servicio' : 'Navegador';
+}
+
+/**
+ * Nombre del servicio que atiende la petición (NOMBRE_SERVICIO de su index.php).
+ */
+function nombreDeEsteServicio(): string
+{
+    return defined('NOMBRE_SERVICIO') ? ucfirst((string) constant('NOMBRE_SERVICIO')) : 'Servicio';
+}
+
+/**
+ * /monitoreo-red-soa/servicios/dispositivos/7?x=1 → /dispositivos/7?x=1
+ */
+function rutaDeServicio(string $url): string
+{
+    $ruta = (string) (parse_url($url, PHP_URL_PATH) ?? '');
+    $consulta = parse_url($url, PHP_URL_QUERY);
+    $base = (string) parse_url(URL_SERVICIOS, PHP_URL_PATH);
+
+    if ($base !== '' && str_starts_with($ruta, $base)) {
+        $ruta = substr($ruta, strlen($base));
+    }
+
+    return $ruta . ($consulta ? "?$consulta" : '');
 }
