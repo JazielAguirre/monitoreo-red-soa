@@ -144,7 +144,7 @@ function crearTarjetaEstado(d) {
     textos.append(nombre, elemento('span', 'tarjeta-estado__ip', d.ip));
 
     const pie = elemento('div', 'tarjeta-estado__pie');
-    pie.append(crearTiempo(d, 'tarjeta-estado__tiempo'), elemento('span', 'tarjeta-estado__fecha', formatearFechaCorta(d.ultima_comprobacion, { siVacio: 'Nunca comprobado' })));
+    pie.append(crearTiempo(d, 'tarjeta-estado__tiempo'), elemento('span', 'tarjeta-estado__fecha', formatearFechaCorta(d.ultima_comprobacion, { siVacio: 'Nunca comprobado', compacta: true })));
 
     tarjeta.append(cabecera, textos, pie);
 

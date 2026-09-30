@@ -205,7 +205,7 @@ function crearTabla(visibles) {
     const encabezado = elemento('thead');
     const fila = elemento('tr');
 
-    for (const [texto, clase] of [['Estado'], ['Nombre'], ['Dirección IP'], ['Tipo'], ['Ubicación'], ['Respuesta'], ['Comprobado'], ['Acciones', 'text-end']]) {
+    for (const [texto, clase] of [['Estado'], ['Nombre'], ['Dirección IP'], ['Tipo', 'col-tipo'], ['Ubicación', 'col-ubicacion'], ['Respuesta'], ['Comprobado', 'col-comprobado'], ['Acciones', 'text-end']]) {
         const th = elemento('th', clase ?? '', texto);
         th.scope = 'col';
         fila.append(th);
@@ -238,7 +238,8 @@ function crearFila(d) {
         crearRespuesta(d, 'texto-mono fw-normal'),
         elemento('span', '', formatearFechaCorta(d.ultima_comprobacion, { siVacio: 'Nunca' })),
     ];
-    const clasesCelda = ['', '', '', '', '', '', 'tabla-tenue'];
+    // col-*: columnas que se ocultan cuando la tabla no cabe (container query en app.css).
+    const clasesCelda = ['', '', '', 'col-tipo', 'col-ubicacion', '', 'tabla-tenue col-comprobado'];
 
     celdas.forEach((contenidoCelda, i) => {
         const td = elemento('td', clasesCelda[i]);

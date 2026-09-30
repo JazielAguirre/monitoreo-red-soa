@@ -37,11 +37,14 @@ sudo /opt/lampp/lampp startmysql
 
 # Colores fuera de tokens.css, solo en estilos (CSS, JS, style="" y <style>). Debe no imprimir nada.
 # Los hexadecimales como texto visible en componentes.html son documentación y no se revisan.
+# Excepción: web/favicon.svg lleva sus colores escritos (un favicon no puede usar variables CSS);
+# este grep no lo revisa porque solo mira web/css, web/js y los HTML.
 grep -rnE '#[0-9a-fA-F]{3,8}\b|\b(rgba?|hsla?)\(' web/css web/js --include='*.css' --include='*.js' | grep -v '^web/css/tokens\.css:'
 grep -nE 'style="[^"]*(#[0-9a-fA-F]{3,8}|(rgba?|hsla?)\()|<style' web/*.html
 
 # URLs externas en la interfaz (fuera de vendor/). Debe no imprimir nada.
-grep -rnE 'https?://' web --exclude-dir=vendor
+# favicon.svg se excluye: su xmlns="http://www.w3.org/2000/svg" es obligatorio y no es una petición.
+grep -rnE 'https?://' web --exclude-dir=vendor --exclude=favicon.svg
 
 # Revisar la sintaxis de un archivo PHP (con el PHP de XAMPP, el mismo que usa Apache)
 /opt/lampp/bin/php -l servicios/dispositivos/index.php
@@ -126,7 +129,9 @@ La sesión se lee con session_start(['read_and_close' => true]) (leerUsuarioDeLa
 Cookie monitoreo_soa_sesion: HttpOnly, SameSite=Lax, ruta /monitoreo-red-soa/, 8 horas (DURACION_SESION; también session.gc_maxlifetime y la hora de expiración guardada en la sesión). session_regenerate_id(true) al iniciar sesión, con use_strict_mode.
 Login: mismo mensaje y tiempo similar exista o no el usuario (password_verify() contra HASH_FICTICIO si no existe).
 Diseño de la interfaz
-Tokens: colores, tipografía, espaciados, radios y sombras son variables CSS en web/css/tokens.css. Ningún otro archivo usa valores hexadecimales sueltos.
+Tokens: colores, tipografía, espaciados, radios y sombras son variables CSS en web/css/tokens.css. Ningún otro archivo usa valores hexadecimales sueltos (única excepción: web/favicon.svg, con los valores de --color-base, --color-base-icono y --color-activo escritos, porque un favicon no puede leer variables CSS).
+Caché: web/.htaccess envía Cache-Control: no-cache a .html, .js y .css (menos vendor/), dentro de <IfModule mod_headers.c>. El navegador revalida cada vez y recibe 304 si nada cambió. Existe porque en la Fase 6 un celular siguió usando los JavaScript viejos hasta que se cambió de navegador; el día de la demo puede pasar en cualquier equipo que ya abrió la aplicación. Lo comprueba el inicio de pruebas/interfaz.php.
+Proyector: la interfaz se revisa también a 1024×768 y 1280×720. La tabla de Dispositivos oculta Ubicación, Tipo y Comprobado (en ese orden) con una container query cuando la tarjeta no alcanza; nombre, IP, estado, respuesta y acciones siempre quedan a la vista.
 Referencia visual: docs/diseno/. "Monitoreo de Red SOA.dc.html" es el sistema de diseño (valores finales), "Monitoreo de Red SOA · Pantallas.dc.html" y el PDF muestran las pantallas. Es solo referencia: no copies su código (usa React internamente y carga recursos desde internet).
 Tokens: web/css/tokens.css es el único archivo con colores (hexadecimales o rgb/rgba), agrupados por categoría: paleta base, estados, superficies y bordes, barra lateral, acento, gráficas, transparencias, tipografía y medidas. Además de la paleta del :root del diseño, tokeniza los colores que el diseño escribía directamente (bordes suaves, hover de fila, esqueleto, variantes del acento, colores de la barra lateral, series de la gráfica, fondos de modal y anillos de foco).
 Paleta base (valores finales del sistema de diseño):
@@ -207,7 +212,10 @@ Estado actual
 
 Actualiza esta sección al cerrar cada fase.
 
-Fase actual: 8 — Integración, pruebas y demo (sin empezar).
+Fase actual: 8 — Integración, pruebas y demo, en la rama preparacion-demo (no se fusiona a main hasta que el equipo revise el guion).
+Progreso de la Fase 8 (un commit por subpaso):
+- 8.1 hecho: web/.htaccess con Cache-Control: no-cache (mod_headers activo en XAMPP; 304 al revalidar; vendor/ sin cambios), favicon.svg en las 6 páginas (títulos de pestaña ya estaban), revisión a 1024×768 y 1280×720: tabla de Dispositivos con columnas que se ocultan por container query, filtros de Monitoreos en una fila de 4 entre 1200 y 1399 px, fecha compacta en las tarjetas del Dashboard. interfaz.php 298 comprobaciones (caché, títulos, favicon y proyector).
+- Siguiente: 8.2 preparar-demo.php, 8.3 README y Windows, 8.4 guion y ensayo.
 Completado:
 - Fase 0 — Preparación y prueba de ping: estructura del proyecto, comun/config.php y comun/respuesta.php, puntos de entrada de dispositivos, alertas y monitoreo con reescritura de URLs, esqueletos HTML, librerías en web/vendor/, repositorio git, .htaccess que solo expone web/ y los servicios, y servicios/monitoreo/ping.php probado a través de Apache (127.0.0.1 y la puerta de enlace activos, 192.0.2.1 inactivo en ~1 s, entradas inválidas → 400 sin ejecutar comandos).
 - Fase 1 — Base de datos: database/schema.sql con las 4 tablas de docs/API.md (FK con ON DELETE CASCADE, índices, utf8mb4_unicode_ci), database/seed.sql (6 dispositivos, 56 monitoreos, 1 alerta pendiente y 3 atendidas, usuario admin) y comun/db.php (PDO con EMULATE_PREPARES en false y colación utf8mb4_unicode_ci). Verificado: carga desde cero repetible, coherencia de ultimo_* con el último monitoreo, UNIQUE, FK y cascada (con ROLLBACK).

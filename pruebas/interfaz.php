@@ -18,6 +18,40 @@ const XSS = '<img src=x onerror=alert(1)>';
 
 echo "Pruebas de la interfaz\n";
 
+// =====================================================================
+seccion('8.1 · Caché: páginas, módulos y estilos se revalidan; vendor/ no');
+
+/**
+ * GET a un archivo de web/ (opcionalmente con If-None-Match): [código, cabeceras en minúsculas].
+ */
+function cabecerasDeArchivo(string $ruta, ?string $etiqueta = null): array
+{
+    $contexto = stream_context_create(['http' => [
+        'ignore_errors' => true,
+        'timeout' => 10,
+        'header' => $etiqueta === null ? '' : "If-None-Match: $etiqueta\r\n",
+    ]]);
+    @file_get_contents(URL_INTERFAZ . "/$ruta", false, $contexto);
+    $cabeceras = leerCabeceras($http_response_header ?? []);
+
+    return [$cabeceras['codigo'], $cabeceras['lista']];
+}
+
+foreach (['index.html', 'login.html', 'js/modulos/estructura.js', 'js/api.js', 'css/app.css'] as $archivo) {
+    [$codigo, $cabeceras] = cabecerasDeArchivo($archivo);
+    comprobarIgual([200, 'no-cache'], [$codigo, $cabeceras['cache-control'] ?? null], "$archivo → Cache-Control: no-cache (el navegador pregunta si hay versión nueva)");
+    [$codigo] = cabecerasDeArchivo($archivo, $cabeceras['etag'] ?? '');
+    comprobarIgual(304, $codigo, '  y si no cambió recibe un 304, sin volver a descargarlo');
+}
+[$codigo, $cabeceras] = cabecerasDeArchivo('');
+comprobarIgual([200, 'no-cache'], [$codigo, $cabeceras['cache-control'] ?? null], 'web/ (índice de la carpeta) también');
+foreach (['vendor/bootstrap/css/bootstrap.min.css', 'vendor/chart.js/chart.umd.min.js'] as $archivo) {
+    [$codigo, $cabeceras] = cabecerasDeArchivo($archivo);
+    comprobarIgual([200, null], [$codigo, $cabeceras['cache-control'] ?? null], "$archivo conserva la caché normal (sin no-cache)");
+}
+[$codigo, $cabeceras] = cabecerasDeArchivo('favicon.svg');
+comprobarIgual([200, 'image/svg+xml'], [$codigo, $cabeceras['content-type'] ?? null], 'favicon.svg se sirve como imagen SVG');
+
 $ejecutable = Navegador::buscarEjecutable();
 if ($ejecutable === null) {
     avisar('Pruebas de interfaz omitidas: no se encontró Chrome, Chromium ni Edge (se puede indicar con CHROME_BIN).');
@@ -800,13 +834,13 @@ $r = $navegador->evaluar(<<<'JS'
     ])
 JS);
 comprobarIgual([
-    ['Impresora Laboratorio', 'tarjeta-estado--activo', '2.75 ms', '27/09/2026 09:45'],
-    ['Mi PC', 'tarjeta-estado--activo', '0.06 ms', '27/09/2026 09:45'],
-    ['PC Recepción', 'tarjeta-estado--activo', '0.07 ms', '27/09/2026 09:45'],
-    ['Router principal', 'tarjeta-estado--activo', '32.9 ms', '27/09/2026 09:45'],
+    ['Impresora Laboratorio', 'tarjeta-estado--activo', '2.75 ms', '27/09 09:45'],
+    ['Mi PC', 'tarjeta-estado--activo', '0.06 ms', '27/09 09:45'],
+    ['PC Recepción', 'tarjeta-estado--activo', '0.07 ms', '27/09 09:45'],
+    ['Router principal', 'tarjeta-estado--activo', '32.9 ms', '27/09 09:45'],
     ['Servidor de respaldo', 'tarjeta-estado--desconocido', '—', 'Nunca comprobado'],
-    ['Servidor principal', 'tarjeta-estado--inactivo', 'Sin respuesta', '27/09/2026 09:45'],
-], $r, '6 tarjetas de estado: variante, tiempo y fecha (sin monitorear → «Nunca comprobado»)');
+    ['Servidor principal', 'tarjeta-estado--inactivo', 'Sin respuesta', '27/09 09:45'],
+], $r, '6 tarjetas de estado: variante, tiempo y fecha compacta (sin monitorear → «Nunca comprobado»)');
 comprobarIgual(['monitoreos.html?dispositivo=6', 'dashed'], [$navegador->evaluar("document.querySelector('.tarjeta-estado--desconocido a').getAttribute('href')"), $navegador->evaluar("getComputedStyle(document.querySelector('.tarjeta-estado--desconocido')).borderTopStyle")], '  la tarjeta enlaza al historial; la de «Sin monitorear» tiene borde punteado');
 
 $r = $navegador->evaluar("({ contador: document.getElementById('contador-panel-alertas').textContent, items: [...document.querySelectorAll('.alerta-reciente')].map((a) => [a.querySelector('.alerta-reciente__nombre').textContent, a.querySelector('.insignia-estado').textContent, a.querySelector('.alerta-reciente__fecha').textContent]) })");
@@ -1510,6 +1544,35 @@ foreach ($paginasTeclado as $pagina => $espera) {
     comprobar(count($recorridos) >= 5 && $sinFoco === [], "$pagina: los " . count($recorridos) . ' elementos que se alcanzan con Tab muestran el foco', implode(', ', $sinFoco));
 }
 $navegador->evaluar('document.activeElement.blur()');
+
+// =====================================================================
+seccion('8.1 · Títulos de pestaña, favicon y resoluciones de proyector');
+
+$titulos = ['login.html' => 'Iniciar sesión', 'index.html' => 'Dashboard', 'dispositivos.html' => 'Dispositivos', 'monitoreos.html' => 'Monitoreos', 'alertas.html' => 'Alertas', 'componentes.html' => 'Componentes'];
+foreach ($titulos as $pagina => $titulo) {
+    $html = (string) file_get_contents(__DIR__ . "/../web/$pagina");
+    comprobar(str_contains($html, "<title>$titulo · Monitoreo de Red SOA</title>") && str_contains($html, '<link rel="icon" href="favicon.svg" type="image/svg+xml">'), "$pagina: título «{$titulo} · Monitoreo de Red SOA» y favicon");
+}
+
+// La sesión de las secciones anteriores sigue abierta.
+foreach ([[1024, 768], [1280, 720]] as [$ancho, $alto]) {
+    $navegador->tamano($ancho, $alto);
+    foreach (['index.html', 'dispositivos.html', 'monitoreos.html?dispositivo=4', 'alertas.html', 'login.html?volver=x'] as $pagina) {
+        abrirPagina($navegador, $pagina);
+        $navegador->procesarEventos(1.2);
+        comprobarIgual(false, $navegador->evaluar('document.documentElement.scrollWidth > innerWidth'), "{$ancho}×{$alto} " . strtok($pagina, '?') . ': sin desplazamiento horizontal');
+    }
+    abrirPagina($navegador, 'dispositivos.html');
+    $navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8);
+    $r = $navegador->evaluar("(() => { const t = document.querySelector('.tabla-dispositivos'); const b = document.querySelector('.tabla-dispositivos tbody tr:first-child .tabla-acciones').getBoundingClientRect(); return { cabe: t.scrollWidth <= t.clientWidth, acciones: b.right <= t.getBoundingClientRect().right }; })()");
+    comprobarIgual(['cabe' => true, 'acciones' => true], $r, "  Dispositivos a {$ancho} px: la tabla cabe y los botones Monitorear/Editar/Eliminar quedan a la vista");
+    abrirPagina($navegador, 'monitoreos.html');
+    $navegador->esperarHasta("!document.getElementById('contenido-historial').hasAttribute('aria-busy')", 8);
+    $r = $navegador->evaluar("(() => { const h = document.getElementById('filtro-hasta').getBoundingClientRect(); const b = document.getElementById('restablecer-filtros').getBoundingClientRect(); return h.right <= b.left || h.bottom <= b.top || b.bottom <= h.top; })()");
+    comprobar($r === true, "  Monitoreos a {$ancho} px: «Hasta» no se encima con «Restablecer filtros»");
+    capturar($navegador, "proyector-$ancho-monitoreos");
+}
+$navegador->tamano(1440, 900);
 
 // =====================================================================
 seccion('7.2 · «Salir» cierra la sesión (barra lateral y menú del celular)');
