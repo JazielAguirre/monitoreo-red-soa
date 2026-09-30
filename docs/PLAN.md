@@ -54,7 +54,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 **Archivo de red simulada (`pruebas/.red-simulada.json`, Fase 9).** Sirve para probar el Servicio de Descubrimiento a través de Apache sin depender de la red de quien corre las pruebas y sin enviar nada a la red local. Sigue el mismo modelo que el fallo simulado:
 
 - **Qué es:** si existe y está vigente, el Servicio de Descubrimiento usa como IP propia la que indica el archivo en lugar de detectarla, y lee la tabla ARP del texto que trae el archivo (en el formato del sistema operativo: `ip neigh`, `arp -a` o `arp -an`) en lugar de ejecutar el comando. Los pings son reales.
-- **Solo admite dos redes:** IP propia `127.0.0.1` (la /24 `127.0.0.0/24`, donde todas las direcciones responden) o `192.0.2.1` (la /24 de documentación `192.0.2.0/24`, donde ninguna responde). Cualquier otro valor se ignora, así que el archivo no sirve para escanear otras redes.
+- **Solo escanea dos redes:** IP propia `127.0.0.1` (la /24 `127.0.0.0/24`, donde todas las direcciones responden) o `192.0.2.1` (la /24 de documentación `192.0.2.0/24`, donde ninguna responde). Para probar los 503 sin desconectar nada admite además `null` (sin red) y `198.51.100.1` (documentación, no privada: se rechaza como cualquier red pública). Cualquier otro valor se ignora, así que el archivo no sirve para escanear otras redes.
 - **Solo lo usa `pruebas/descubrimiento.php`**, que lo crea y lo borra (al empezar, al terminar y ante un error fatal). Está en `.gitignore`.
 - **Caduca solo** (campo `expira`, máximo 60 segundos en el futuro) y **no puede activarse por HTTP**, igual que el fallo simulado.
 
