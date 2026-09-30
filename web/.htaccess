@@ -1,0 +1,11 @@
+# Caché de la interfaz: el navegador siempre pregunta si hay una versión nueva de
+# las páginas, los módulos JavaScript y los estilos (Cache-Control: no-cache), y
+# recibe un 304 (sin descargar nada) si no cambiaron. Sin esto, un celular que ya
+# había abierto la aplicación siguió usando los JavaScript de una fase anterior.
+# vendor/ (Bootstrap, Chart.js, fuentes) no cambia y conserva la caché normal.
+# Sin reglas de reescritura: siguen valiendo las del .htaccess de la raíz.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(html|js|css)$">
+        Header set Cache-Control "no-cache" "expr=%{REQUEST_URI} !~ m#/vendor/#"
+    </FilesMatch>
+</IfModule>

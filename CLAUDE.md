@@ -24,6 +24,10 @@ bash
 sudo /opt/lampp/lampp startapache
 sudo /opt/lampp/lampp startmysql
 
+# Preparar la demo: recarga la base, mueve las fechas a hace 10 min, pone las IPs de la red y comprueba todo
+/opt/lampp/bin/php herramientas/preparar-demo.php            # --router=IP --pc=IP, o --sin-red
+/opt/lampp/bin/php herramientas/ver-llamadas.php             # llamadas entre servicios en vivo
+
 # Recrear la base de datos desde cero y cargar datos de prueba
 /opt/lampp/bin/mysql -u root < database/schema.sql
 /opt/lampp/bin/mysql -u root monitoreo_red_soa < database/seed.sql
@@ -37,11 +41,14 @@ sudo /opt/lampp/lampp startmysql
 
 # Colores fuera de tokens.css, solo en estilos (CSS, JS, style="" y <style>). Debe no imprimir nada.
 # Los hexadecimales como texto visible en componentes.html son documentación y no se revisan.
+# Excepción: web/favicon.svg lleva sus colores escritos (un favicon no puede usar variables CSS);
+# este grep no lo revisa porque solo mira web/css, web/js y los HTML.
 grep -rnE '#[0-9a-fA-F]{3,8}\b|\b(rgba?|hsla?)\(' web/css web/js --include='*.css' --include='*.js' | grep -v '^web/css/tokens\.css:'
 grep -nE 'style="[^"]*(#[0-9a-fA-F]{3,8}|(rgba?|hsla?)\()|<style' web/*.html
 
 # URLs externas en la interfaz (fuera de vendor/). Debe no imprimir nada.
-grep -rnE 'https?://' web --exclude-dir=vendor
+# favicon.svg se excluye: su xmlns="http://www.w3.org/2000/svg" es obligatorio y no es una petición.
+grep -rnE 'https?://' web --exclude-dir=vendor --exclude=favicon.svg
 
 # Revisar la sintaxis de un archivo PHP (con el PHP de XAMPP, el mismo que usa Apache)
 /opt/lampp/bin/php -l servicios/dispositivos/index.php
@@ -67,12 +74,14 @@ web/
 ├── js/          api.js (único punto de acceso a la API, URL base relativa; con 401 lleva al login) + modulos/ (formatos, notificaciones, vistas, estructura, sesion, gráficas…) + un módulo ES por página
 ├── vendor/      bootstrap, bootstrap-icons, chart.js, fuentes Inter y JetBrains Mono
 └── *.html       login, index (dashboard), dispositivos, monitoreos, alertas, componentes
+herramientas/    base-de-datos.php (recarga schema y seed; la usan las pruebas y la demo), red.php (detecta puerta de enlace e IP propia), preparar-demo.php, ver-llamadas.php. Solo línea de comandos; no accesible por HTTP
 pruebas/         ayudas.php (peticiones con la cookie de iniciarSesionDePrueba() o con la clave en peticionInterna(), fallo simulado) + un script por servicio (dispositivos.php, ..., auth.php) + interfaz.php con navegador.php (cliente del protocolo de Chrome). Solo línea de comandos; no accesible por HTTP
 Reglas SOA (no negociables)
 Cada servicio solo lee y escribe sus propias tablas.
+Excepción: herramientas/ (como schema.sql y seed.sql) son herramientas de base de datos y pueden tocar todas las tablas; preparar-demo.php mueve fechas e IPs directamente en MySQL. La regla sigue valiendo para todo lo que está en servicios/.
 Si un servicio necesita datos o acciones de otro, los pide por HTTP usando servicios/comun/http.php. Nunca hace require del código de otro servicio ni consultas SQL a tablas ajenas.
 Ejemplo: Monitoreo obtiene la IP con GET /dispositivos/{id}, actualiza el estado con PATCH /dispositivos/{id}/estado y crea alertas con POST /alertas.
-comun/http.php: llamarServicio() usa streams de PHP (no curl), espera TIEMPO_ESPERA_SERVICIOS (config.php) y envía X-Servicio-Clave. Si el otro servicio no responde o no devuelve el JSON del formato común, lanza ErrorDeComunicacion, que el index.php responde como 502 "No se pudo comunicar con el Servicio de {nombre}".
+comun/http.php: llamarServicio() usa streams de PHP (no curl), espera TIEMPO_ESPERA_SERVICIOS (config.php) y envía X-Servicio-Clave. Cada llamada se anota en llamadas-servicios.log, en la carpeta del error_log de PHP (XAMPP: /opt/lampp/logs o C:\xampp\php\logs, donde Apache ya puede escribir): «Monitoreo → Dispositivos: PATCH /dispositivos/7/estado (200, 12 ms)», precedida por la petición que la originó. Sirve para la demo (herramientas/ver-llamadas.php) porque el log de Apache no distingue al navegador de la laptop (127.0.0.1) de los servicios y anota cada petición al terminar. Si no se puede escribir, se ignora. Si el otro servicio no responde o no devuelve el JSON del formato común, lanza ErrorDeComunicacion, que el index.php responde como 502 "No se pudo comunicar con el Servicio de {nombre}".
 Archivo de fallo simulado (pruebas/.fallo-simulado.json, leído por comun/http.php): solo lo usan las pruebas para simular que Dispositivos o Alertas no responde. Caduca solo (máximo 60 s), solo admite modos fijos hacia 127.0.0.1 o web/index.html, y no puede activarse por HTTP (ningún endpoint escribe archivos y pruebas/ responde 404). Detalle en docs/PLAN.md, "Pruebas automáticas".
 La interfaz nunca accede a la base de datos: todo pasa por web/js/api.js.
 Seguridad en la interfaz: los datos de la API se insertan con textContent o pasan por escaparHtml() de web/js/modulos/formatos.js; nunca directo en innerHTML. Las fechas de la API se separan con partesFecha(), nunca con new Date(texto) (Safari del iPhone las toma como inválidas). Los formularios usan novalidate: los mensajes de validación vienen solo de la API.
@@ -126,7 +135,9 @@ La sesión se lee con session_start(['read_and_close' => true]) (leerUsuarioDeLa
 Cookie monitoreo_soa_sesion: HttpOnly, SameSite=Lax, ruta /monitoreo-red-soa/, 8 horas (DURACION_SESION; también session.gc_maxlifetime y la hora de expiración guardada en la sesión). session_regenerate_id(true) al iniciar sesión, con use_strict_mode.
 Login: mismo mensaje y tiempo similar exista o no el usuario (password_verify() contra HASH_FICTICIO si no existe).
 Diseño de la interfaz
-Tokens: colores, tipografía, espaciados, radios y sombras son variables CSS en web/css/tokens.css. Ningún otro archivo usa valores hexadecimales sueltos.
+Tokens: colores, tipografía, espaciados, radios y sombras son variables CSS en web/css/tokens.css. Ningún otro archivo usa valores hexadecimales sueltos (única excepción: web/favicon.svg, con los valores de --color-base, --color-base-icono y --color-activo escritos, porque un favicon no puede leer variables CSS).
+Caché: web/.htaccess envía Cache-Control: no-cache a .html, .js y .css (menos vendor/), dentro de <IfModule mod_headers.c>. El navegador revalida cada vez y recibe 304 si nada cambió. Existe porque en la Fase 6 un celular siguió usando los JavaScript viejos hasta que se cambió de navegador; el día de la demo puede pasar en cualquier equipo que ya abrió la aplicación. Lo comprueba el inicio de pruebas/interfaz.php.
+Proyector: la interfaz se revisa también a 1024×768 y 1280×720. La tabla de Dispositivos oculta Ubicación, Tipo y Comprobado (en ese orden) con una container query cuando la tarjeta no alcanza; nombre, IP, estado, respuesta y acciones siempre quedan a la vista.
 Referencia visual: docs/diseno/. "Monitoreo de Red SOA.dc.html" es el sistema de diseño (valores finales), "Monitoreo de Red SOA · Pantallas.dc.html" y el PDF muestran las pantallas. Es solo referencia: no copies su código (usa React internamente y carga recursos desde internet).
 Tokens: web/css/tokens.css es el único archivo con colores (hexadecimales o rgb/rgba), agrupados por categoría: paleta base, estados, superficies y bordes, barra lateral, acento, gráficas, transparencias, tipografía y medidas. Además de la paleta del :root del diseño, tokeniza los colores que el diseño escribía directamente (bordes suaves, hover de fila, esqueleto, variantes del acento, colores de la barra lateral, series de la gráfica, fondos de modal y anillos de foco).
 Paleta base (valores finales del sistema de diseño):
@@ -207,7 +218,11 @@ Estado actual
 
 Actualiza esta sección al cerrar cada fase.
 
-Fase actual: 8 — Integración, pruebas y demo (sin empezar).
+Fase actual: ninguna. Las Fases 0–8 están completas y fusionadas a main; la etiqueta v1.0 es la versión que se presenta. Repositorio: https://github.com/JazielAguirre/monitoreo-red-soa (remoto origin por SSH).
+Pendientes del equipo (no requieren código):
+- Ensayar docs/DEMO.md en vivo, cronometrado, y grabar el video de respaldo.
+- Repetir las 5 suites en la computadora de otro integrante (Windows: docs/WINDOWS.md; el ping en Windows solo se probó con salidas de ejemplo).
+- Si es posible, conectar la computadora al proyector real del salón (hasta ahora se simuló con Chrome a 1024×768 y 1280×720).
 Completado:
 - Fase 0 — Preparación y prueba de ping: estructura del proyecto, comun/config.php y comun/respuesta.php, puntos de entrada de dispositivos, alertas y monitoreo con reescritura de URLs, esqueletos HTML, librerías en web/vendor/, repositorio git, .htaccess que solo expone web/ y los servicios, y servicios/monitoreo/ping.php probado a través de Apache (127.0.0.1 y la puerta de enlace activos, 192.0.2.1 inactivo en ~1 s, entradas inválidas → 400 sin ejecutar comandos).
 - Fase 1 — Base de datos: database/schema.sql con las 4 tablas de docs/API.md (FK con ON DELETE CASCADE, índices, utf8mb4_unicode_ci), database/seed.sql (6 dispositivos, 56 monitoreos, 1 alerta pendiente y 3 atendidas, usuario admin) y comun/db.php (PDO con EMULATE_PREPARES en false y colación utf8mb4_unicode_ci). Verificado: carga desde cero repetible, coherencia de ultimo_* con el último monitoreo, UNIQUE, FK y cascada (con ROLLBACK).
@@ -217,6 +232,7 @@ Completado:
 - Fase 5 — Sistema de diseño: tokens.css (único archivo con colores, agrupado por categoría, fuentes locales), app.css (Bootstrap por componente y componentes propios de las secciones 01–14, :focus-visible, prefers-reduced-motion) y componentes.html con componentes.css y componentes.js. Comparado con la referencia a 1440 y 390 px, sin peticiones externas, contrastes AA documentados. Aprobado por el equipo.
 - Fase 6 — Pantallas: Dashboard, Dispositivos, Monitoreos y Alertas con los servicios reales. api.js (URL base relativa) y módulos compartidos en web/js/modulos/ (formatos, notificaciones, vistas, estructura, piezas, gráficas, monitorear-todos, formulario-dispositivo, modales); estados de carga, vacío y error en cada vista; filtros en la URL; adaptaciones de celular (tarjetas en Dispositivos, filas en el Dashboard, filas compactas del historial en Monitoreos con una container query, tarjetas apiladas en Alertas); piezas en componentes.html (secciones 15–31). pruebas/interfaz.php con su propio Chrome headless (235 comprobaciones, incluidos el nombre con HTML en las cuatro pantallas y el foco visible con el teclado). Revisado por el equipo contra docs/diseno/, probado en un celular real por la WiFi y con MySQL apagado de verdad.
 - Fase 7 — Inicio de sesión: Servicio de Autenticación (login, logout, sesión) con el patrón de los demás; comun/auth.php con acceso por ruta ([Interfaz]: sesión o clave → 401; [Interno]: solo clave → 403; clave aleatoria comparada con hash_equals); sesión leída con read_and_close (sin bloqueo: 3 peticiones que esperan 3 s tardan 3 s juntas, no 9); cookie HttpOnly, SameSite=Lax, ruta del proyecto, 8 h; login con el mismo mensaje y tiempo exista o no el usuario. login.html (5a y 5b), redirección con «volver» validado, iniciarPagina() en cada pantalla, usuario real y «Salir». pruebas/auth.php (126) y las demás suites con sesión; interfaz.php entra por la pantalla real. «Monitorear todos» tarda lo mismo que antes (5.30 s contra 5.29 s). Probado a mano por el equipo en la computadora y en el celular.
+- Fase 8 — Integración, pruebas y demo: web/.htaccess con Cache-Control: no-cache (vendor/ sin cambios), favicon.svg, ajustes para proyector (columnas de Dispositivos por container query, filtros de Monitoreos, fecha compacta). herramientas/preparar-demo.php (fechas movidas a hace 10 min, IPs detectadas, indicadas o --sin-red, comprobación previa con ✓/✗ y «Qué hacer»), registro de llamadas entre servicios con herramientas/ver-llamadas.php. README completo y docs/WINDOWS.md. docs/DEMO.md: guion de 5 min para 4 integrantes (70–80 s cada uno, frases a 130 palabras por minuto), preguntas con quién responde, plan B y «Si pasa X, haz Y», revisado por el equipo. Con el seed, «Monitorear todos» crea 2 alertas en vivo (Impresora y Servidor de respaldo): el contador va de 1 a 3 (a 4 si el router no responde o con --sin-red). Las 5 suites pasan (dispositivos 207, alertas 154, monitoreo 221, auth 126, interfaz 319, con el ensayo completo del guion) y pasaron en una copia recién clonada siguiendo el README. Al cambiar el enlace de htdocs, PHP sigue un rato con la carpeta anterior (realpath_cache_ttl = 120 s): reiniciar Apache o esperar 130 s antes de probar y antes de borrar la carpeta anterior.
 Pendientes o decisiones abiertas:
 - Con EMULATE_PREPARES en false, PDO ya devuelve INT como int, pero DECIMAL sigue como texto y TINYINT como int (1): cada servicio convierte a número y booleano antes de responder (Dispositivos lo hace en formatearDispositivo()).
 - El 1452 de POST /monitoreo (dispositivo borrado entre el paso 1 y el 3) se prueba en datos.php, no de punta a punta: provocar esa carrera por HTTP no es confiable.

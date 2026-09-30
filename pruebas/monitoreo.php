@@ -435,4 +435,91 @@ comprobarRespuesta($r, 201, 'con sesión, POST /monitoreo/6 completa el flujo (G
 comprobarIgual(true, $r['json']['data']['alerta_creada'] ?? null, '  y crea la alerta a través del endpoint [Interno] POST /alertas');
 recargarBaseDeDatos();
 
+// =====================================================================
+seccion('12. Registro de llamadas entre servicios (comun/http.php)');
+
+recargarBaseDeDatos();
+$registro = archivoRegistroLlamadas();
+$antes = is_file($registro) ? (int) filesize($registro) : 0;
+peticion('POST', '/monitoreo/6'); // Servidor de respaldo: no responde → también llama a Alertas
+clearstatcache(true, $registro);
+if (!is_readable($registro)) {
+    avisar("Registro de llamadas no comprobado: no se puede leer $registro desde las pruebas.");
+} else {
+    $nuevo = (string) file_get_contents($registro, false, null, $antes);
+    $lineas = array_map(fn($l) => preg_replace('/^\[\d{2}:\d{2}:\d{2}\] /', '', $l), array_values(array_filter(explode("\n", $nuevo))));
+    $sinTiempos = array_map(fn($l) => preg_replace('/, \d+ ms\)$/', ')', $l), $lineas);
+    comprobarIgual([
+        'Navegador → Monitoreo: POST /monitoreo/6',
+        '  Monitoreo → Dispositivos: GET /dispositivos/6 (200)',
+        '  Monitoreo → Dispositivos: PATCH /dispositivos/6/estado (200)',
+        '  Monitoreo → Alertas: POST /alertas (201)',
+    ], $sinTiempos, 'POST /monitoreo/6 anota la petición del navegador y, debajo, cada llamada entre servicios con su código');
+    comprobar(preg_match('/^\[\d{2}:\d{2}:\d{2}\]   Monitoreo → Alertas: POST \/alertas \(201, \d+ ms\)$/m', $nuevo) === 1, '  cada línea lleva la hora y los milisegundos', $nuevo);
+}
+
+// =====================================================================
+seccion('13. Preparación de la demo (herramientas/preparar-demo.php)');
+
+require_once __DIR__ . '/../herramientas/red.php';
+
+/**
+ * Corre preparar-demo.php con los argumentos dados: [código de salida, salida].
+ */
+function prepararDemo(string $argumentos): array
+{
+    exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/../herramientas/preparar-demo.php') . " $argumentos 2>&1", $salida, $codigo);
+
+    return [$codigo, implode("\n", $salida)];
+}
+
+/**
+ * Todas las fechas de la base, como segundos desde 1970, por "tabla.columna.id".
+ */
+function fechasDeLaBase(): array
+{
+    $fechas = [];
+    foreach (['dispositivos' => ['fecha_registro', 'ultima_comprobacion'], 'monitoreos' => ['fecha'], 'alertas' => ['fecha', 'fecha_atendida'], 'usuarios' => ['fecha_registro']] as $tabla => $columnas) {
+        foreach ($columnas as $columna) {
+            foreach (filasBd("SELECT id, $columna AS f FROM $tabla WHERE $columna IS NOT NULL") as $fila) {
+                $fechas["$tabla.$columna.{$fila['id']}"] = strtotime($fila['f']);
+            }
+        }
+    }
+
+    return $fechas;
+}
+
+$ipPropia = detectarIpPropia();
+$puerta = detectarPuertaDeEnlace();
+$formaValida = fn(?string $ip): bool => $ip === null || (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false && !str_starts_with($ip, '127.'));
+comprobar($formaValida($ipPropia) && $formaValida($puerta), 'la detección devuelve una IPv4 de red o null (sin red), nunca otra cosa', json_encode([$ipPropia, $puerta]));
+
+recargarBaseDeDatos();
+$antesFechas = fechasDeLaBase();
+[$codigo, $salida] = prepararDemo('--router=192.0.2.30 --pc=127.0.0.2');
+comprobarIgual(0, $codigo, 'preparar-demo.php --router=192.0.2.30 --pc=127.0.0.2 termina bien (código 0)', $salida);
+$despues = fechasDeLaBase();
+$diferencias = array_unique(array_map(fn($clave) => $despues[$clave] - $antesFechas[$clave], array_keys($antesFechas)));
+comprobar(count($diferencias) === 1 && array_keys($antesFechas) === array_keys($despues), 'todas las fechas se movieron lo mismo: se conservan las distancias entre ellas', json_encode(array_values($diferencias)));
+$ultima = strtotime((string) valorBd('SELECT MAX(fecha) FROM monitoreos'));
+comprobar(abs(time() - 600 - $ultima) <= 60, '  la última ronda de monitoreo quedó de hace unos 10 minutos', date('Y-m-d H:i:s', $ultima));
+comprobar(strtotime((string) valorBd('SELECT MAX(fecha_atendida) FROM alertas')) < strtotime('today'), '  las alertas atendidas siguen siendo de días anteriores');
+comprobarIgual(['192.0.2.30', '127.0.0.2', '127.0.0.1'], [valorBd('SELECT ip FROM dispositivos WHERE id = 2'), valorBd('SELECT ip FROM dispositivos WHERE id = 3'), valorBd('SELECT ip FROM dispositivos WHERE id = 1')], 'el router y PC Recepción tienen las IPs indicadas; los demás, las del seed');
+comprobarIgual([['192.0.2.30'], ['127.0.0.2']], [array_column(filasBd('SELECT DISTINCT ip FROM monitoreos WHERE dispositivo_id = 2'), 'ip'), array_column(filasBd('SELECT DISTINCT ip FROM monitoreos WHERE dispositivo_id = 3'), 'ip')], '  también en su historial de monitoreos');
+foreach (['Router principal ... 192.0.2.30 (indicada)', '✓ Apache responde', '✓ Los servicios contestan', '✓ La base tiene los datos de la demo', 'no responde, como se espera', '✓ PC Recepción (127.0.0.2) responde al ping', 'Todo listo para la demo.'] as $texto) {
+    comprobar(str_contains($salida, $texto), "  el resumen y la comprobación previa incluyen «{$texto}»");
+}
+
+recargarBaseDeDatos();
+peticion('PUT', '/dispositivos/1', ['nombre' => 'Marca de la prueba', 'ip' => '127.0.0.1', 'tipo' => 'computadora', 'ubicacion' => 'Laboratorio']);
+foreach (['--router=300.1.1.1' => 'no es una IPv4 válida', '--router=192.0.2.40 --pc=192.0.2.40' => 'no pueden tener la misma IP', '--otra-opcion' => 'Uso:'] as $argumentos => $mensaje) {
+    [$codigo, $salida] = prepararDemo($argumentos);
+    comprobar($codigo === 2 && str_contains($salida, $mensaje), "$argumentos → código 2 y «{$mensaje}»", $salida);
+}
+comprobarIgual('Marca de la prueba', valorBd('SELECT nombre FROM dispositivos WHERE id = 1'), '  sin tocar la base de datos');
+[$codigo, $salida] = prepararDemo('--router=192.0.2.40 --pc=127.0.0.1');
+comprobar($codigo === 2 && str_contains($salida, 'ya es de «Mi PC»'), 'una IP que ya usa otro dispositivo (Mi PC) → código 2', $salida);
+comprobarIgual(['2026-09-27 09:45:03', '192.168.0.1'], [valorBd('SELECT MAX(fecha) FROM monitoreos'), valorBd('SELECT ip FROM dispositivos WHERE id = 2')], '  y la base queda con el seed sin mover fechas ni IPs');
+
 terminarPruebas();

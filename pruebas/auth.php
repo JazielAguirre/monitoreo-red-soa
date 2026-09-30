@@ -89,9 +89,14 @@ $expira = strtotime((string) ($cookie['expires'] ?? ''));
 comprobar(is_int($expira) && abs($expira - (time() + DURACION_SESION)) < 60, '  Expires dentro de 8 horas', (string) ($cookie['expires'] ?? '(ninguno)'));
 $idSesion = $r['cookie'];
 
-$gc = trim((string) shell_exec(escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg(
-    'require ' . var_export(__DIR__ . '/../servicios/comun/auth.php', true) . '; configurarSesion(); echo ini_get("session.gc_maxlifetime");'
-)));
+// En un proceso aparte (configurarSesion() cambia ajustes de PHP). Un script temporal en
+// lugar de «php -r "…"»: en Windows, escapeshellarg() cambia las comillas dobles por espacios.
+$temporal = tempnam(sys_get_temp_dir(), 'gc');
+$script = "$temporal.php";
+file_put_contents($script, '<?php require ' . var_export(realpath(__DIR__ . '/../servicios/comun/auth.php'), true) . "; configurarSesion(); echo ini_get('session.gc_maxlifetime');");
+$gc = trim((string) shell_exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($script)));
+unlink($script);
+unlink($temporal);
 comprobarIgual((string) DURACION_SESION, $gc, 'configurarSesion() fija session.gc_maxlifetime en 8 horas');
 comprobarIgual(null, usuarioVigente(['usuario' => USUARIO_ADMIN, 'expira' => time() - 1]), 'una sesión cuya hora de expiración ya pasó no vale (usuarioVigente)');
 comprobarIgual(USUARIO_ADMIN, usuarioVigente(['usuario' => USUARIO_ADMIN, 'expira' => time() + 60]), '  y una vigente, sí');
@@ -355,6 +360,7 @@ seccion('13. Cada pantalla confirma la sesión antes de pedir datos (esqueleto m
 foreach (['index.html' => '#panel-estado', 'dispositivos.html' => '#contenido-dispositivos', 'monitoreos.html' => '#contenido-historial', 'alertas.html' => '#lista-alertas'] as $pantalla => $contenedor) {
     $navegador->interceptar('auth/sesion', ['retener' => true]);
     abrir($navegador, $pantalla);
+    $navegador->esperarRetenida('auth/sesion');
     $pedidas = $navegador->evaluar("performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.includes('/servicios/') && !n.includes('/auth/sesion')).length");
     $r = $navegador->evaluar("({ ocupado: document.querySelector('$contenedor')?.getAttribute('aria-busy'), esqueletos: document.querySelectorAll('$contenedor .esqueleto, $contenedor [class*=\"esqueleto\"]').length > 0 })");
     comprobarIgual([0, ['ocupado' => 'true', 'esqueletos' => true]], [$pedidas, $r], "$pantalla: mientras GET /auth/sesion no responde, no pide datos y muestra el esqueleto");

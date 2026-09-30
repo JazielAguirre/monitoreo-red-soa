@@ -1883,6 +1883,32 @@ a.encabezado-movil__boton:hover {
     border-top: 0;
 }
 
+/* Proyector y pantallas medianas (1024–1366 px): si la tarjeta no alcanza para la tabla
+   completa (~1124 px con los datos del seed), se ocultan primero las columnas que menos
+   importan para operar; nombre, IP, estado, respuesta y acciones siempre quedan a la
+   vista. El detalle completo sigue en el formulario de edición. */
+.panel-dispositivos {
+    container: dispositivos / inline-size;
+}
+
+@container dispositivos (max-width: 1123.98px) {
+    .tabla-dispositivos .col-ubicacion {
+        display: none;
+    }
+}
+
+@container dispositivos (max-width: 929.98px) {
+    .tabla-dispositivos .col-tipo {
+        display: none;
+    }
+}
+
+@container dispositivos (max-width: 799.98px) {
+    .tabla-dispositivos .col-comprobado {
+        display: none;
+    }
+}
+
 .tabla-ubicacion {
     display: inline-block;
     max-width: 180px;
@@ -3133,6 +3159,18 @@ a.encabezado-movil__boton:hover {
 .paginacion__botones {
     display: flex;
     gap: 8px;
+}
+
+/* 1200–1399 px (proyector de 1280): los cuatro filtros en una fila y «Restablecer» debajo. */
+@media (max-width: 1399.98px) {
+    .filtros-historial {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .filtros-historial__acciones {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
 }
 
 @media (max-width: 1199.98px) {

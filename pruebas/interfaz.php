@@ -18,6 +18,40 @@ const XSS = '<img src=x onerror=alert(1)>';
 
 echo "Pruebas de la interfaz\n";
 
+// =====================================================================
+seccion('8.1 · Caché: páginas, módulos y estilos se revalidan; vendor/ no');
+
+/**
+ * GET a un archivo de web/ (opcionalmente con If-None-Match): [código, cabeceras en minúsculas].
+ */
+function cabecerasDeArchivo(string $ruta, ?string $etiqueta = null): array
+{
+    $contexto = stream_context_create(['http' => [
+        'ignore_errors' => true,
+        'timeout' => 10,
+        'header' => $etiqueta === null ? '' : "If-None-Match: $etiqueta\r\n",
+    ]]);
+    @file_get_contents(URL_INTERFAZ . "/$ruta", false, $contexto);
+    $cabeceras = leerCabeceras($http_response_header ?? []);
+
+    return [$cabeceras['codigo'], $cabeceras['lista']];
+}
+
+foreach (['index.html', 'login.html', 'js/modulos/estructura.js', 'js/api.js', 'css/app.css'] as $archivo) {
+    [$codigo, $cabeceras] = cabecerasDeArchivo($archivo);
+    comprobarIgual([200, 'no-cache'], [$codigo, $cabeceras['cache-control'] ?? null], "$archivo → Cache-Control: no-cache (el navegador pregunta si hay versión nueva)");
+    [$codigo] = cabecerasDeArchivo($archivo, $cabeceras['etag'] ?? '');
+    comprobarIgual(304, $codigo, '  y si no cambió recibe un 304, sin volver a descargarlo');
+}
+[$codigo, $cabeceras] = cabecerasDeArchivo('');
+comprobarIgual([200, 'no-cache'], [$codigo, $cabeceras['cache-control'] ?? null], 'web/ (índice de la carpeta) también');
+foreach (['vendor/bootstrap/css/bootstrap.min.css', 'vendor/chart.js/chart.umd.min.js'] as $archivo) {
+    [$codigo, $cabeceras] = cabecerasDeArchivo($archivo);
+    comprobarIgual([200, null], [$codigo, $cabeceras['cache-control'] ?? null], "$archivo conserva la caché normal (sin no-cache)");
+}
+[$codigo, $cabeceras] = cabecerasDeArchivo('favicon.svg');
+comprobarIgual([200, 'image/svg+xml'], [$codigo, $cabeceras['content-type'] ?? null], 'favicon.svg se sirve como imagen SVG');
+
 $ejecutable = Navegador::buscarEjecutable();
 if ($ejecutable === null) {
     avisar('Pruebas de interfaz omitidas: no se encontró Chrome, Chromium ni Edge (se puede indicar con CHROME_BIN).');
@@ -465,6 +499,7 @@ recargarBaseDeDatos();
 $navegador->tamano(1440, 900);
 $navegador->interceptar('servicios/dispositivos', ['retener' => true]);
 abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarRetenida('servicios/dispositivos'); // sale después de confirmar la sesión
 $r = $navegador->evaluar("({ ocupado: document.getElementById('contenido-dispositivos').getAttribute('aria-busy'), esqueletos: document.querySelectorAll('#contenido-dispositivos .esqueleto').length, monitorearTodos: document.getElementById('monitorear-todos-escritorio').disabled })");
 comprobarIgual(['ocupado' => 'true', 'esqueletos' => 16, 'monitorearTodos' => true], $r, 'mientras llegan los datos: esqueleto (aria-busy) y "Monitorear todos" deshabilitado');
 $navegador->liberar('servicios/dispositivos');
@@ -773,6 +808,7 @@ recargarBaseDeDatos();
 $navegador->tamano(1440, 900);
 $navegador->interceptar('servicios/dispositivos', ['retener' => true]);
 abrirPagina($navegador, 'index.html');
+$navegador->esperarRetenida('servicios/dispositivos'); // sale después de confirmar la sesión
 comprobarIgual([4, 'true'], [$navegador->evaluar("document.querySelectorAll('.indicadores .esqueleto').length"), $navegador->evaluar("document.getElementById('panel-estado').getAttribute('aria-busy')")], 'mientras cargan: esqueleto en los indicadores y en el estado de dispositivos');
 $navegador->liberar('servicios/dispositivos');
 $navegador->quitarIntercepciones();
@@ -800,13 +836,13 @@ $r = $navegador->evaluar(<<<'JS'
     ])
 JS);
 comprobarIgual([
-    ['Impresora Laboratorio', 'tarjeta-estado--activo', '2.75 ms', '27/09/2026 09:45'],
-    ['Mi PC', 'tarjeta-estado--activo', '0.06 ms', '27/09/2026 09:45'],
-    ['PC Recepción', 'tarjeta-estado--activo', '0.07 ms', '27/09/2026 09:45'],
-    ['Router principal', 'tarjeta-estado--activo', '32.9 ms', '27/09/2026 09:45'],
+    ['Impresora Laboratorio', 'tarjeta-estado--activo', '2.75 ms', '27/09 09:45'],
+    ['Mi PC', 'tarjeta-estado--activo', '0.06 ms', '27/09 09:45'],
+    ['PC Recepción', 'tarjeta-estado--activo', '0.07 ms', '27/09 09:45'],
+    ['Router principal', 'tarjeta-estado--activo', '32.9 ms', '27/09 09:45'],
     ['Servidor de respaldo', 'tarjeta-estado--desconocido', '—', 'Nunca comprobado'],
-    ['Servidor principal', 'tarjeta-estado--inactivo', 'Sin respuesta', '27/09/2026 09:45'],
-], $r, '6 tarjetas de estado: variante, tiempo y fecha (sin monitorear → «Nunca comprobado»)');
+    ['Servidor principal', 'tarjeta-estado--inactivo', 'Sin respuesta', '27/09 09:45'],
+], $r, '6 tarjetas de estado: variante, tiempo y fecha compacta (sin monitorear → «Nunca comprobado»)');
 comprobarIgual(['monitoreos.html?dispositivo=6', 'dashed'], [$navegador->evaluar("document.querySelector('.tarjeta-estado--desconocido a').getAttribute('href')"), $navegador->evaluar("getComputedStyle(document.querySelector('.tarjeta-estado--desconocido')).borderTopStyle")], '  la tarjeta enlaza al historial; la de «Sin monitorear» tiene borde punteado');
 
 $r = $navegador->evaluar("({ contador: document.getElementById('contador-panel-alertas').textContent, items: [...document.querySelectorAll('.alerta-reciente')].map((a) => [a.querySelector('.alerta-reciente__nombre').textContent, a.querySelector('.insignia-estado').textContent, a.querySelector('.alerta-reciente__fecha').textContent]) })");
@@ -989,6 +1025,7 @@ recargarBaseDeDatos();
 $navegador->tamano(1440, 900);
 $navegador->interceptar('servicios/monitoreo?', ['retener' => true]);
 abrirPagina($navegador, 'monitoreos.html');
+$navegador->esperarRetenida('servicios/monitoreo?'); // sale después de confirmar la sesión
 $navegador->esperarHasta("document.getElementById('filtro-dispositivo').options.length > 1", 8);
 comprobarIgual(['true', 3, 'true'], [
     $navegador->evaluar("document.getElementById('contenido-historial').getAttribute('aria-busy')"),
@@ -1296,7 +1333,7 @@ recargarBaseDeDatos();
 $navegador->tamano(1440, 900);
 $navegador->interceptar('servicios/alertas?', ['retener' => true]);
 abrirPagina($navegador, 'alertas.html');
-$navegador->procesarEventos(0.5);
+$navegador->esperarRetenida('servicios/alertas?'); // sale después de confirmar la sesión
 comprobarIgual(['true', 2], [$navegador->evaluar("document.getElementById('lista-alertas').getAttribute('aria-busy')"), $navegador->evaluar("document.querySelectorAll('#lista-alertas .alerta--esqueleto').length")], 'mientras carga: esqueleto de dos alertas');
 $navegador->liberar('servicios/alertas?');
 $navegador->quitarIntercepciones();
@@ -1510,6 +1547,184 @@ foreach ($paginasTeclado as $pagina => $espera) {
     comprobar(count($recorridos) >= 5 && $sinFoco === [], "$pagina: los " . count($recorridos) . ' elementos que se alcanzan con Tab muestran el foco', implode(', ', $sinFoco));
 }
 $navegador->evaluar('document.activeElement.blur()');
+
+// =====================================================================
+seccion('8.1 · Títulos de pestaña, favicon y resoluciones de proyector');
+
+$titulos = ['login.html' => 'Iniciar sesión', 'index.html' => 'Dashboard', 'dispositivos.html' => 'Dispositivos', 'monitoreos.html' => 'Monitoreos', 'alertas.html' => 'Alertas', 'componentes.html' => 'Componentes'];
+foreach ($titulos as $pagina => $titulo) {
+    $html = (string) file_get_contents(__DIR__ . "/../web/$pagina");
+    comprobar(str_contains($html, "<title>$titulo · Monitoreo de Red SOA</title>") && str_contains($html, '<link rel="icon" href="favicon.svg" type="image/svg+xml">'), "$pagina: título «{$titulo} · Monitoreo de Red SOA» y favicon");
+}
+
+// La sesión de las secciones anteriores sigue abierta.
+foreach ([[1024, 768], [1280, 720]] as [$ancho, $alto]) {
+    $navegador->tamano($ancho, $alto);
+    foreach (['index.html', 'dispositivos.html', 'monitoreos.html?dispositivo=4', 'alertas.html', 'login.html?volver=x'] as $pagina) {
+        abrirPagina($navegador, $pagina);
+        $navegador->procesarEventos(1.2);
+        comprobarIgual(false, $navegador->evaluar('document.documentElement.scrollWidth > innerWidth'), "{$ancho}×{$alto} " . strtok($pagina, '?') . ': sin desplazamiento horizontal');
+    }
+    abrirPagina($navegador, 'dispositivos.html');
+    $navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8);
+    $r = $navegador->evaluar("(() => { const t = document.querySelector('.tabla-dispositivos'); const b = document.querySelector('.tabla-dispositivos tbody tr:first-child .tabla-acciones').getBoundingClientRect(); return { cabe: t.scrollWidth <= t.clientWidth, acciones: b.right <= t.getBoundingClientRect().right }; })()");
+    comprobarIgual(['cabe' => true, 'acciones' => true], $r, "  Dispositivos a {$ancho} px: la tabla cabe y los botones Monitorear/Editar/Eliminar quedan a la vista");
+    abrirPagina($navegador, 'monitoreos.html');
+    $navegador->esperarHasta("!document.getElementById('contenido-historial').hasAttribute('aria-busy')", 8);
+    $r = $navegador->evaluar("(() => { const h = document.getElementById('filtro-hasta').getBoundingClientRect(); const b = document.getElementById('restablecer-filtros').getBoundingClientRect(); return h.right <= b.left || h.bottom <= b.top || b.bottom <= h.top; })()");
+    comprobar($r === true, "  Monitoreos a {$ancho} px: «Hasta» no se encima con «Restablecer filtros»");
+    capturar($navegador, "proyector-$ancho-monitoreos");
+}
+$navegador->tamano(1440, 900);
+
+// =====================================================================
+seccion('8.4 · Ensayo del guion de la demo (docs/DEMO.md), a 1280×720');
+
+/**
+ * Contador de alertas pendientes del menú lateral (0 si está oculto).
+ */
+function contadorDelMenu(Navegador $navegador): int
+{
+    return (int) $navegador->evaluar("(() => { const c = document.querySelector('#barra-lateral .js-contador-alertas'); return c.hidden ? 0 : Number(c.textContent); })()");
+}
+
+/**
+ * Corre un script de PHP de la carpeta del proyecto y devuelve [código de salida, salida].
+ */
+function correrScript(string $ruta, string $opciones = ''): array
+{
+    exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . "/../$ruta") . " $opciones 2>&1", $salida, $codigo);
+    return [$codigo, implode("\n", $salida)];
+}
+
+// 127.0.0.3 hace de router que responde (como en la red de la demo); 127.0.0.2, de PC Recepción.
+[$codigoDemo, $salidaDemo] = correrScript('herramientas/preparar-demo.php', '--router=127.0.0.3 --pc=127.0.0.2');
+comprobarIgual(0, $codigoDemo, 'antes de empezar: preparar-demo.php deja todo listo (comprobación previa en ✓)', $salidaDemo);
+$navegador->tamano(1280, 720);
+$navegador->erroresJs = [];
+
+// Integrante 1: Dashboard y «Monitorear todos».
+abrirPagina($navegador, 'index.html');
+esperarDashboard($navegador);
+comprobar(str_starts_with((string) $navegador->evaluar("document.getElementById('ultima-comprobacion').textContent"), date('d/m/Y')), 'Integrante 1: el Dashboard muestra la última comprobación de hoy (fechas movidas por el script)');
+comprobarIgual(1, contadorDelMenu($navegador), '  al empezar hay 1 alerta pendiente (la del Servidor principal)');
+clic($navegador, '#monitorear-todos');
+comprobar($navegador->esperarHasta("!document.getElementById('monitorear-todos').disabled && document.getElementById('progreso-monitoreo').hidden", 40), '  «Monitorear todos» recorre los 6 dispositivos y termina');
+$navegador->esperarHasta('Number(document.querySelector("#barra-lateral .js-contador-alertas").textContent) === 3', 5);
+$titulosDemo = notificaciones($navegador);
+sort($titulosDemo);
+comprobarIgual([['2 dispositivos no respondieron', 'Monitoreo completado'], true, 3], [
+    $titulosDemo,
+    $navegador->evaluar("document.querySelector('#panel-estado .tarjeta-estado[data-id=\"5\"]')?.classList.contains('tarjeta-estado--inactivo')"),
+    contadorDelMenu($navegador),
+], '  la Impresora pasa a inactiva (primera alerta en vivo), con el Servidor de respaldo: el contador va de 1 a 3');
+cerrarNotificaciones($navegador);
+
+// Integrante 2: agregar (primero con una IP mala) y monitorear.
+abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8);
+clic($navegador, '#agregar-dispositivo');
+esperarModal($navegador, 'modal-dispositivo', true);
+escribir($navegador, '#campo-nombre', 'Servidor de pruebas');
+escribir($navegador, '#campo-ip', '192.168.1.300');
+clic($navegador, 'label[for="tipo-servidor"]');
+escribir($navegador, '#campo-ubicacion', 'Laboratorio');
+clic($navegador, '#modal-dispositivo [type="submit"]');
+$navegador->esperarHasta("!document.getElementById('error-ip').hidden", 5);
+comprobarIgual(['Dirección IP no válida', true], [$navegador->evaluar("document.getElementById('error-ip').textContent"), $navegador->evaluar("document.getElementById('modal-dispositivo').classList.contains('show')")], 'Integrante 2: con 192.168.1.300, el mensaje de la API bajo el campo IP y el modal sigue abierto');
+escribir($navegador, '#campo-ip', '192.0.2.50');
+clic($navegador, '#modal-dispositivo [type="submit"]');
+esperarModal($navegador, 'modal-dispositivo', false);
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 7", 8);
+$idPruebas = (int) valorBd("SELECT id FROM dispositivos WHERE ip = '192.0.2.50'");
+comprobar($idPruebas > 0, '  con 192.0.2.50 se agrega «Servidor de pruebas» (7 dispositivos)');
+cerrarNotificaciones($navegador); // «Dispositivo agregado»
+$registroLlamadas = archivoRegistroLlamadas();
+clic($navegador, ".tabla-dispositivos tr[data-id=\"$idPruebas\"] [data-accion=\"monitorear\"]");
+$navegador->esperarHasta("[...document.querySelectorAll('.toast .notificacion__titulo')].some((t) => t.textContent === 'Servidor de pruebas no respondió')", 10);
+$navegador->esperarHasta('Number(document.querySelector("#barra-lateral .js-contador-alertas").textContent) === 4', 5);
+comprobarIgual(['Servidor de pruebas no respondió', 'Inactivo', 4], [
+    notificaciones($navegador)[0] ?? null,
+    $navegador->evaluar("document.querySelector('.tabla-dispositivos tr[data-id=\"$idPruebas\"] .insignia-estado')?.textContent"),
+    contadorDelMenu($navegador),
+], '  al monitorearlo: notificación de la alerta, fila Inactivo y el contador del menú va de 3 a 4');
+cerrarNotificaciones($navegador);
+
+// Integrante 3: con el registro recién limpiado, monitorear otra vez; después, atender la alerta.
+clearstatcache(true, $registroLlamadas);
+$tamanoRegistro = is_file($registroLlamadas) ? (int) filesize($registroLlamadas) : 0;
+clic($navegador, ".tabla-dispositivos tr[data-id=\"$idPruebas\"] [data-accion=\"monitorear\"]");
+$navegador->esperarHasta("[...document.querySelectorAll('.toast .notificacion__texto')].some((t) => t.textContent.startsWith('Ya tenía una alerta pendiente.'))", 10);
+comprobarIgual(['Servidor de pruebas no respondió', 'Ya tenía una alerta pendiente. Ver alertas', 4], [
+    notificaciones($navegador)[0] ?? null,
+    $navegador->evaluar("document.querySelector('.toast .notificacion__texto')?.textContent"),
+    contadorDelMenu($navegador),
+], 'Integrante 3: al monitorear otra vez, «Ya tenía una alerta pendiente.» y el contador sigue en 4');
+cerrarNotificaciones($navegador);
+clearstatcache(true, $registroLlamadas);
+if (is_readable($registroLlamadas)) {
+    $llamadas = trim((string) file_get_contents($registroLlamadas, false, null, $tamanoRegistro));
+    $lineas = $llamadas === '' ? [] : explode("\n", (string) preg_replace('/^\[\d\d:\d\d:\d\d\] /m', '', $llamadas));
+    $esperadas = ["Navegador → Monitoreo: POST /monitoreo/$idPruebas", "  Monitoreo → Dispositivos: GET /dispositivos/$idPruebas (200, ", "  Monitoreo → Dispositivos: PATCH /dispositivos/$idPruebas/estado (200, ", '  Monitoreo → Alertas: POST /alertas (200, '];
+    $coinciden = count($lineas) === 4;
+    foreach ($esperadas as $i => $inicio) {
+        $coinciden = $coinciden && str_starts_with($lineas[$i] ?? '', $inicio);
+    }
+    comprobar($coinciden, '  el registro muestra exactamente sus 4 líneas, y POST /alertas responde 200 (la alerta ya existía, no se duplicó)', $llamadas);
+} else {
+    avisar("Registro de llamadas no comprobado en el ensayo: no se puede leer $registroLlamadas.");
+}
+abrirPagina($navegador, 'alertas.html');
+esperarAlertas($navegador);
+$idAlerta = (int) valorBd("SELECT id FROM alertas WHERE dispositivo_id = $idPruebas AND atendida = 0");
+clic($navegador, "#lista-alertas .alerta[data-id=\"$idAlerta\"] .alerta__boton");
+$navegador->esperarHasta("!document.querySelector('#lista-alertas .alerta[data-id=\"$idAlerta\"]')", 8);
+$navegador->procesarEventos(0.4);
+comprobarIgual([3, 1], [contadorDelMenu($navegador), (int) valorBd("SELECT atendida FROM alertas WHERE id = $idAlerta")], '  «Marcar como atendida»: la alerta sale de Pendientes y el contador del menú va de 4 a 3');
+cerrarNotificaciones($navegador);
+
+// Integrante 4: historial y eliminar.
+abrirPagina($navegador, 'monitoreos.html');
+esperarMonitoreos($navegador);
+escribir($navegador, '#filtro-dispositivo', '4');
+esperarMonitoreos($navegador);
+comprobarIgual([true, true], [$navegador->evaluar("!!document.querySelector('#panel-grafica canvas')"), $navegador->evaluar("document.getElementById('resumen-disponibilidad').textContent.endsWith('%')")], 'Integrante 4: el historial del Servidor principal con su gráfica y la disponibilidad');
+abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 7", 8);
+clic($navegador, ".tabla-dispositivos tr[data-id=\"$idPruebas\"] [data-accion=\"eliminar\"]");
+esperarModal($navegador, 'modal-eliminar', true);
+comprobarIgual('Servidor de pruebas', $navegador->evaluar("document.getElementById('eliminar-nombre').textContent"), '  «Eliminar» pide confirmación en un modal');
+clic($navegador, '#confirmar-eliminar');
+comprobar($navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8), '  al confirmar, la tabla vuelve a 6 dispositivos');
+comprobarIgual([0, 0], [(int) valorBd("SELECT COUNT(*) FROM monitoreos WHERE dispositivo_id = $idPruebas"), (int) valorBd("SELECT COUNT(*) FROM alertas WHERE dispositivo_id = $idPruebas")], '  y la base borró en cascada su historial y sus alertas');
+comprobarIgual(3, contadorDelMenu($navegador), '  el contador sigue en 3 (su alerta ya estaba atendida)');
+capturar($navegador, 'ensayo-1280');
+
+// El celular: al recargar su Dashboard, el dispositivo eliminado ya no aparece.
+$navegador->tamano(390, 844, true);
+abrirPagina($navegador, 'index.html');
+esperarDashboard($navegador);
+$nombresCelular = $navegador->evaluar("[...document.querySelectorAll('#panel-estado .fila-estado__nombre, #panel-estado .tarjeta-estado__nombre')].filter((n) => n.offsetParent).map((n) => n.textContent)") ?? [];
+comprobar(count($nombresCelular) === 6 && !in_array('Servidor de pruebas', $nombresCelular, true), '  en el celular, el Dashboard recargado muestra los 6 dispositivos, sin «Servidor de pruebas»', json_encode($nombresCelular, JSON_UNESCAPED_UNICODE));
+$navegador->tamano(1280, 720);
+
+// Cierre (Integrante 1): una suite en vivo deja las fechas del seed; preparar-demo.php las vuelve a mover y la sesión sigue abierta.
+[$codigoSuite, $salidaSuite] = correrScript('pruebas/dispositivos.php');
+comprobar($codigoSuite === 0 && preg_match('/Resultado: (\d+) de \1 comprobaciones correctas/', $salidaSuite) === 1, 'Cierre: pruebas/dispositivos.php pasa completa', substr($salidaSuite, -400));
+abrirPagina($navegador, 'index.html');
+esperarDashboard($navegador);
+comprobar(!str_starts_with((string) $navegador->evaluar("document.getElementById('ultima-comprobacion').textContent"), date('d/m/Y')), '  después de la suite, el Dashboard muestra las fechas viejas del seed');
+[$codigoDemo, $salidaDemo] = correrScript('herramientas/preparar-demo.php', '--router=127.0.0.3 --pc=127.0.0.2');
+abrirPagina($navegador, 'index.html');
+esperarDashboard($navegador);
+comprobarIgual([0, true, true], [
+    $codigoDemo,
+    (bool) $navegador->evaluar("location.pathname.endsWith('/index.html')"),
+    str_starts_with((string) $navegador->evaluar("document.getElementById('ultima-comprobacion').textContent"), date('d/m/Y')),
+], '  preparar-demo.php de nuevo: fechas de hoy y la sesión sigue abierta (sin volver al login)', $salidaDemo);
+comprobarIgual([], array_values(array_filter($navegador->erroresJs, fn($e) => !str_contains($e, 'status of 401'))), 'el ensayo completo, sin errores de JavaScript');
+$navegador->tamano(1440, 900);
+recargarBaseDeDatos();
 
 // =====================================================================
 seccion('7.2 · «Salir» cierra la sesión (barra lateral y menú del celular)');

@@ -26,9 +26,9 @@ Después de la Fase 1, el backend y el frontend pueden avanzar en paralelo. La F
 | 3 | Servicio de Alertas | Integrante 4 | ✅ Completa |
 | 4 | Servicio de Monitoreo | Integrante 3 | ✅ Completa |
 | 5 | Sistema de diseño | Integrante 4 | ✅ Completa |
-| 6 | Pantallas | Integrante 4 | Pendiente |
-| 7 | Inicio de sesión | Todo el equipo | Pendiente |
-| 8 | Integración, pruebas y demo | Todo el equipo | Pendiente |
+| 6 | Pantallas | Integrante 4 | ✅ Completa |
+| 7 | Inicio de sesión | Todo el equipo | ✅ Completa |
+| 8 | Integración, pruebas y demo | Todo el equipo | ✅ Completa (quedan el ensayo en vivo y la prueba en Windows) |
 
 ## Pruebas automáticas
 
@@ -157,7 +157,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] Se ve bien a 1440 px y a 390 px.
 - [x] El equipo aprueba el resultado.
 
-## Fase 6 · Pantallas
+## Fase 6 · Pantallas ✅
 
 **Objetivo:** las cinco pantallas del diseño funcionando con los servicios reales.
 
@@ -181,7 +181,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] Probado en un celular real, entrando por la IP de la computadora en la red local.
 - [x] Se puede usar solo con el teclado: foco visible y los modales se cierran con Escape.
 
-## Fase 7 · Inicio de sesión
+## Fase 7 · Inicio de sesión ✅
 
 **Objetivo:** proteger la aplicación sin romper la comunicación entre servicios.
 
@@ -202,7 +202,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] "Salir" cierra la sesión.
 - [x] Todas las pruebas automáticas pasan, ajustadas para iniciar sesión.
 
-## Fase 8 · Integración, pruebas y demo
+## Fase 8 · Integración, pruebas y demo ✅
 
 **Objetivo:** que la demo funcione de principio a fin sin tocar código.
 
@@ -216,9 +216,12 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 **Listo cuando:**
 
-- [ ] Todas las pruebas automáticas pasan en una copia recién clonada del repositorio, idealmente en la computadora de otro integrante.
-- [ ] El guion de la demo se ejecuta completo sin errores: agregar, monitorear, ver la alerta, atenderla, consultar el historial y eliminar.
-- [ ] La aplicación se ve bien en el proyector y en un celular.
+- [x] Todas las pruebas automáticas pasan en una copia recién clonada del repositorio (Linux, siguiendo el README: 1023 de 1023 comprobaciones).
+  - [ ] Pendiente del equipo: repetirlo en la computadora de otro integrante, en Windows con `docs/WINDOWS.md`.
+- [x] El guion de la demo se ejecuta completo sin errores: agregar, monitorear, ver la alerta, atenderla, consultar el historial y eliminar (ensayo automático en `pruebas/interfaz.php`, a 1280×720).
+  - [x] El equipo revisó `docs/DEMO.md` (servicios, alertas en vivo, registro de llamadas, celular, preguntas y tiempos por integrante).
+  - [ ] Pendiente del equipo: ensayarlo en vivo, cronometrado.
+- [x] La aplicación se ve bien en el proyector y en un celular (`interfaz.php` a 1024×768, 1280×720 y 390 px; celular real en las Fases 6 y 7).
 
 ## Extras (solo si sobra tiempo)
 
