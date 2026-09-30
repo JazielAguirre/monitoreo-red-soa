@@ -10,7 +10,7 @@ require_once __DIR__ . '/../comun/respuesta.php';
 require_once __DIR__ . '/datos.php';
 require_once __DIR__ . '/validacion.php';
 require_once __DIR__ . '/clientes.php';
-require_once __DIR__ . '/ping.php';
+require_once __DIR__ . '/../comun/ping.php';
 
 const ERROR_MYSQL_FK = 1452;
 

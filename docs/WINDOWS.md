@@ -1,6 +1,6 @@
 # Verificación en Windows
 
-El proyecto se desarrolló en Linux. El ping (`servicios/monitoreo/ping.php`) solo se
+El proyecto se desarrolló en Linux. El ping (`servicios/comun/ping.php`) solo se
 probó en Windows con salidas de ejemplo, nunca en un Windows real. Esta lista es
 para el primer integrante que lo corra en Windows: son unos 15 minutos.
 
@@ -21,7 +21,7 @@ cd C:\xampp\htdocs\monitoreo-red-soa
 
 - [ ] **2. Ping desde PHP**, sin Apache (debe decir `responde: true` con un tiempo, y `responde: false`):
   ```powershell
-  C:/xampp/php/php.exe -r "require 'servicios/monitoreo/ping.php'; foreach (['127.0.0.1', '192.0.2.20'] as `$ip) { `$r = hacerPing(`$ip); echo `$ip, ': responde: ', json_encode(`$r['responde']), ', tiempo: ', (`$r['tiempo_respuesta_ms'] ?? 'null'), PHP_EOL, `$r['salida'], PHP_EOL, PHP_EOL; }"
+  C:/xampp/php/php.exe -r "require 'servicios/comun/ping.php'; foreach (['127.0.0.1', '192.0.2.20'] as `$ip) { `$r = hacerPing(`$ip); echo `$ip, ': responde: ', json_encode(`$r['responde']), ', tiempo: ', (`$r['tiempo_respuesta_ms'] ?? 'null'), PHP_EOL, `$r['salida'], PHP_EOL, PHP_EOL; }"
   ```
   - 127.0.0.1 → `responde: true`, `tiempo: 0` (Windows escribe `tiempo<1m`) o un número.
   - 192.0.2.20 → `responde: false`, `tiempo: null`, en unos 1–2 segundos.

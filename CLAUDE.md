@@ -64,10 +64,10 @@ Interfaz web (web/)  →  HTTP + JSON  →  Servicios (servicios/)  →  MySQL
 database/        schema.sql (recrea la BD completa), seed.sql (datos de prueba)
 docs/            PLAN.md (fases del proyecto), API.md (contrato de endpoints), diseno/ (referencia visual)
 servicios/
-├── comun/       config.php, db.php, respuesta.php, peticion.php, enrutador.php (acceso por ruta), http.php (cliente entre servicios), auth.php (sesión y clave de servicio) (.htaccess: Require all denied)
+├── comun/       config.php, db.php, respuesta.php, peticion.php, enrutador.php (acceso por ruta), http.php (cliente entre servicios), auth.php (sesión y clave de servicio), ping.php (ping del sistema; lo usan Monitoreo y Descubrimiento) (.htaccess: Require all denied)
 ├── dispositivos/  index.php + .htaccess, endpoints.php, validacion.php, datos.php → dueño de la tabla dispositivos
 ├── alertas/       index.php + .htaccess, endpoints.php, validacion.php, datos.php → dueño de la tabla alertas
-├── monitoreo/     index.php + .htaccess, endpoints.php, validacion.php, datos.php, clientes.php (llamadas HTTP a Dispositivos y Alertas), ping.php → dueño de la tabla monitoreos
+├── monitoreo/     index.php + .htaccess, endpoints.php, validacion.php, datos.php, clientes.php (llamadas HTTP a Dispositivos y Alertas) → dueño de la tabla monitoreos
 └── auth/          index.php + .htaccess, endpoints.php, validacion.php, datos.php → dueño de la tabla usuarios
 web/
 ├── css/         tokens.css (variables de diseño, único archivo con colores), app.css (componentes y Bootstrap), componentes.css (solo la página de muestra)
@@ -85,10 +85,10 @@ comun/http.php: llamarServicio() usa streams de PHP (no curl), espera TIEMPO_ESP
 Archivo de fallo simulado (pruebas/.fallo-simulado.json, leído por comun/http.php): solo lo usan las pruebas para simular que Dispositivos o Alertas no responde. Caduca solo (máximo 60 s), solo admite modos fijos hacia 127.0.0.1 o web/index.html, y no puede activarse por HTTP (ningún endpoint escribe archivos y pruebas/ responde 404). Detalle en docs/PLAN.md, "Pruebas automáticas".
 La interfaz nunca accede a la base de datos: todo pasa por web/js/api.js.
 Seguridad en la interfaz: los datos de la API se insertan con textContent o pasan por escaparHtml() de web/js/modulos/formatos.js; nunca directo en innerHTML. Las fechas de la API se separan con partesFecha(), nunca con new Date(texto) (Safari del iPhone las toma como inválidas). Los formularios usan novalidate: los mensajes de validación vienen solo de la API.
-comun/ contiene solo infraestructura (conexión, respuestas, cliente HTTP, autenticación). Nunca lógica de negocio.
+comun/ contiene solo infraestructura (conexión, respuestas, cliente HTTP, autenticación, ping del sistema). Nunca lógica de negocio.
 Las URLs base y la clave interna viven en comun/config.php. Nada hardcodeado en los servicios.
 Patrón de un servicio (lo fija Dispositivos): index.php declara las rutas y llama a despachar() de comun/enrutador.php dentro de try/catch; endpoints.php tiene una función por endpoint; validacion.php las reglas; datos.php todo el SQL y la conversión de tipos. comun/peticion.php lee método, ruta, parámetros de la URL (filtroOpcional()) y cuerpo JSON.
-Por HTTP, cada servicio solo ejecuta su index.php: su .htaccess envía ahí todas las rutas, incluidos los archivos que existen (por ejemplo ping.php). No agregues RewriteCond %{REQUEST_FILENAME} !-f.
+Por HTTP, cada servicio solo ejecuta su index.php: su .htaccess envía ahí todas las rutas, incluidos los archivos que existen (por ejemplo endpoints.php). No agregues RewriteCond %{REQUEST_FILENAME} !-f.
 Contrato de la API
 
 La fuente de verdad es @docs/API.md. Si una tarea requiere cambiar un endpoint, un campo o un formato, pregunta antes y actualiza docs/API.md en el mismo cambio.
@@ -111,8 +111,8 @@ Toda salida pasa por los helpers de comun/respuesta.php (responder(), responderE
 Las excepciones se capturan en el punto de entrada de cada servicio y se responde 500 con un mensaje genérico. El detalle va a error_log(), nunca al cliente.
 Validar todas las entradas: campos requeridos, longitudes, valores permitidos e IP con filter_var($ip, FILTER_VALIDATE_IP).
 Variables, funciones y tablas con nombres en español. Funciones cortas, cada una con una sola responsabilidad.
-Ping (Servicio de Monitoreo)
-Implementación: servicios/monitoreo/ping.php (hacerPing() devuelve responde, tiempo_respuesta_ms y salida).
+Ping (Servicios de Monitoreo y Descubrimiento)
+Implementación: servicios/comun/ping.php (hacerPing() devuelve responde, tiempo_respuesta_ms y salida). Estaba en servicios/monitoreo/ hasta la Fase 9; se movió a comun/ porque también lo usa Descubrimiento.
 Seguridad: la IP se valida con FILTER_VALIDATE_IP y pasa por escapeshellarg() antes de exec(). Nunca ejecutes un comando con texto que no haya sido validado.
 Solo IPv4 (FILTER_VALIDATE_IP con FILTER_FLAG_IPV4): así no hay que manejar las diferencias de ping con IPv6 entre sistemas operativos.
 El sistema operativo se detecta con PHP_OS_FAMILY:
@@ -220,7 +220,7 @@ Actualiza esta sección al cerrar cada fase.
 
 Fase actual: Fase 9 — Descubrimiento de red, en la rama descubrimiento-red (sin push ni fusión hasta que el usuario revise). Las Fases 0–8 están completas y fusionadas a main; la etiqueta v1.0 es la versión que se presenta y no se toca. Repositorio: https://github.com/JazielAguirre/monitoreo-red-soa (remoto origin por SSH).
 Fase 9, decisiones aprobadas: ping.php se mueve a comun/ (lo usan Monitoreo y Descubrimiento; en Monitoreo solo cambia el require); escaneo en 4 lotes de la /24 pedidos uno tras otro desde la interfaz; 503 cuando no hay red local o la IP no es privada. Si el DNS inverso por UDP se complica, avisar al usuario antes de seguir (preferencia: nombre "—" y terminar lo principal). La prueba real con pings a la red actual (192.168.137.0/24) espera confirmación del usuario de que es su red; las pruebas automáticas nunca tocan la red local.
-Fase 9, subpasos: [x] 1 contrato (API.md) y plan (PLAN.md) · [ ] 2 ping.php a comun/ · [ ] 3 servicio Descubrimiento · [ ] 4 pruebas/descubrimiento.php y red simulada · [ ] 5 interfaz y componentes.html · [ ] 6 secciones de interfaz.php · [ ] 7 README, DEMO.md (tramo del escáner 0:50–1:20 del Integrante 2; recarga del celular del Integrante 4 «opcional si hay que quedarse en 5:00»; en «El día anterior», confirmar con el profesor el tiempo disponible) y cierre.
+Fase 9, subpasos: [x] 1 contrato (API.md) y plan (PLAN.md) · [x] 2 ping.php a comun/ · [ ] 3 servicio Descubrimiento · [ ] 4 pruebas/descubrimiento.php y red simulada · [ ] 5 interfaz y componentes.html · [ ] 6 secciones de interfaz.php · [ ] 7 README, DEMO.md (tramo del escáner 0:50–1:20 del Integrante 2; recarga del celular del Integrante 4 «opcional si hay que quedarse en 5:00»; en «El día anterior», confirmar con el profesor el tiempo disponible) y cierre.
 Pendientes del equipo (no requieren código):
 - Ensayar docs/DEMO.md en vivo, cronometrado, y grabar el video de respaldo.
 - Repetir las 5 suites en la computadora de otro integrante (Windows: docs/WINDOWS.md; el ping en Windows solo se probó con salidas de ejemplo).

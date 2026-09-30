@@ -25,7 +25,7 @@ require_once __DIR__ . '/red.php';
 require_once __DIR__ . '/../servicios/comun/config.php';
 require_once __DIR__ . '/../servicios/comun/db.php';
 require_once __DIR__ . '/../servicios/comun/http.php';       // archivoRegistroLlamadas()
-require_once __DIR__ . '/../servicios/monitoreo/ping.php';   // hacerPing(), la misma función del servicio
+require_once __DIR__ . '/../servicios/comun/ping.php';       // hacerPing(), la misma función de Monitoreo
 
 const MINUTOS_DESDE_LA_ULTIMA_RONDA = 10;
 const ID_ROUTER = 2;          // "Router principal" en seed.sql

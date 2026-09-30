@@ -313,7 +313,7 @@ Ejecuta un ping y registra el resultado. Tarda como máximo un poco más de 1 se
 Flujo:
 
 1. `GET /dispositivos/{id}` para obtener la IP y el nombre. Si responde 404, se devuelve 404.
-2. Ping con la función de `ping.php`.
+2. Ping con la función de `comun/ping.php`.
 3. Se genera la fecha **una sola vez** y se guarda el monitoreo en `monitoreos`. Si el INSERT falla por la llave foránea (el dispositivo se eliminó entre el paso 1 y este), se devuelve 404.
 4. `PATCH /dispositivos/{id}/estado` con el mismo estado, tiempo y fecha del paso 3. Así el monitoreo y el dispositivo tienen exactamente la misma fecha.
 5. Si no respondió: `POST /alertas` con el mensaje "El dispositivo {nombre} no respondió al monitoreo.". La alerta lleva la fecha que genera el Servicio de Alertas (cada servicio es dueño de sus datos, y `POST /alertas` no acepta fechas de quien llama): coincide con la del monitoreo salvo por fracciones de segundo.
