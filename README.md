@@ -273,6 +273,7 @@ El guion completo, con el reparto entre integrantes y el plan B, está en
 | Las pantallas muestran **"Error interno del servidor"** | MySQL apagado | `sudo /opt/lampp/lampp startmysql` o el panel de XAMPP |
 | **El celular no carga** la página | Cortafuegos, otra red WiFi o IP equivocada | `ufw allow` (Linux) o permitir Apache en el Firewall de Windows; misma red; la URL que da `preparar-demo.php` |
 | El navegador muestra **una versión vieja** | Caché de antes de la Fase 8 | Recarga forzada (Ctrl+Shift+R). Desde la Fase 8 las páginas se revalidan solas (`web/.htaccess`) |
+| Después de cambiar a dónde apunta el enlace de `htdocs`, hay errores 500 o fallan las pruebas del fallo simulado | PHP recuerda la ruta anterior (`realpath_cache`) en cada proceso de Apache | Reinicia Apache (`sudo /opt/lampp/lampp restartapache` o el panel de XAMPP) |
 | La sesión se cierra | Pasaron 8 horas desde el login | Vuelve a iniciar sesión; te regresa a la pantalla donde estabas |
 | Un dispositivo siempre sale **inactivo** aunque responda | Ping bloqueado para Apache o salida del ping en otro idioma | `docs/WINDOWS.md` (Windows) o prueba `curl -X POST …/servicios/monitoreo/1` y revisa `/opt/lampp/logs/php_error_log` |
 

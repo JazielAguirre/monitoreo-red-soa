@@ -1578,6 +1578,102 @@ foreach ([[1024, 768], [1280, 720]] as [$ancho, $alto]) {
 $navegador->tamano(1440, 900);
 
 // =====================================================================
+seccion('8.4 · Ensayo del guion de la demo (docs/DEMO.md), a 1280×720');
+
+/**
+ * Contador de alertas pendientes del menú lateral (0 si está oculto).
+ */
+function contadorDelMenu(Navegador $navegador): int
+{
+    return (int) $navegador->evaluar("(() => { const c = document.querySelector('#barra-lateral .js-contador-alertas'); return c.hidden ? 0 : Number(c.textContent); })()");
+}
+
+exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/../herramientas/preparar-demo.php') . ' --router=192.0.2.30 --pc=127.0.0.2 2>&1', $salidaDemo, $codigoDemo);
+comprobarIgual(0, $codigoDemo, 'antes de empezar: preparar-demo.php deja todo listo (comprobación previa en ✓)', implode("\n", $salidaDemo));
+$navegador->tamano(1280, 720);
+$navegador->erroresJs = [];
+
+// Integrante 1: Dashboard y «Monitorear todos».
+abrirPagina($navegador, 'index.html');
+esperarDashboard($navegador);
+comprobar(str_starts_with((string) $navegador->evaluar("document.getElementById('ultima-comprobacion').textContent"), date('d/m/Y')), 'Integrante 1: el Dashboard muestra la última comprobación de hoy (fechas movidas por el script)');
+clic($navegador, '#monitorear-todos');
+comprobar($navegador->esperarHasta("!document.getElementById('monitorear-todos').disabled && document.getElementById('progreso-monitoreo').hidden", 40), '  «Monitorear todos» recorre los 6 dispositivos y termina');
+comprobar(in_array('Monitoreo completado', notificaciones($navegador), true), '  con la notificación del resumen');
+cerrarNotificaciones($navegador);
+
+// Integrante 2: agregar (primero con una IP mala) y monitorear.
+abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8);
+clic($navegador, '#agregar-dispositivo');
+esperarModal($navegador, 'modal-dispositivo', true);
+escribir($navegador, '#campo-nombre', 'Servidor de pruebas');
+escribir($navegador, '#campo-ip', '192.168.1.300');
+clic($navegador, 'label[for="tipo-servidor"]');
+escribir($navegador, '#campo-ubicacion', 'Laboratorio');
+clic($navegador, '#modal-dispositivo [type="submit"]');
+$navegador->esperarHasta("!document.getElementById('error-ip').hidden", 5);
+comprobarIgual(['Dirección IP no válida', true], [$navegador->evaluar("document.getElementById('error-ip').textContent"), $navegador->evaluar("document.getElementById('modal-dispositivo').classList.contains('show')")], 'Integrante 2: con 192.168.1.300, el mensaje de la API bajo el campo IP y el modal sigue abierto');
+escribir($navegador, '#campo-ip', '192.0.2.50');
+clic($navegador, '#modal-dispositivo [type="submit"]');
+esperarModal($navegador, 'modal-dispositivo', false);
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 7", 8);
+$idPruebas = (int) valorBd("SELECT id FROM dispositivos WHERE ip = '192.0.2.50'");
+comprobar($idPruebas > 0, '  con 192.0.2.50 se agrega «Servidor de pruebas» (7 dispositivos)');
+cerrarNotificaciones($navegador); // «Dispositivo agregado»
+$pendientesAntes = contadorDelMenu($navegador);
+$registroLlamadas = archivoRegistroLlamadas();
+clearstatcache(true, $registroLlamadas);
+$tamanoRegistro = is_file($registroLlamadas) ? (int) filesize($registroLlamadas) : 0;
+clic($navegador, ".tabla-dispositivos tr[data-id=\"$idPruebas\"] [data-accion=\"monitorear\"]");
+$navegador->esperarHasta("[...document.querySelectorAll('.toast .notificacion__titulo')].some((t) => t.textContent === 'Servidor de pruebas no respondió')", 10);
+$navegador->esperarHasta('Number(document.querySelector("#barra-lateral .js-contador-alertas").textContent) === ' . ($pendientesAntes + 1), 5);
+comprobarIgual(['Servidor de pruebas no respondió', 'Inactivo', $pendientesAntes + 1], [
+    notificaciones($navegador)[0] ?? null,
+    $navegador->evaluar("document.querySelector('.tabla-dispositivos tr[data-id=\"$idPruebas\"] .insignia-estado')?.textContent"),
+    contadorDelMenu($navegador),
+], '  al monitorearlo: notificación de la alerta, fila Inactivo y el contador del menú sube');
+cerrarNotificaciones($navegador);
+
+// Integrante 3: el registro de llamadas y atender la alerta.
+clearstatcache(true, $registroLlamadas);
+if (is_readable($registroLlamadas)) {
+    $llamadas = (string) file_get_contents($registroLlamadas, false, null, $tamanoRegistro);
+    foreach (["Navegador → Monitoreo: POST /monitoreo/$idPruebas", "Monitoreo → Dispositivos: GET /dispositivos/$idPruebas (200", "Monitoreo → Dispositivos: PATCH /dispositivos/$idPruebas/estado (200", 'Monitoreo → Alertas: POST /alertas (201'] as $texto) {
+        comprobar(str_contains($llamadas, $texto), "Integrante 3: el registro muestra «{$texto}…»", $llamadas);
+    }
+} else {
+    avisar("Registro de llamadas no comprobado en el ensayo: no se puede leer $registroLlamadas.");
+}
+abrirPagina($navegador, 'alertas.html');
+esperarAlertas($navegador);
+$idAlerta = (int) valorBd("SELECT id FROM alertas WHERE dispositivo_id = $idPruebas AND atendida = 0");
+clic($navegador, "#lista-alertas .alerta[data-id=\"$idAlerta\"] .alerta__boton");
+$navegador->esperarHasta("!document.querySelector('#lista-alertas .alerta[data-id=\"$idAlerta\"]')", 8);
+$navegador->procesarEventos(0.4);
+comprobarIgual([$pendientesAntes, 1], [contadorDelMenu($navegador), (int) valorBd("SELECT atendida FROM alertas WHERE id = $idAlerta")], '  «Marcar como atendida»: la alerta sale de Pendientes y el contador del menú baja');
+cerrarNotificaciones($navegador);
+
+// Integrante 4: historial y eliminar.
+abrirPagina($navegador, 'monitoreos.html');
+esperarMonitoreos($navegador);
+escribir($navegador, '#filtro-dispositivo', '4');
+esperarMonitoreos($navegador);
+comprobarIgual([true, true], [$navegador->evaluar("!!document.querySelector('#panel-grafica canvas')"), $navegador->evaluar("document.getElementById('resumen-disponibilidad').textContent.endsWith('%')")], 'Integrante 4: el historial del Servidor principal con su gráfica y la disponibilidad');
+abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 7", 8);
+clic($navegador, ".tabla-dispositivos tr[data-id=\"$idPruebas\"] [data-accion=\"eliminar\"]");
+esperarModal($navegador, 'modal-eliminar', true);
+comprobarIgual('Servidor de pruebas', $navegador->evaluar("document.getElementById('eliminar-nombre').textContent"), '  «Eliminar» pide confirmación en un modal');
+clic($navegador, '#confirmar-eliminar');
+comprobar($navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8), '  al confirmar, la tabla vuelve a 6 dispositivos');
+comprobarIgual([0, 0], [(int) valorBd("SELECT COUNT(*) FROM monitoreos WHERE dispositivo_id = $idPruebas"), (int) valorBd("SELECT COUNT(*) FROM alertas WHERE dispositivo_id = $idPruebas")], '  y la base borró en cascada su historial y sus alertas');
+comprobarIgual([], array_values(array_filter($navegador->erroresJs, fn($e) => !str_contains($e, 'status of 401'))), 'el ensayo completo, sin errores de JavaScript');
+capturar($navegador, 'ensayo-1280');
+$navegador->tamano(1440, 900);
+recargarBaseDeDatos();
+
+// =====================================================================
 seccion('7.2 · «Salir» cierra la sesión (barra lateral y menú del celular)');
 
 $navegador->tamano(1440, 900);
