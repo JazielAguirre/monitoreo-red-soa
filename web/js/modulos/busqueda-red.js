@@ -68,6 +68,16 @@ function crearMarcas(equipo) {
     return marcas;
 }
 
+/**
+ * Nombre DNS; si se recorta en el proyector, el completo queda en el title.
+ */
+function crearNombreEquipo(nombre) {
+    const nodo = elemento('span', 'equipo-nombre', nombre);
+    nodo.title = nombre;
+
+    return nodo;
+}
+
 function crearSinDato() {
     const guion = elemento('span', 'texto-tenue', '—');
     guion.setAttribute('aria-label', 'Sin dato');
@@ -84,7 +94,7 @@ export function crearRegistro(equipo, { completo = false, alAgregar = () => {} }
         const enlace = elemento('a', 'enlace-discreto', equipo.dispositivo.nombre);
         enlace.href = urlHistorial(equipo.dispositivo.id);
         enlace.title = `Ver el historial de ${equipo.dispositivo.nombre}`;
-        registrado.append(icono('bi-check2-circle'), 'Registrado · ', enlace);
+        registrado.append(icono('bi-check2-circle'), elemento('span', 'equipo-registrado__etiqueta', 'Registrado · '), enlace);
         return registrado;
     }
 
@@ -132,7 +142,7 @@ function crearFilaEquipo(equipo, opciones) {
     const celdas = [
         [crearInsigniaHallazgo(equipo), ''],
         [ip, ''],
-        [equipo.nombre ? elemento('span', 'equipo-nombre', equipo.nombre) : crearSinDato(), 'col-nombre'],
+        [equipo.nombre ? crearNombreEquipo(equipo.nombre) : crearSinDato(), 'col-nombre'],
         [equipo.mac ? elemento('span', 'texto-mono fw-normal', equipo.mac) : crearSinDato(), 'tabla-tenue col-mac'],
         [equipo.responde_ping ? elemento('span', 'texto-mono fw-normal', formatearMs(equipo.tiempo_respuesta_ms)) : crearSinDato(), 'col-respuesta'],
         [crearRegistro(equipo, opciones), 'text-end'],

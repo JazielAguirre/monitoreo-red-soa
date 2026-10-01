@@ -19,9 +19,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/ayudas.php';
 require_once __DIR__ . '/../servicios/descubrimiento/red.php';
 require_once __DIR__ . '/../servicios/descubrimiento/escaneo.php';
-require_once __DIR__ . '/../servicios/descubrimiento/arp.php';
 require_once __DIR__ . '/../servicios/descubrimiento/dns.php';
-require_once __DIR__ . '/../servicios/descubrimiento/simulacion.php';
 
 const CLAVES_RED = ['red', 'ip_propia', 'puerta_enlace', 'lotes', 'total_direcciones'];
 const CLAVES_LOTE = ['lote', 'desde', 'hasta', 'encontrados'];
@@ -33,21 +31,6 @@ const LIMITE_LOTE_SEGUNDOS = 3.0;
 // ---------------------------------------------------------------- Ayudas
 
 /**
- * Escribe la red simulada por 30 segundos. $datos: ip_propia, puerta_enlace, arp.
- */
-function simularRed(array $datos): void
-{
-    file_put_contents(ARCHIVO_RED_SIMULADA, json_encode($datos + ['expira' => time() + 30]));
-}
-
-function quitarRedSimulada(): void
-{
-    if (is_file(ARCHIVO_RED_SIMULADA)) {
-        unlink(ARCHIVO_RED_SIMULADA);
-    }
-}
-
-/**
  * POST a un lote. Devuelve [respuesta, segundos].
  */
 function escanear(int|string $lote): array
@@ -56,34 +39,6 @@ function escanear(int|string $lote): array
     $respuesta = peticion('POST', "/descubrimiento/red/lotes/$lote");
 
     return [$respuesta, microtime(true) - $inicio];
-}
-
-/**
- * Tabla ARP de ejemplo en el formato del sistema operativo donde corre Apache
- * (el mismo que el de esta prueba). $entradas: [ip, mac con ":", estado].
- * Los estados FAILED/INCOMPLETE se escriben como el sistema los muestra.
- */
-function tablaArpDeEjemplo(array $entradas): string
-{
-    $lineas = [];
-    $formato = formatoArpDelSistema();
-
-    if ($formato === FORMATO_WINDOWS) {
-        $lineas[] = '';
-        $lineas[] = 'Interfaz: 192.0.2.1 --- 0xb';
-        $lineas[] = '  Dirección de Internet          Dirección física      Tipo';
-    }
-
-    foreach ($entradas as [$ip, $mac, $estado]) {
-        $incompleta = in_array($estado, ['FAILED', 'INCOMPLETE'], true);
-        $lineas[] = match ($formato) {
-            FORMATO_WINDOWS => $incompleta ? "  $ip            00-00-00-00-00-00     no válido" : sprintf('  %-22s%-22sdinámico', $ip, str_replace(':', '-', $mac)),
-            FORMATO_MAC => $incompleta ? "? ($ip) at (incomplete) on en0 ifscope [ethernet]" : "? ($ip) at $mac on en0 ifscope [ethernet]",
-            default => $incompleta ? "$ip dev eth0  $estado" : "$ip dev eth0 lladdr $mac $estado",
-        };
-    }
-
-    return implode("\n", $lineas) . "\n";
 }
 
 function ipsDe(array $equipos): array
