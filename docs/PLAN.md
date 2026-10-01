@@ -16,7 +16,7 @@ Fase 0 → Fase 1 ─┬─ Backend:  Fase 2 → Fase 3 → Fase 4 ──┬─�
                  └─ Frontend: Fase 5 → Fase 6 ────────────┘
 ```
 
-La Fase 9 es una ampliación posterior a la versión que se presenta (`v1.0`): se trabaja en su rama y `v1.0` queda intacta como respaldo.
+La Fase 9 es una ampliación posterior a `v1.0`: la versión con el escáner es `v1.1`, y `v1.0` queda intacta como respaldo sin el escáner.
 
 Después de la Fase 1, el backend y el frontend pueden avanzar en paralelo. La Fase 6 empieza con datos de ejemplo que siguen `API.md` y se conecta a los servicios reales cuando estén listos.
 
@@ -31,7 +31,7 @@ Después de la Fase 1, el backend y el frontend pueden avanzar en paralelo. La F
 | 6 | Pantallas | Integrante 4 | ✅ Completa |
 | 7 | Inicio de sesión | Todo el equipo | ✅ Completa |
 | 8 | Integración, pruebas y demo | Todo el equipo | ✅ Completa (quedan el ensayo en vivo y la prueba en Windows) |
-| 9 | Descubrimiento de red | Todo el equipo | ✅ Completa en la rama `descubrimiento-red` (falta la revisión para fusionar; quedan la prueba en Windows y el ensayo en vivo) |
+| 9 | Descubrimiento de red | Todo el equipo | ✅ Completa, fusionada a `main` (etiqueta `v1.1`; quedan la prueba en Windows y el ensayo en vivo) |
 
 ## Pruebas automáticas
 
@@ -263,7 +263,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] Lote fuera de rango → 404; método no permitido → 405; sin sesión → 401. Siempre en JSON.
 - [x] **Regla SOA:** `servicios/descubrimiento/` no contiene SQL ni `require` de otros servicios (se revisa con `grep`), y en `servicios/dispositivos/`, `alertas/` y `auth/` no cambió nada (`git diff main`); en `monitoreo/` solo la línea del `require` de `ping.php`. En `comun/`: `ping.php` movido sin cambios de código y `URL_DESCUBRIMIENTO` en `config.php`.
 - [x] Pantalla Dispositivos: "Buscar dispositivos en la red" muestra el progreso por lote y la lista (IP, MAC, nombre, ping o solo ARP, registrado o no). "Agregar" abre el formulario con la IP y el nombre escritos. Estados de carga, vacío y error; se ve bien a 390 px y en el proyector; colores solo desde `tokens.css`; piezas nuevas en `componentes.html`.
-- [x] `pruebas/descubrimiento.php` pasa sin depender de la red de quien la corre (red simulada), las secciones nuevas de `pruebas/interfaz.php` pasan, y las 5 suites anteriores siguen pasando: 1172 de 1172 (dispositivos 207, alertas 154, monitoreo 221, auth 126, descubrimiento 112, interfaz 352). Se rompió el código a propósito (12 roturas) y cada una la detectó alguna prueba.
+- [x] `pruebas/descubrimiento.php` pasa sin depender de la red de quien la corre (red simulada), las secciones nuevas de `pruebas/interfaz.php` pasan, y las 5 suites anteriores siguen pasando: 1174 de 1174 (dispositivos 207, alertas 154, monitoreo 223, auth 126, descubrimiento 112, interfaz 352). Se rompió el código a propósito (13 roturas, contando la del ⚠ de `preparar-demo.php`) y cada una la detectó alguna prueba.
 - [x] Probado a través de Apache en una red propia (hotspot del equipo, 192.168.137.0/24): 4 lotes en ~4.4 s, 7 equipos con MAC y nombre; el hotspot y una computadora con Windows bloquean el ping y aparecen «Solo en ARP». Revisado en Chrome a 1440, 1024 y 390 px.
   - [ ] Pendiente del equipo: probarlo en Windows (`docs/WINDOWS.md`, paso 7) y ensayar el tramo del escáner en vivo con el segundo teléfono.
 - [x] README y `docs/DEMO.md` explican el uso responsable, y el guion incluye el tramo del escáner.
