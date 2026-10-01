@@ -24,11 +24,15 @@
             </div>
             <div class="encabezado-pagina__acciones">
                 <button type="button" class="btn btn-secondary boton-monitorear-todos d-none d-lg-inline-flex" id="monitorear-todos-escritorio" disabled><i class="bi bi-broadcast" aria-hidden="true"></i>Monitorear todos</button>
+                <button type="button" class="btn btn-secondary boton-buscar-red" id="buscar-red"><i class="bi bi-radar" aria-hidden="true"></i><span class="d-none d-xl-inline">Buscar dispositivos en la red</span><span class="d-none d-sm-inline d-xl-none">Buscar en la red</span><span class="visually-hidden d-sm-none">Buscar dispositivos en la red</span></button>
                 <button type="button" class="btn btn-primary" id="agregar-dispositivo"><i class="bi bi-plus-lg" aria-hidden="true"></i><span class="d-none d-sm-inline">Agregar dispositivo</span><span class="d-sm-none">Agregar</span></button>
             </div>
         </div>
 
         <div id="progreso-monitoreo" hidden></div>
+
+        <!-- «Buscar dispositivos en la red» (Fase 9): lo llena modulos/busqueda-red.js. -->
+        <div id="busqueda-red" hidden></div>
 
         <section class="tabla-tarjeta panel-dispositivos" aria-labelledby="titulo-lista">
             <h2 class="visually-hidden" id="titulo-lista">Lista de dispositivos</h2>

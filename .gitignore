@@ -15,5 +15,6 @@ desktop.ini
 *.log
 logs/
 
-# Archivo temporal de las pruebas (fallo simulado entre servicios)
+# Archivos temporales de las pruebas (fallo simulado entre servicios y red simulada del escáner)
 pruebas/.fallo-simulado.json
+pruebas/.red-simulada.json

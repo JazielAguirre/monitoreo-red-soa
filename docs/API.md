@@ -34,6 +34,7 @@ Este documento es la fuente de verdad de la comunicación entre la interfaz y lo
 | 409 | Conflicto, por ejemplo una IP duplicada |
 | 500 | Error interno (el detalle va a `error_log()`, nunca al cliente) |
 | 502 | Otro servicio no respondió o respondió algo inesperado |
+| 503 | El servicio no puede hacer su trabajo en esta computadora, por ejemplo Descubrimiento sin red local (desde la Fase 9) |
 
 **Nombres de campos:** `snake_case`, en español y **sin acentos ni ñ** (`ubicacion`, `contrasena`), iguales a las columnas de la base de datos.
 
@@ -312,7 +313,7 @@ Ejecuta un ping y registra el resultado. Tarda como máximo un poco más de 1 se
 Flujo:
 
 1. `GET /dispositivos/{id}` para obtener la IP y el nombre. Si responde 404, se devuelve 404.
-2. Ping con la función de `ping.php`.
+2. Ping con la función de `comun/ping.php`.
 3. Se genera la fecha **una sola vez** y se guarda el monitoreo en `monitoreos`. Si el INSERT falla por la llave foránea (el dispositivo se eliminó entre el paso 1 y este), se devuelve 404.
 4. `PATCH /dispositivos/{id}/estado` con el mismo estado, tiempo y fecha del paso 3. Así el monitoreo y el dispositivo tienen exactamente la misma fecha.
 5. Si no respondió: `POST /alertas` con el mensaje "El dispositivo {nombre} no respondió al monitoreo.". La alerta lleva la fecha que genera el Servicio de Alertas (cada servicio es dueño de sus datos, y `POST /alertas` no acepta fechas de quien llama): coincide con la del monitoreo salvo por fracciones de segundo.
@@ -401,6 +402,122 @@ Solo incluye dispositivos con al menos un monitoreo, ordenados por `dispositivo_
 
 ---
 
+## Servicio de Descubrimiento (Fase 9)
+
+Busca los equipos conectados a la red local de la computadora donde corre el servidor, aunque no estén registrados, para que el usuario elija cuáles agregar. **No tiene tabla:** sus datos vienen del sistema operativo (ping y tabla ARP), y para saber qué IPs ya están registradas le pregunta al Servicio de Dispositivos (`GET /dispositivos`, con la clave interna). Para registrar un equipo, la interfaz sigue usando `POST /dispositivos`.
+
+**Uso responsable:** el escaneo solo debe usarse en redes propias o con permiso. En la demo se usa en el hotspot de un teléfono del equipo, nunca en la red de la escuela.
+
+**Qué red se escanea.** La calcula siempre el servicio, nunca viene del navegador, para que nadie pueda usarlo para escanear otras redes:
+
+- La IP propia es la de la interfaz con la que la computadora sale a la red (la misma detección de `herramientas/preparar-demo.php`).
+- Se escanea la /24 de esa IP: de `.1` a `.254` (254 direcciones).
+- Solo se aceptan IPs privadas: `10.0.0.0/8`, `172.16.0.0/12` y `192.168.0.0/16`. Con cualquier otra, el servicio responde 503 y no envía nada.
+
+**Cómo se escanea.** La red se divide en 4 lotes, y la interfaz pide uno tras otro para mostrar el progreso (como "Monitorear todos"):
+
+| Lote | Direcciones |
+|---|---|
+| 1 | `.1` – `.64` |
+| 2 | `.65` – `.128` |
+| 3 | `.129` – `.192` |
+| 4 | `.193` – `.254` |
+
+En cada lote:
+
+1. Ping a todas sus direcciones **en paralelo** (máximo 64 a la vez), con el mismo comando y la misma lectura de la salida que el Servicio de Monitoreo (`comun/ping.php`): 1 intento y 1 segundo de espera.
+2. Lectura de la tabla ARP del sistema (Linux: `ip -4 neigh show`, o `/proc/net/arp` si no existe `ip`; Windows: `arp -a`; macOS: `arp -an`), sin depender del idioma. Así aparecen también los equipos que bloquean el ping (por ejemplo, computadoras con Windows) y se obtiene su dirección MAC. Se descartan las entradas incompletas o fallidas, broadcast y multicast.
+3. Nombre de cada equipo encontrado por DNS inverso, con un límite total de 0.8 segundos.
+4. `GET /dispositivos` para marcar los que ya están registrados.
+
+Un lote tarda alrededor de 1 a 2 segundos; la red completa, unos 5.
+
+### Objeto `equipo`
+
+```json
+{
+  "ip": "192.168.137.220",
+  "mac": "86:f1:ba:40:ec:9f",
+  "nombre": "telefono-ana.lan",
+  "responde_ping": false,
+  "tiempo_respuesta_ms": null,
+  "en_arp": true,
+  "es_esta_computadora": false,
+  "es_puerta_enlace": false,
+  "dispositivo": null
+}
+```
+
+| Campo | Significado |
+|---|---|
+| `ip` | IPv4 del equipo, dentro de la /24 escaneada |
+| `mac` | Dirección MAC de la tabla ARP, en minúsculas y con `:` (`aa:bb:cc:dd:ee:ff`). `null` si no aparece en la tabla ARP (por ejemplo, la propia computadora) |
+| `nombre` | Nombre por DNS inverso, sin el punto final. `null` si no hay o no llegó a tiempo |
+| `responde_ping` | `true` si respondió al ping |
+| `tiempo_respuesta_ms` | Como en Monitoreo: milisegundos con hasta 2 decimales (`0` si fue menor a 1 ms). `null` si no respondió al ping |
+| `en_arp` | `true` si aparece en la tabla ARP con su MAC |
+| `es_esta_computadora` | `true` si es la IP propia del servidor |
+| `es_puerta_enlace` | `true` si es la puerta de enlace predeterminada (normalmente el router) |
+| `dispositivo` | `{ "id": 2, "nombre": "Router principal" }` si ya hay un dispositivo registrado con esa IP; `null` si no |
+
+Un equipo aparece si responde al ping o si está en la tabla ARP. "Solo en ARP" es `en_arp: true` con `responde_ping: false`: el equipo contestó en la red hace poco, pero no al ping. Como la tabla ARP guarda las entradas unos minutos, un equipo que se desconectó hace poco todavía puede aparecer así.
+
+### `GET /descubrimiento/red` [Interfaz]
+
+La red que se va a escanear, calculada en el servidor. No envía ningún paquete.
+
+**200:**
+
+```json
+{
+  "ok": true,
+  "data": {
+    "red": "192.168.137.0/24",
+    "ip_propia": "192.168.137.66",
+    "puerta_enlace": "192.168.137.1",
+    "lotes": 4,
+    "total_direcciones": 254
+  }
+}
+```
+
+`puerta_enlace` es `null` si no se detecta o no está dentro de la /24.
+
+**503:**
+
+| Caso | `error` |
+|---|---|
+| La computadora no tiene red (no hay ruta hacia afuera) | "No se detectó una red local. Conecta la computadora a una red WiFi o cableada." |
+| La IP propia no es privada | "Solo se pueden escanear redes privadas (10.x, 172.16–31.x o 192.168.x)." |
+
+### `POST /descubrimiento/red/lotes/{n}` [Interfaz]
+
+Escanea el lote `n` (1 a 4) de la red que calcula el servicio. No necesita cuerpo; si llega uno, se ignora. Es `POST` porque envía paquetes a la red.
+
+**200:**
+
+```json
+{
+  "ok": true,
+  "data": {
+    "lote": 1,
+    "desde": "192.168.137.1",
+    "hasta": "192.168.137.64",
+    "encontrados": [ { }, { } ]
+  }
+}
+```
+
+`encontrados` es un arreglo de objetos `equipo`, ordenado por IP; `[]` si no se encontró nada en ese lote.
+
+**404:** "El lote no existe" (`n` mayor que 4; un `n` que no es un entero positivo responde "La ruta no existe", como en los demás servicios).
+
+**502:** "No se pudo comunicar con el Servicio de Dispositivos".
+
+**503:** los mismos casos de `GET /descubrimiento/red`.
+
+---
+
 ## Autenticación (Fase 7)
 
 Los tres endpoints son públicos (no piden sesión ni clave): cada uno decide qué responder.
@@ -438,7 +555,7 @@ Los tres endpoints son públicos (no piden sesión ni clave): cada uno decide qu
 |---|---|
 | Todas | `GET /alertas/conteo` (menú lateral). Desde la Fase 7, también `GET /auth/sesion` |
 | Dashboard | `GET /dispositivos` (indicadores y tarjetas), `GET /monitoreo/recientes`, `GET /alertas?limite=4`, `POST /monitoreo/{id}` para "Monitorear todos". La "Última comprobación" es la `ultima_comprobacion` más reciente de la lista de dispositivos |
-| Dispositivos | `GET`, `POST`, `PUT` y `DELETE /dispositivos`, `POST /monitoreo/{id}` |
+| Dispositivos | `GET`, `POST`, `PUT` y `DELETE /dispositivos`, `POST /monitoreo/{id}`. Desde la Fase 9, "Buscar dispositivos en la red": `GET /descubrimiento/red` y `POST /descubrimiento/red/lotes/{n}` |
 | Monitoreos | `GET /dispositivos` (filtro y nombres), `GET /monitoreo` |
 | Alertas | `GET /alertas?atendida=0` o `=1`, `GET /alertas/conteo`, `PATCH /alertas/{id}/atender`, `GET /dispositivos` (nombre e IP) |
 | Inicio de sesión | `POST /auth/login` |

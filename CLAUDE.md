@@ -37,6 +37,7 @@ sudo /opt/lampp/lampp startmysql
 /opt/lampp/bin/php pruebas/alertas.php
 /opt/lampp/bin/php pruebas/monitoreo.php
 /opt/lampp/bin/php pruebas/auth.php       # login, cookie, 401/403, sesión sin bloqueo
+/opt/lampp/bin/php pruebas/descubrimiento.php  # escáner de red con la red simulada; nunca envía nada a la red local
 /opt/lampp/bin/php pruebas/interfaz.php   # abre su propio Chrome headless (perfil temporal); se omite si no hay Chrome
 
 # Colores fuera de tokens.css, solo en estilos (CSS, JS, style="" y <style>). Debe no imprimir nada.
@@ -64,31 +65,33 @@ Interfaz web (web/)  →  HTTP + JSON  →  Servicios (servicios/)  →  MySQL
 database/        schema.sql (recrea la BD completa), seed.sql (datos de prueba)
 docs/            PLAN.md (fases del proyecto), API.md (contrato de endpoints), diseno/ (referencia visual)
 servicios/
-├── comun/       config.php, db.php, respuesta.php, peticion.php, enrutador.php (acceso por ruta), http.php (cliente entre servicios), auth.php (sesión y clave de servicio) (.htaccess: Require all denied)
+├── comun/       config.php, db.php, respuesta.php, peticion.php, enrutador.php (acceso por ruta), http.php (cliente entre servicios), auth.php (sesión y clave de servicio), ping.php (ping del sistema; lo usan Monitoreo y Descubrimiento) (.htaccess: Require all denied)
 ├── dispositivos/  index.php + .htaccess, endpoints.php, validacion.php, datos.php → dueño de la tabla dispositivos
 ├── alertas/       index.php + .htaccess, endpoints.php, validacion.php, datos.php → dueño de la tabla alertas
-├── monitoreo/     index.php + .htaccess, endpoints.php, validacion.php, datos.php, clientes.php (llamadas HTTP a Dispositivos y Alertas), ping.php → dueño de la tabla monitoreos
-└── auth/          index.php + .htaccess, endpoints.php, validacion.php, datos.php → dueño de la tabla usuarios
+├── monitoreo/     index.php + .htaccess, endpoints.php, validacion.php, datos.php, clientes.php (llamadas HTTP a Dispositivos y Alertas) → dueño de la tabla monitoreos
+├── auth/          index.php + .htaccess, endpoints.php, validacion.php, datos.php → dueño de la tabla usuarios
+└── descubrimiento/ index.php + .htaccess, endpoints.php, red.php (IP propia, puerta de enlace, /24 y lotes), escaneo.php (pings en paralelo con proc_open), arp.php, dns.php (PTR por UDP), clientes.php (GET /dispositivos), simulacion.php (red simulada de las pruebas) → sin tablas (Fase 9)
 web/
 ├── css/         tokens.css (variables de diseño, único archivo con colores), app.css (componentes y Bootstrap), componentes.css (solo la página de muestra)
-├── js/          api.js (único punto de acceso a la API, URL base relativa; con 401 lleva al login) + modulos/ (formatos, notificaciones, vistas, estructura, sesion, gráficas…) + un módulo ES por página
+├── js/          api.js (único punto de acceso a la API, URL base relativa; con 401 lleva al login) + modulos/ (formatos, notificaciones, vistas, estructura, sesion, gráficas, busqueda-red…) + un módulo ES por página
 ├── vendor/      bootstrap, bootstrap-icons, chart.js, fuentes Inter y JetBrains Mono
 └── *.html       login, index (dashboard), dispositivos, monitoreos, alertas, componentes
-herramientas/    base-de-datos.php (recarga schema y seed; la usan las pruebas y la demo), red.php (detecta puerta de enlace e IP propia), preparar-demo.php, ver-llamadas.php. Solo línea de comandos; no accesible por HTTP
-pruebas/         ayudas.php (peticiones con la cookie de iniciarSesionDePrueba() o con la clave en peticionInterna(), fallo simulado) + un script por servicio (dispositivos.php, ..., auth.php) + interfaz.php con navegador.php (cliente del protocolo de Chrome). Solo línea de comandos; no accesible por HTTP
+herramientas/    base-de-datos.php (recarga schema y seed; la usan las pruebas y la demo), red.php (detecta puerta de enlace e IP propia con las funciones de servicios/descubrimiento/red.php), preparar-demo.php, ver-llamadas.php. Solo línea de comandos; no accesible por HTTP
+pruebas/         ayudas.php (peticiones con la cookie de iniciarSesionDePrueba() o con la clave en peticionInterna(), fallo simulado) + un script por servicio (dispositivos.php, ..., auth.php, descubrimiento.php) + interfaz.php con navegador.php (cliente del protocolo de Chrome); la red simulada del escáner (simularRed(), tablaArpDeEjemplo()) también está en ayudas.php. Solo línea de comandos; no accesible por HTTP
 Reglas SOA (no negociables)
 Cada servicio solo lee y escribe sus propias tablas.
 Excepción: herramientas/ (como schema.sql y seed.sql) son herramientas de base de datos y pueden tocar todas las tablas; preparar-demo.php mueve fechas e IPs directamente en MySQL. La regla sigue valiendo para todo lo que está en servicios/.
 Si un servicio necesita datos o acciones de otro, los pide por HTTP usando servicios/comun/http.php. Nunca hace require del código de otro servicio ni consultas SQL a tablas ajenas.
 Ejemplo: Monitoreo obtiene la IP con GET /dispositivos/{id}, actualiza el estado con PATCH /dispositivos/{id}/estado y crea alertas con POST /alertas.
 comun/http.php: llamarServicio() usa streams de PHP (no curl), espera TIEMPO_ESPERA_SERVICIOS (config.php) y envía X-Servicio-Clave. Cada llamada se anota en llamadas-servicios.log, en la carpeta del error_log de PHP (XAMPP: /opt/lampp/logs o C:\xampp\php\logs, donde Apache ya puede escribir): «Monitoreo → Dispositivos: PATCH /dispositivos/7/estado (200, 12 ms)», precedida por la petición que la originó. Sirve para la demo (herramientas/ver-llamadas.php) porque el log de Apache no distingue al navegador de la laptop (127.0.0.1) de los servicios y anota cada petición al terminar. Si no se puede escribir, se ignora. Si el otro servicio no responde o no devuelve el JSON del formato común, lanza ErrorDeComunicacion, que el index.php responde como 502 "No se pudo comunicar con el Servicio de {nombre}".
+Archivo de red simulada (pruebas/.red-simulada.json, leído por servicios/descubrimiento/simulacion.php): solo para pruebas/descubrimiento.php. Cambia la IP propia (solo 127.0.0.1 o 192.0.2.1 se escanean; null y 198.51.100.1 sirven para probar los 503) y el texto de la tabla ARP; los pings son reales. Caduca en 60 s como máximo. Detalle en docs/PLAN.md.
 Archivo de fallo simulado (pruebas/.fallo-simulado.json, leído por comun/http.php): solo lo usan las pruebas para simular que Dispositivos o Alertas no responde. Caduca solo (máximo 60 s), solo admite modos fijos hacia 127.0.0.1 o web/index.html, y no puede activarse por HTTP (ningún endpoint escribe archivos y pruebas/ responde 404). Detalle en docs/PLAN.md, "Pruebas automáticas".
 La interfaz nunca accede a la base de datos: todo pasa por web/js/api.js.
 Seguridad en la interfaz: los datos de la API se insertan con textContent o pasan por escaparHtml() de web/js/modulos/formatos.js; nunca directo en innerHTML. Las fechas de la API se separan con partesFecha(), nunca con new Date(texto) (Safari del iPhone las toma como inválidas). Los formularios usan novalidate: los mensajes de validación vienen solo de la API.
-comun/ contiene solo infraestructura (conexión, respuestas, cliente HTTP, autenticación). Nunca lógica de negocio.
+comun/ contiene solo infraestructura (conexión, respuestas, cliente HTTP, autenticación, ping del sistema). Nunca lógica de negocio.
 Las URLs base y la clave interna viven en comun/config.php. Nada hardcodeado en los servicios.
 Patrón de un servicio (lo fija Dispositivos): index.php declara las rutas y llama a despachar() de comun/enrutador.php dentro de try/catch; endpoints.php tiene una función por endpoint; validacion.php las reglas; datos.php todo el SQL y la conversión de tipos. comun/peticion.php lee método, ruta, parámetros de la URL (filtroOpcional()) y cuerpo JSON.
-Por HTTP, cada servicio solo ejecuta su index.php: su .htaccess envía ahí todas las rutas, incluidos los archivos que existen (por ejemplo ping.php). No agregues RewriteCond %{REQUEST_FILENAME} !-f.
+Por HTTP, cada servicio solo ejecuta su index.php: su .htaccess envía ahí todas las rutas, incluidos los archivos que existen (por ejemplo endpoints.php). No agregues RewriteCond %{REQUEST_FILENAME} !-f.
 Contrato de la API
 
 La fuente de verdad es @docs/API.md. Si una tarea requiere cambiar un endpoint, un campo o un formato, pregunta antes y actualiza docs/API.md en el mismo cambio.
@@ -96,7 +99,7 @@ La fuente de verdad es @docs/API.md. Si una tarea requiere cambiar un endpoint, 
 Respuesta exitosa: { "ok": true, "data": ... }
 Error: { "ok": false, "error": "Mensaje claro para el usuario" }
 Errores de validación (400 y 409): pueden llevar el campo opcional "campos", con un mensaje por campo: { "ok": false, "error": "Revisa los datos del formulario", "campos": { "ip": "Dirección IP no válida" } }
-Códigos HTTP: 200 OK, 201 creado, 400 datos inválidos, 401 sin sesión, 403 endpoint interno sin clave de servicio (desde la Fase 7), 404 no existe, 405 método no permitido, 409 conflicto (por ejemplo, IP duplicada), 500 error interno, 502 otro servicio no respondió o respondió algo inesperado.
+Códigos HTTP: 200 OK, 201 creado, 400 datos inválidos, 401 sin sesión, 403 endpoint interno sin clave de servicio (desde la Fase 7), 404 no existe, 405 método no permitido, 409 conflicto (por ejemplo, IP duplicada), 500 error interno, 502 otro servicio no respondió o respondió algo inesperado, 503 el servicio no puede trabajar en esta computadora (Descubrimiento sin red local o con IP no privada, Fase 9).
 Siempre Content-Type: application/json; charset=utf-8, también en los errores.
 Campos en snake_case, en español y sin acentos ni ñ (ubicacion, contrasena), iguales a las columnas: id, nombre, ip, tipo, ubicacion, estado, fecha_registro, tiempo_respuesta_ms, atendida, etc.
 Tipos en JSON: números como números y booleanos como booleanos. PDO devuelve DECIMAL y TINYINT como texto: se convierten antes de responder ("0.32" → 0.32, "1" → true).
@@ -111,8 +114,8 @@ Toda salida pasa por los helpers de comun/respuesta.php (responder(), responderE
 Las excepciones se capturan en el punto de entrada de cada servicio y se responde 500 con un mensaje genérico. El detalle va a error_log(), nunca al cliente.
 Validar todas las entradas: campos requeridos, longitudes, valores permitidos e IP con filter_var($ip, FILTER_VALIDATE_IP).
 Variables, funciones y tablas con nombres en español. Funciones cortas, cada una con una sola responsabilidad.
-Ping (Servicio de Monitoreo)
-Implementación: servicios/monitoreo/ping.php (hacerPing() devuelve responde, tiempo_respuesta_ms y salida).
+Ping (Servicios de Monitoreo y Descubrimiento)
+Implementación: servicios/comun/ping.php (hacerPing() devuelve responde, tiempo_respuesta_ms y salida). Estaba en servicios/monitoreo/ hasta la Fase 9; se movió a comun/ porque también lo usa Descubrimiento.
 Seguridad: la IP se valida con FILTER_VALIDATE_IP y pasa por escapeshellarg() antes de exec(). Nunca ejecutes un comando con texto que no haya sido validado.
 Solo IPv4 (FILTER_VALIDATE_IP con FILTER_FLAG_IPV4): así no hay que manejar las diferencias de ping con IPv6 entre sistemas operativos.
 El sistema operativo se detecta con PHP_OS_FAMILY:
@@ -123,6 +126,7 @@ En Windows no confíes en el código de salida: con "Host de destino inaccesible
 El tiempo de respuesta se extrae aceptando salida en inglés y en español: time=2ms, time<1ms, tiempo=2ms, tiempo<1m, time=0.032 ms. Se redondea a 2 decimales. Si la salida indica <1, guarda 0 y la interfaz lo muestra como < 1 ms.
 Espera máxima: 1 segundo por dispositivo.
 Solo se crea una alerta si el dispositivo no tiene ya una alerta pendiente, para evitar alertas repetidas en cada ping fallido. La regla vive en el Servicio de Alertas (POST /alertas) y la garantiza la base de datos con el índice único de alertas.dispositivo_pendiente, también con peticiones simultáneas.
+Escáner de red (Servicio de Descubrimiento, Fase 9): solo la /24 de la IP propia, calculada en el servidor y solo si es privada; el navegador solo elige el lote (1–4). Ping en paralelo con proc_open (máximo 64 a la vez, tope de 3 s por lote) usando comun/ping.php, tabla ARP sin depender del idioma y DNS inverso con 0.8 s como máximo. Uso responsable: solo en redes propias o con permiso; en la demo, el hotspot del equipo, nunca la red de la escuela. Las pruebas nunca escanean la red local: usan la red simulada.
 IPs de prueba: 127.0.0.1 siempre responde. 192.0.2.1 (rango reservado para documentación) nunca responde. Las pruebas automáticas usan solo 127.0.0.1 y 192.0.2.x, nunca IPs de la red local, para pasar en cualquier red o sin red.
 Prueba el ping a través de Apache (con curl al endpoint), no solo con php en la terminal: Apache corre como daemon y puede tener permisos distintos a tu usuario para ejecutar ping.
 Autenticación
@@ -137,7 +141,7 @@ Login: mismo mensaje y tiempo similar exista o no el usuario (password_verify() 
 Diseño de la interfaz
 Tokens: colores, tipografía, espaciados, radios y sombras son variables CSS en web/css/tokens.css. Ningún otro archivo usa valores hexadecimales sueltos (única excepción: web/favicon.svg, con los valores de --color-base, --color-base-icono y --color-activo escritos, porque un favicon no puede leer variables CSS).
 Caché: web/.htaccess envía Cache-Control: no-cache a .html, .js y .css (menos vendor/), dentro de <IfModule mod_headers.c>. El navegador revalida cada vez y recibe 304 si nada cambió. Existe porque en la Fase 6 un celular siguió usando los JavaScript viejos hasta que se cambió de navegador; el día de la demo puede pasar en cualquier equipo que ya abrió la aplicación. Lo comprueba el inicio de pruebas/interfaz.php.
-Proyector: la interfaz se revisa también a 1024×768 y 1280×720. La tabla de Dispositivos oculta Ubicación, Tipo y Comprobado (en ese orden) con una container query cuando la tarjeta no alcanza; nombre, IP, estado, respuesta y acciones siempre quedan a la vista.
+Proyector: la interfaz se revisa también a 1024×768 y 1280×720. La tabla de Dispositivos oculta Ubicación, Tipo y Comprobado (en ese orden) con una container query cuando la tarjeta no alcanza; nombre, IP, estado, respuesta y acciones siempre quedan a la vista. El panel «Equipos en la red» (Fase 9) oculta la MAC por debajo de 960 px de tarjeta y, por debajo de 820, el tiempo; la marca baja debajo de la IP, los nombres se recortan y «Registrado ·» queda solo para lectores de pantalla.
 Referencia visual: docs/diseno/. "Monitoreo de Red SOA.dc.html" es el sistema de diseño (valores finales), "Monitoreo de Red SOA · Pantallas.dc.html" y el PDF muestran las pantallas. Es solo referencia: no copies su código (usa React internamente y carga recursos desde internet).
 Tokens: web/css/tokens.css es el único archivo con colores (hexadecimales o rgb/rgba), agrupados por categoría: paleta base, estados, superficies y bordes, barra lateral, acento, gráficas, transparencias, tipografía y medidas. Además de la paleta del :root del diseño, tokeniza los colores que el diseño escribía directamente (bordes suaves, hover de fila, esqueleto, variantes del acento, colores de la barra lateral, series de la gráfica, fondos de modal y anillos de foco).
 Paleta base (valores finales del sistema de diseño):
@@ -218,10 +222,12 @@ Estado actual
 
 Actualiza esta sección al cerrar cada fase.
 
-Fase actual: ninguna. Las Fases 0–8 están completas y fusionadas a main; la etiqueta v1.0 es la versión que se presenta. Repositorio: https://github.com/JazielAguirre/monitoreo-red-soa (remoto origin por SSH).
+Fase actual: ninguna. Las Fases 0–9 están completas y fusionadas a main. Etiquetas: v1.1 es la versión actual, con el escáner de red (Fase 9); v1.0 queda como respaldo sin el escáner (la que se presenta si el escáner no puede usarse). Repositorio: https://github.com/JazielAguirre/monitoreo-red-soa (remoto origin por SSH).
 Pendientes del equipo (no requieren código):
+- Probar «Buscar dispositivos en la red» en Windows (docs/WINDOWS.md, paso 7) y ensayar su tramo en vivo con un segundo teléfono en el hotspot.
+- Confirmar con el profesor el tiempo disponible (el guion dura ~5:30; ~5:05 sin la recarga del celular).
 - Ensayar docs/DEMO.md en vivo, cronometrado, y grabar el video de respaldo.
-- Repetir las 5 suites en la computadora de otro integrante (Windows: docs/WINDOWS.md; el ping en Windows solo se probó con salidas de ejemplo).
+- Repetir las 6 suites en la computadora de otro integrante (Windows: docs/WINDOWS.md; el ping en Windows solo se probó con salidas de ejemplo).
 - Si es posible, conectar la computadora al proyector real del salón (hasta ahora se simuló con Chrome a 1024×768 y 1280×720).
 Completado:
 - Fase 0 — Preparación y prueba de ping: estructura del proyecto, comun/config.php y comun/respuesta.php, puntos de entrada de dispositivos, alertas y monitoreo con reescritura de URLs, esqueletos HTML, librerías en web/vendor/, repositorio git, .htaccess que solo expone web/ y los servicios, y servicios/monitoreo/ping.php probado a través de Apache (127.0.0.1 y la puerta de enlace activos, 192.0.2.1 inactivo en ~1 s, entradas inválidas → 400 sin ejecutar comandos).
@@ -233,6 +239,7 @@ Completado:
 - Fase 6 — Pantallas: Dashboard, Dispositivos, Monitoreos y Alertas con los servicios reales. api.js (URL base relativa) y módulos compartidos en web/js/modulos/ (formatos, notificaciones, vistas, estructura, piezas, gráficas, monitorear-todos, formulario-dispositivo, modales); estados de carga, vacío y error en cada vista; filtros en la URL; adaptaciones de celular (tarjetas en Dispositivos, filas en el Dashboard, filas compactas del historial en Monitoreos con una container query, tarjetas apiladas en Alertas); piezas en componentes.html (secciones 15–31). pruebas/interfaz.php con su propio Chrome headless (235 comprobaciones, incluidos el nombre con HTML en las cuatro pantallas y el foco visible con el teclado). Revisado por el equipo contra docs/diseno/, probado en un celular real por la WiFi y con MySQL apagado de verdad.
 - Fase 7 — Inicio de sesión: Servicio de Autenticación (login, logout, sesión) con el patrón de los demás; comun/auth.php con acceso por ruta ([Interfaz]: sesión o clave → 401; [Interno]: solo clave → 403; clave aleatoria comparada con hash_equals); sesión leída con read_and_close (sin bloqueo: 3 peticiones que esperan 3 s tardan 3 s juntas, no 9); cookie HttpOnly, SameSite=Lax, ruta del proyecto, 8 h; login con el mismo mensaje y tiempo exista o no el usuario. login.html (5a y 5b), redirección con «volver» validado, iniciarPagina() en cada pantalla, usuario real y «Salir». pruebas/auth.php (126) y las demás suites con sesión; interfaz.php entra por la pantalla real. «Monitorear todos» tarda lo mismo que antes (5.30 s contra 5.29 s). Probado a mano por el equipo en la computadora y en el celular.
 - Fase 8 — Integración, pruebas y demo: web/.htaccess con Cache-Control: no-cache (vendor/ sin cambios), favicon.svg, ajustes para proyector (columnas de Dispositivos por container query, filtros de Monitoreos, fecha compacta). herramientas/preparar-demo.php (fechas movidas a hace 10 min, IPs detectadas, indicadas o --sin-red, comprobación previa con ✓/✗ y «Qué hacer»), registro de llamadas entre servicios con herramientas/ver-llamadas.php. README completo y docs/WINDOWS.md. docs/DEMO.md: guion de 5 min para 4 integrantes (70–80 s cada uno, frases a 130 palabras por minuto), preguntas con quién responde, plan B y «Si pasa X, haz Y», revisado por el equipo. Con el seed, «Monitorear todos» crea 2 alertas en vivo (Impresora y Servidor de respaldo): el contador va de 1 a 3 (a 4 si el router no responde o con --sin-red). Las 5 suites pasan (dispositivos 207, alertas 154, monitoreo 221, auth 126, interfaz 319, con el ensayo completo del guion) y pasaron en una copia recién clonada siguiendo el README. Al cambiar el enlace de htdocs, PHP sigue un rato con la carpeta anterior (realpath_cache_ttl = 120 s): reiniciar Apache o esperar 130 s antes de probar y antes de borrar la carpeta anterior.
+- Fase 9 — Descubrimiento de red (fusionada a main, etiqueta v1.1): Servicio de Descubrimiento sin tablas (GET /descubrimiento/red y POST /descubrimiento/red/lotes/{n}): /24 de la IP propia calculada en el servidor y solo privada, ping en paralelo con proc_open (64 direcciones en ~1 s, no 64 s), tabla ARP de Linux/Windows/macOS sin depender del idioma, DNS inverso por UDP con 0.8 s como máximo y registrados pedidos a Dispositivos por HTTP; los servicios existentes no cambiaron (en Monitoreo solo el require de ping.php). Pantalla Dispositivos: «Buscar dispositivos en la red» con progreso por lote, lista y «Agregar» prellenado; sección 33 de componentes.html. pruebas/descubrimiento.php (112) con red simulada, secciones 9.x de interfaz.php y el tramo en el ensayo del guion (352). Probado en el hotspot real a través de Apache: 7 equipos en ~4.4 s, 2 solo por ARP. 12 roturas a propósito detectadas. Tras la revisión: preparar-demo.php marca ⚠ «El router bloquea el ping, pero está conectado (aparece en ARP)» en lugar de ✗ (lee la tabla ARP con tablaArpDelServicio() de arp.php; probado con la red simulada en pruebas/monitoreo.php) y DEMO.md suma la pregunta del router inactivo y que en el hotspot solo haya equipos del equipo. Las 6 suites: 1174 de 1174 (dispositivos 207, alertas 154, monitoreo 223, auth 126, descubrimiento 112, interfaz 352).
 Pendientes o decisiones abiertas:
 - Con EMULATE_PREPARES en false, PDO ya devuelve INT como int, pero DECIMAL sigue como texto y TINYINT como int (1): cada servicio convierte a número y booleano antes de responder (Dispositivos lo hace en formatearDispositivo()).
 - El 1452 de POST /monitoreo (dispositivo borrado entre el paso 1 y el 3) se prueba en datos.php, no de punta a punta: provocar esa carrera por HTTP no es confiable.

@@ -11,12 +11,18 @@ Interfaz web (web/)  ──HTTP + JSON──►  Servicios (servicios/)  ──�
                                         ├── auth          → tabla usuarios
                                         ├── dispositivos  → tabla dispositivos
                                         ├── monitoreo     → tabla monitoreos
-                                        └── alertas       → tabla alertas
+                                        ├── alertas       → tabla alertas
+                                        └── descubrimiento → sin tablas (ping y tabla ARP)
 ```
 
 Cada servicio solo lee y escribe su propia tabla. Cuando uno necesita algo de otro,
 se lo pide por HTTP: por ejemplo, Monitoreo le pide la IP a Dispositivos, le avisa
 el resultado y le pide a Alertas que cree una alerta.
+
+Desde la Fase 9, la pantalla Dispositivos también puede **buscar los equipos
+conectados a la red local** (Servicio de Descubrimiento) y agregarlos con un clic.
+Úsalo solo en redes propias o con permiso: ver [Buscar dispositivos en la
+red](#8-buscar-dispositivos-en-la-red).
 
 ---
 
@@ -29,8 +35,9 @@ el resultado y le pide a Alertas que cree una alerta.
 5. [Comprobar que funciona](#5-comprobar-que-funciona)
 6. [Pruebas automáticas](#6-pruebas-automáticas)
 7. [Preparar la demo](#7-preparar-la-demo)
-8. [Problemas comunes](#8-problemas-comunes)
-9. [Estructura del proyecto](#9-estructura-del-proyecto)
+8. [Buscar dispositivos en la red](#8-buscar-dispositivos-en-la-red)
+9. [Problemas comunes](#9-problemas-comunes)
+10. [Estructura del proyecto](#10-estructura-del-proyecto)
 
 ---
 
@@ -203,6 +210,7 @@ cd ~/Proyectos/monitoreo-red-soa
 /opt/lampp/bin/php pruebas/alertas.php
 /opt/lampp/bin/php pruebas/monitoreo.php
 /opt/lampp/bin/php pruebas/auth.php
+/opt/lampp/bin/php pruebas/descubrimiento.php
 /opt/lampp/bin/php pruebas/interfaz.php
 ```
 
@@ -212,7 +220,8 @@ cd ~/Proyectos/monitoreo-red-soa
 | `alertas.php` | Endpoints de Alertas, una sola alerta pendiente por dispositivo (también con peticiones simultáneas) | 3 s |
 | `monitoreo.php` | Flujo de monitoreo por HTTP entre servicios, 502 cuando otro servicio no responde, regla SOA, registro de llamadas y preparación de la demo | 15 s |
 | `auth.php` | Login, cookie, 401/403, mismo tiempo exista o no el usuario, sesión sin bloqueo, redirecciones y «Salir» en el navegador | 1 min |
-| `interfaz.php` | Las pantallas en un Chrome sin ventana: estados de carga/vacío/error, celular (390 px), proyector (1024 y 1280 px), teclado, caché | 6 min |
+| `descubrimiento.php` | Escáner de red: red y lotes, tabla ARP de Linux, Windows (inglés y español) y macOS, DNS inverso, pings en paralelo, 503/502, regla SOA. Usa una red simulada: **nunca envía nada a tu red** | 12 s |
+| `interfaz.php` | Las pantallas en un Chrome sin ventana: estados de carga/vacío/error, celular (390 px), proyector (1024 y 1280 px), teclado, caché y «Buscar dispositivos en la red» | 4 min |
 
 Cada suite termina con `Resultado: N de N comprobaciones correctas.` y con código
 de salida distinto de 0 si algo falla. Las pruebas de navegador abren su propio
@@ -240,7 +249,9 @@ de la red donde se presenta y comprueba que todo responde.
 
 Al final muestra un resumen (fechas nuevas, IPs, URL para el celular) y una
 **comprobación previa** con ✓ o ✗ en cada línea: Apache, servicios, base de datos y
-ping al router. Si algo falla, dice qué hacer.
+ping al router. Si algo falla, dice qué hacer. Si el router bloquea el ping pero
+aparece en la tabla ARP (pasa con muchos hotspots), sale ⚠ «El router bloquea el
+ping, pero está conectado (aparece en ARP)»: es un aviso, no un fallo.
 
 Durante la parte de SOA de la demo, en otra terminal:
 
@@ -262,7 +273,58 @@ El guion completo, con el reparto entre integrantes y el plan B, está en
 
 ---
 
-## 8. Problemas comunes
+## 8. Buscar dispositivos en la red
+
+En **Dispositivos → Buscar dispositivos en la red**, el sistema encuentra los equipos
+conectados a la red local de esta computadora, aunque no estén registrados, y muestra
+para cada uno su IP, MAC, nombre (si lo tiene), si respondió al ping o solo apareció
+en la tabla ARP, y si ya está registrado. **Agregar** abre el formulario de siempre
+con la IP y el nombre ya escritos.
+
+> **Uso responsable.** Escanear una red es enviar paquetes a todos sus equipos.
+> Úsalo **solo en redes propias o con permiso** de quien las administra. En la demo se
+> usa en el **hotspot de un teléfono del equipo**, nunca en la red de la escuela. Si
+> la computadora está conectada a una red ajena, no pulses el botón.
+
+Cómo funciona (Servicio de Descubrimiento, `servicios/descubrimiento/`):
+
+- **Solo la red de esta computadora:** la /24 de su IP (por ejemplo `192.168.137.0/24`,
+  254 direcciones), calculada en el servidor. El rango nunca viene del navegador, así
+  que nadie puede usar el servicio para escanear otras redes, y solo se aceptan redes
+  privadas (`10.x`, `172.16–31.x`, `192.168.x`).
+- **Ping en paralelo, por lotes:** la interfaz pide 4 lotes de 64 direcciones, uno tras
+  otro, para mostrar el progreso; cada lote hace sus pings a la vez y tarda 1–2 s.
+  La red completa, unos 5 s.
+- **Tabla ARP:** después del ping se lee la tabla ARP del sistema (`ip neigh` en Linux,
+  `arp -a` en Windows, `arp -an` en macOS). Así aparecen también los equipos que
+  bloquean el ping, como muchas computadoras con Windows o el propio hotspot
+  («Solo en ARP»), con su dirección MAC.
+- **Nombre:** por DNS inverso, con 0.8 s como máximo; si no hay, se muestra «—».
+- **Registrados:** el servicio le pregunta a Dispositivos (`GET /dispositivos`) por
+  HTTP; para registrar, la interfaz usa el `POST /dispositivos` de siempre. Ningún
+  otro servicio cambió para agregar el escáner.
+
+Límites conocidos:
+
+- Si la red es más grande que una /24 (por ejemplo una /16 de una escuela), solo se
+  busca en la /24 de esta computadora.
+- La tabla ARP guarda los equipos unos minutos: uno que se desconectó hace poco puede
+  seguir apareciendo como «Solo en ARP».
+- En Windows y macOS, la lectura de la tabla ARP solo se probó con salidas de ejemplo.
+
+Probarlo desde la terminal (solo en una red propia: el lote 1 hace ping a 64 direcciones):
+
+```bash
+curl -s -c cookies.txt -H 'Content-Type: application/json' \
+  -d '{"usuario":"admin","contrasena":"admin123"}' \
+  http://localhost/monitoreo-red-soa/servicios/auth/login
+curl -s -b cookies.txt http://localhost/monitoreo-red-soa/servicios/descubrimiento/red
+curl -s -b cookies.txt -X POST http://localhost/monitoreo-red-soa/servicios/descubrimiento/red/lotes/1
+```
+
+---
+
+## 9. Problemas comunes
 
 | Síntoma | Causa | Solución |
 |---|---|---|
@@ -276,18 +338,22 @@ El guion completo, con el reparto entre integrantes y el plan B, está en
 | Después de cambiar a dónde apunta el enlace de `htdocs`, hay errores 500 o fallan las pruebas del fallo simulado | PHP recuerda la ruta anterior (`realpath_cache`) en cada proceso de Apache | Reinicia Apache (`sudo /opt/lampp/lampp restartapache` o el panel de XAMPP), o espera unos 2 minutos (`realpath_cache_ttl` es 120 s). No borres la carpeta anterior hasta entonces |
 | La sesión se cierra | Pasaron 8 horas desde el login | Vuelve a iniciar sesión; te regresa a la pantalla donde estabas |
 | Un dispositivo siempre sale **inactivo** aunque responda | Ping bloqueado para Apache o salida del ping en otro idioma | `docs/WINDOWS.md` (Windows) o prueba `curl -X POST …/servicios/monitoreo/1` y revisa `/opt/lampp/logs/php_error_log` |
+| «Buscar dispositivos en la red» dice **"No se detectó una red local"** | La computadora no tiene red (sin WiFi ni cable) | Conéctala a la red (en la demo, al hotspot) y vuelve a buscar |
+| Dice **"Solo se pueden escanear redes privadas"** | La IP de la computadora no es de una red local privada | Es a propósito: el escáner nunca recorre redes públicas. Conéctala a una red local |
+| **Un equipo no aparece** en la búsqueda | No respondió al ping ni a ARP en ese momento (teléfono con la pantalla apagada, otra red WiFi) | Despiértalo, confirma que esté en la misma red y pulsa «Buscar de nuevo» |
 
 ---
 
-## 9. Estructura del proyecto
+## 10. Estructura del proyecto
 
 ```
 database/       schema.sql (recrea la base), seed.sql (datos de prueba)
 docs/           API.md (contrato de los endpoints), PLAN.md (fases), DEMO.md (guion),
                 WINDOWS.md (verificación en Windows), diseno/ (referencia visual)
 herramientas/   preparar-demo.php, ver-llamadas.php y sus funciones (solo línea de comandos)
-pruebas/        las 5 suites y sus ayudas (solo línea de comandos)
-servicios/      comun/ (infraestructura) y un servicio por carpeta: auth, dispositivos, monitoreo, alertas
+pruebas/        las 6 suites y sus ayudas (solo línea de comandos)
+servicios/      comun/ (infraestructura) y un servicio por carpeta: auth, dispositivos, monitoreo,
+                alertas y descubrimiento
 web/            interfaz: HTML, css/ (tokens.css es el único archivo con colores), js/, vendor/
 ```
 

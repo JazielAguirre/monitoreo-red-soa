@@ -511,6 +511,25 @@ foreach (['Router principal ... 192.0.2.30 (indicada)', '✓ Apache responde', '
     comprobar(str_contains($salida, $texto), "  el resumen y la comprobación previa incluyen «{$texto}»");
 }
 
+// Un router que bloquea el ping pero está en la tabla ARP (como muchos hotspots): ⚠, no ✗.
+// La tabla ARP viene de la red simulada (la misma lectura que el escáner), así que no depende de la red.
+register_shutdown_function('quitarRedSimulada');
+simularRed(['ip_propia' => '192.0.2.1', 'arp' => tablaArpDeEjemplo([['192.0.2.40', 'aa:bb:cc:dd:ee:40', 'REACHABLE']])]);
+[$codigo, $salida] = prepararDemo('--router=192.0.2.40 --pc=127.0.0.2');
+comprobar(
+    $codigo === 0 && str_contains($salida, '⚠ El router bloquea el ping, pero está conectado (aparece en ARP): 192.0.2.40, MAC aa:bb:cc:dd:ee:40')
+        && !str_contains($salida, '✗') && str_contains($salida, 'Todo listo para la demo (lee los avisos con ⚠).'),
+    'router que no responde al ping pero está en ARP → ⚠ «El router bloquea el ping, pero está conectado (aparece en ARP)», código 0',
+    $salida
+);
+quitarRedSimulada();
+[$codigo, $salida] = prepararDemo('--router=192.0.2.40 --pc=127.0.0.2');
+comprobar(
+    $codigo === 1 && str_contains($salida, '✗ El router (192.0.2.40) no responde al ping') && str_contains($salida, 'Qué hacer: El router no responde') && !str_contains($salida, '⚠'),
+    'si tampoco está en ARP → ✗ con «Qué hacer» y código 1',
+    $salida
+);
+
 recargarBaseDeDatos();
 peticion('PUT', '/dispositivos/1', ['nombre' => 'Marca de la prueba', 'ip' => '127.0.0.1', 'tipo' => 'computadora', 'ubicacion' => 'Laboratorio']);
 foreach (['--router=300.1.1.1' => 'no es una IPv4 válida', '--router=192.0.2.40 --pc=192.0.2.40' => 'no pueden tener la misma IP', '--otra-opcion' => 'Uso:'] as $argumentos => $mensaje) {

@@ -1549,6 +1549,278 @@ foreach ($paginasTeclado as $pagina => $espera) {
 $navegador->evaluar('document.activeElement.blur()');
 
 // =====================================================================
+seccion('9.1 · Dispositivos: «Buscar dispositivos en la red» con la red simulada');
+
+// La red simulada (192.0.2.0/24, ver pruebas/ayudas.php) hace que el Servicio de
+// Descubrimiento real escanee una red de prueba: nunca se envía nada a la red local.
+const ARP_INTERFAZ = [
+    ['192.0.2.20', '00:11:22:33:44:55', 'STALE'],      // lote 1: Impresora Laboratorio (registrada)
+    ['192.0.2.77', 'aa:bb:cc:dd:ee:01', 'REACHABLE'],  // lote 2: equipo nuevo que bloquea el ping
+    ['192.0.2.254', 'aa:bb:cc:dd:ee:fe', 'REACHABLE'], // lote 4: puerta de enlace
+];
+register_shutdown_function('quitarRedSimulada');
+
+function simularRedDeLaInterfaz(): void
+{
+    simularRed(['ip_propia' => '192.0.2.1', 'puerta_enlace' => '192.0.2.254', 'arp' => tablaArpDeEjemplo(ARP_INTERFAZ)]);
+}
+
+/**
+ * Estado visible del panel de búsqueda.
+ */
+function estadoBusqueda(Navegador $navegador): array
+{
+    return $navegador->evaluar(<<<'JS'
+        (() => {
+            const panel = document.getElementById('busqueda-red');
+            const q = (s) => panel.querySelector(s);
+            const visibles = (s) => [...panel.querySelectorAll(s)].filter((n) => n.offsetParent !== null);
+            return {
+                oculto: panel.hidden,
+                subtitulo: q('.panel-busqueda__subtitulo')?.textContent ?? null,
+                progreso: q('.panel-busqueda__progreso') ? !q('.panel-busqueda__progreso').hidden : null,
+                posicion: q('.progreso-monitoreo__detalle')?.textContent ?? null,
+                boton: document.getElementById('buscar-red').innerText.trim(),
+                botonDeshabilitado: document.getElementById('buscar-red').disabled,
+                ocupado: q('.panel-busqueda__contenido')?.getAttribute('aria-busy') === 'true',
+                ips: [...panel.querySelectorAll('.tabla-equipos tbody tr')].map((tr) => tr.dataset.ip),
+                filas: [...panel.querySelectorAll('.tabla-equipos tbody tr')].map((tr) => [...tr.children].map((td) => td.textContent.trim())),
+                agregar: visibles('[data-accion="agregar-equipo"]').length,
+            };
+        })()
+    JS);
+}
+
+function esperarFinBusqueda(Navegador $navegador, float $espera = 20): bool
+{
+    return $navegador->esperarHasta("!document.getElementById('busqueda-red').hidden && document.querySelector('#busqueda-red .panel-busqueda__progreso').hidden && !document.getElementById('buscar-red').disabled", $espera);
+}
+
+recargarBaseDeDatos();
+$navegador->tamano(1440, 900);
+abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8);
+$r = $navegador->evaluar("({ texto: document.getElementById('buscar-red').innerText.trim(), panel: document.getElementById('busqueda-red').hidden })");
+comprobarIgual(['texto' => 'Buscar dispositivos en la red', 'panel' => true], $r, 'botón «Buscar dispositivos en la red» en el encabezado; el panel empieza oculto');
+
+simularRedDeLaInterfaz();
+$navegador->interceptar('descubrimiento/red/lotes/2', ['retener' => true]);
+clic($navegador, '#buscar-red');
+comprobar($navegador->esperarRetenida('descubrimiento/red/lotes/2', 15), 'el lote 1 termina y la interfaz pide el lote 2 (uno tras otro)');
+$navegador->procesarEventos(0.3);
+$r = estadoBusqueda($navegador);
+$esperado = ['oculto' => false, 'subtitulo' => 'Buscando en 192.0.2.0/24…', 'progreso' => true, 'posicion' => 'Lote 2 de 4 · 1 encontrado', 'boton' => 'Buscando 2 de 4…', 'botonDeshabilitado' => true, 'ocupado' => true, 'ips' => ['192.0.2.20']];
+comprobarIgual($esperado, array_intersect_key($r, $esperado), '  mientras busca: progreso «Lote 2 de 4», botón «Buscando 2 de 4…» deshabilitado y la lista ya muestra lo del lote 1');
+$r = $navegador->evaluar("(() => { const b = document.querySelector('#busqueda-red [role=\"progressbar\"]'); return [b.getAttribute('aria-valuenow'), b.getAttribute('aria-valuemax'), b.getAttribute('aria-valuetext')]; })()");
+comprobarIgual(['1', '4', 'Lote 2 de 4'], $r, '  barra de progreso accesible (1 de 4 lotes hechos)');
+capturar($navegador, 'busqueda-progreso');
+simularRedDeLaInterfaz(); // la red simulada dura 30 s: se renueva antes de seguir
+$navegador->liberar('descubrimiento/red/lotes/2');
+comprobar(esperarFinBusqueda($navegador), 'la búsqueda termina con los 4 lotes');
+$r = estadoBusqueda($navegador);
+comprobarIgual(['192.0.2.20', '192.0.2.77', '192.0.2.254'], $r['ips'], '  lista: los equipos de la tabla ARP, ordenados por IP');
+comprobarIgual(
+    [
+        ['Solo en ARP', '192.0.2.20', '—', '00:11:22:33:44:55', '—', 'Registrado · Impresora Laboratorio'],
+        ['Solo en ARP', '192.0.2.77', '—', 'aa:bb:cc:dd:ee:01', '—', 'Agregar'],
+        ['Solo en ARP', '192.0.2.254Puerta de enlace', '—', 'aa:bb:cc:dd:ee:fe', '—', 'Agregar'],
+    ],
+    $r['filas'],
+    '  cada fila: detección (punto + texto), IP, nombre, MAC, respuesta y registro'
+);
+comprobarIgual(['192.0.2.0/24 · 3 equipos encontrados · 2 sin registrar', 'Buscar dispositivos en la red', false, false], [$r['subtitulo'], $r['boton'], $r['ocupado'], $r['progreso']], '  resumen en el subtítulo, el botón vuelve a la normalidad y el progreso se oculta');
+$r = $navegador->evaluar("(() => { const a = document.querySelector('#busqueda-red tr[data-ip=\"192.0.2.20\"] a'); return [a.getAttribute('href'), document.querySelector('#busqueda-red .pie-tabla__nota').textContent.trim()]; })()");
+comprobarIgual(['monitoreos.html?dispositivo=5', 'Solo busca en la red de esta computadora. Úsalo en redes propias o con permiso.'], $r, '  «Registrado» enlaza al historial del dispositivo; el pie recuerda el uso responsable');
+capturar($navegador, 'busqueda-resultado');
+
+clic($navegador, '#busqueda-red tr[data-ip="192.0.2.254"] [data-accion="agregar-equipo"]');
+esperarModal($navegador, 'modal-dispositivo', true);
+$r = $navegador->evaluar("(() => { const f = document.querySelector('#modal-dispositivo form').elements; return [document.getElementById('modal-dispositivo-titulo').textContent, f.nombre.value, f.ip.value, f.tipo.value, f.ubicacion.value]; })()");
+comprobarIgual(['Agregar dispositivo', '', '192.0.2.254', 'router', ''], $r, '«Agregar» en la puerta de enlace: el formulario de siempre, con la IP escrita y tipo Router');
+$navegador->tecla('Escape');
+esperarModal($navegador, 'modal-dispositivo', false);
+
+$lotesAntes = (int) $navegador->evaluar("performance.getEntriesByType('resource').filter((e) => e.name.includes('/lotes/')).length");
+clic($navegador, '#busqueda-red tr[data-ip="192.0.2.77"] [data-accion="agregar-equipo"]');
+esperarModal($navegador, 'modal-dispositivo', true);
+comprobarIgual(['192.0.2.77', 'computadora'], $navegador->evaluar("(() => { const f = document.querySelector('#modal-dispositivo form').elements; return [f.ip.value, f.tipo.value]; })()"), '«Agregar» en un equipo nuevo: IP escrita y tipo Computadora');
+escribir($navegador, '#campo-nombre', 'Laptop de Ana');
+escribir($navegador, '#campo-ubicacion', 'Laboratorio');
+clic($navegador, '#modal-dispositivo [type="submit"]');
+esperarModal($navegador, 'modal-dispositivo', false);
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 7 && document.querySelector('#busqueda-red tr[data-ip=\"192.0.2.77\"]')?.textContent.includes('Registrado')", 8);
+$r = $navegador->evaluar("({ registro: document.querySelector('#busqueda-red tr[data-ip=\"192.0.2.77\"] td:last-child').textContent.trim(), filas: document.querySelectorAll('.tabla-dispositivos tbody tr').length, subtitulo: document.querySelector('.panel-busqueda__subtitulo').textContent, lotes: performance.getEntriesByType('resource').filter((e) => e.name.includes('/lotes/')).length, foco: document.activeElement.textContent })");
+comprobarIgual(['registro' => 'Registrado · Laptop de Ana', 'filas' => 7, 'subtitulo' => '192.0.2.0/24 · 3 equipos encontrados · 1 sin registrar', 'lotes' => $lotesAntes, 'foco' => 'Laptop de Ana'], $r,
+    '  al guardar: aparece en la tabla, pasa a «Registrado» sin volver a escanear y el foco va a su enlace');
+comprobarIgual('Laptop de Ana', valorBd("SELECT nombre FROM dispositivos WHERE ip = '192.0.2.77'"), '  se registró con POST /dispositivos (está en la base)');
+cerrarNotificaciones($navegador);
+
+$idLaptop = (int) valorBd("SELECT id FROM dispositivos WHERE ip = '192.0.2.77'");
+clic($navegador, ".tabla-dispositivos tr[data-id=\"$idLaptop\"] [data-accion=\"eliminar\"]");
+esperarModal($navegador, 'modal-eliminar', true);
+clic($navegador, '#confirmar-eliminar');
+esperarModal($navegador, 'modal-eliminar', false);
+comprobar($navegador->esperarHasta("document.querySelector('#busqueda-red tr[data-ip=\"192.0.2.77\"] [data-accion=\"agregar-equipo\"]')", 8), 'al eliminarlo de la lista, el equipo vuelve a mostrar «Agregar»');
+cerrarNotificaciones($navegador);
+
+clic($navegador, '#busqueda-red .panel-busqueda__cerrar');
+comprobarIgual([true, 'buscar-red'], [$navegador->evaluar("document.getElementById('busqueda-red').hidden"), $navegador->evaluar('document.activeElement.id')], '«Cerrar» oculta el panel y devuelve el foco al botón');
+
+// =====================================================================
+seccion('9.2 · Búsqueda en la red: vacío, errores y seguridad');
+
+const RED_DE_EJEMPLO = '{"ok":true,"data":{"red":"192.0.2.0/24","ip_propia":"192.0.2.1","puerta_enlace":null,"lotes":4,"total_direcciones":254}}';
+
+/**
+ * Responde los lotes con $encontrados (lote 1) y [] (los demás), y la red de ejemplo.
+ */
+function interceptarBusqueda(Navegador $navegador, array $encontrados = []): void
+{
+    $navegador->quitarIntercepciones();
+    for ($lote = 1; $lote <= 4; $lote++) {
+        $data = ['lote' => $lote, 'desde' => '192.0.2.' . (($lote - 1) * 64 + 1), 'hasta' => '192.0.2.' . min($lote * 64, 254), 'encontrados' => $lote === 1 ? $encontrados : []];
+        $navegador->interceptar("descubrimiento/red/lotes/$lote", ['codigo' => 200, 'cuerpo' => json_encode(['ok' => true, 'data' => $data], JSON_UNESCAPED_UNICODE)]);
+    }
+    $navegador->interceptar('descubrimiento/red', ['codigo' => 200, 'cuerpo' => RED_DE_EJEMPLO]);
+}
+
+interceptarBusqueda($navegador);
+clic($navegador, '#buscar-red');
+esperarFinBusqueda($navegador, 10);
+$r = $navegador->evaluar("({ titulo: document.querySelector('#busqueda-red .estado-vacio__titulo')?.textContent, boton: document.querySelector('#busqueda-red .estado-vacio button')?.textContent.trim(), subtitulo: document.querySelector('.panel-busqueda__subtitulo').textContent })");
+comprobarIgual(['titulo' => 'No se encontró ningún equipo', 'boton' => 'Buscar de nuevo', 'subtitulo' => '192.0.2.0/24 · 0 equipos encontrados · 0 sin registrar'], $r, 'sin equipos → estado vacío con «Buscar de nuevo»');
+
+$navegador->quitarIntercepciones();
+$navegador->interceptar('descubrimiento/red', ['codigo' => 503, 'cuerpo' => '{"ok":false,"error":"No se detectó una red local. Conecta la computadora a una red WiFi o cableada."}']);
+clic($navegador, '#busqueda-red .estado-vacio button');
+$navegador->esperarHasta("document.querySelector('#busqueda-red .vista-error')", 8);
+$r = $navegador->evaluar("({ rol: document.querySelector('#busqueda-red .vista-error').getAttribute('role'), titulo: document.querySelector('#busqueda-red .vista-error__titulo').textContent, texto: document.querySelector('#busqueda-red .vista-error__texto').textContent, boton: document.getElementById('buscar-red').disabled })");
+comprobarIgual(['rol' => 'alert', 'titulo' => 'No se pudo buscar en la red', 'texto' => 'No se detectó una red local. Conecta la computadora a una red WiFi o cableada.', 'boton' => false], $r, 'sin red (503) → bloque de error con el mensaje de la API y el botón disponible otra vez');
+comprobar(in_array('No se pudo buscar en la red', notificaciones($navegador), true), '  y una notificación de error');
+cerrarNotificaciones($navegador);
+
+interceptarBusqueda($navegador, [['ip' => '192.0.2.5', 'mac' => null, 'nombre' => 'pc.lan', 'responde_ping' => true, 'tiempo_respuesta_ms' => 0, 'en_arp' => false, 'es_esta_computadora' => true, 'es_puerta_enlace' => false, 'dispositivo' => null]]);
+$navegador->interceptar('descubrimiento/red/lotes/3', ['codigo' => 502, 'cuerpo' => '{"ok":false,"error":"No se pudo comunicar con el Servicio de Dispositivos"}']);
+clic($navegador, '#busqueda-red .vista-error button');
+$navegador->esperarHasta("document.querySelector('#busqueda-red .vista-error__texto')?.textContent.includes('Dispositivos')", 10);
+comprobarIgual('No se pudo comunicar con el Servicio de Dispositivos', $navegador->evaluar("document.querySelector('#busqueda-red .vista-error__texto').textContent"), 'un lote falla (502) → error con su mensaje y «Reintentar»; no se queda a medias');
+cerrarNotificaciones($navegador);
+
+interceptarBusqueda($navegador, [
+    ['ip' => '192.0.2.5', 'mac' => null, 'nombre' => 'pc-recepcion.lan', 'responde_ping' => true, 'tiempo_respuesta_ms' => 0, 'en_arp' => false, 'es_esta_computadora' => true, 'es_puerta_enlace' => false, 'dispositivo' => null],
+    ['ip' => '192.0.2.6', 'mac' => 'aa:bb:cc:dd:ee:06', 'nombre' => XSS, 'responde_ping' => true, 'tiempo_respuesta_ms' => 12.5, 'en_arp' => true, 'es_esta_computadora' => false, 'es_puerta_enlace' => false, 'dispositivo' => null],
+]);
+clic($navegador, '#busqueda-red .vista-error button');
+esperarFinBusqueda($navegador, 10);
+$r = estadoBusqueda($navegador);
+comprobarIgual(
+    [['Responde al ping', '192.0.2.5Esta computadora', 'pc-recepcion.lan', '—', '< 1 ms', 'Agregar'], ['Responde al ping', '192.0.2.6', XSS, 'aa:bb:cc:dd:ee:06', '12.5 ms', 'Agregar']],
+    $r['filas'],
+    '«Reintentar» vuelve a buscar; «Responde al ping» con su tiempo (< 1 ms) y la marca «Esta computadora»'
+);
+comprobarIgual(0, $navegador->evaluar("document.querySelectorAll('#busqueda-red img').length"), 'un nombre con HTML se muestra como texto (ninguna <img> creada)');
+clic($navegador, '#busqueda-red tr[data-ip="192.0.2.5"] [data-accion="agregar-equipo"]');
+esperarModal($navegador, 'modal-dispositivo', true);
+comprobarIgual('pc-recepcion', $navegador->evaluar("document.getElementById('campo-nombre').value"), '«Agregar» propone la primera parte del nombre DNS («pc-recepcion.lan» → «pc-recepcion»)');
+$navegador->tecla('Escape');
+esperarModal($navegador, 'modal-dispositivo', false);
+clic($navegador, '#busqueda-red tr[data-ip="192.0.2.6"] [data-accion="agregar-equipo"]');
+esperarModal($navegador, 'modal-dispositivo', true);
+comprobarIgual([XSS, 0], [$navegador->evaluar("document.getElementById('campo-nombre').value"), $navegador->evaluar("document.querySelectorAll('#modal-dispositivo img').length")], '  el nombre con HTML llega al campo como texto');
+$navegador->tecla('Escape');
+esperarModal($navegador, 'modal-dispositivo', false);
+$navegador->procesarEventos(0.3);
+comprobarIgual([], $navegador->dialogos, '  no se ejecutó ningún alert()');
+
+// =====================================================================
+seccion('9.3 · Búsqueda en la red: teclado, proyector y celular');
+
+$navegador->evaluar("document.getElementById('buscar-red').focus()");
+$sinFoco = [];
+$recorridos = [];
+for ($i = 0; $i < 12; $i++) {
+    $navegador->tecla('Tab');
+    $navegador->procesarEventos(0.2);
+    $r = $navegador->evaluar(<<<'JS'
+        (() => {
+            const el = document.activeElement;
+            if (!el.closest('#busqueda-red')) return null;
+            const e = getComputedStyle(el);
+            const visible = (e.outlineStyle !== 'none' && parseFloat(e.outlineWidth) > 0) || /\b[1-9]\d*(\.\d+)?px\b/.test(e.boxShadow.replace(/0px/g, ''));
+            return { nombre: `${el.tagName.toLowerCase()} «${(el.getAttribute('aria-label') || el.textContent).trim().slice(0, 30)}»`, visible: visible && el.matches(':focus-visible') };
+        })()
+    JS);
+    if ($r === null) {
+        continue;
+    }
+    $recorridos[] = $r['nombre'];
+    if (!$r['visible']) {
+        $sinFoco[] = $r['nombre'];
+    }
+}
+comprobar(count($recorridos) >= 4 && $sinFoco === [], 'con Tab, los ' . count($recorridos) . ' controles del panel (Buscar de nuevo, Cerrar, Agregar) muestran el foco', implode(', ', $sinFoco));
+
+$navegador->tamano(1024, 768);
+interceptarBusqueda($navegador, [
+    ['ip' => '192.0.2.5', 'mac' => 'aa:bb:cc:dd:ee:05', 'nombre' => 'una-computadora-con-nombre-largo.mshome.net', 'responde_ping' => true, 'tiempo_respuesta_ms' => 34.9, 'en_arp' => true, 'es_esta_computadora' => false, 'es_puerta_enlace' => true, 'dispositivo' => ['id' => 4, 'nombre' => 'Servidor principal']],
+    ['ip' => '192.0.2.250', 'mac' => 'aa:bb:cc:dd:ee:fa', 'nombre' => null, 'responde_ping' => false, 'tiempo_respuesta_ms' => null, 'en_arp' => true, 'es_esta_computadora' => false, 'es_puerta_enlace' => false, 'dispositivo' => null],
+]);
+abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8);
+clic($navegador, '#buscar-red');
+esperarFinBusqueda($navegador, 10);
+$r = $navegador->evaluar(<<<'JS'
+    (() => {
+        const t = document.querySelector('.tabla-equipos');
+        const panel = t.getBoundingClientRect();
+        const botones = [...t.querySelectorAll('[data-accion="agregar-equipo"], .equipo-registrado')].every((b) => b.getBoundingClientRect().right <= panel.right);
+        return {
+            texto: document.getElementById('buscar-red').innerText.trim(),
+            cabe: t.scrollWidth <= t.clientWidth,
+            botones,
+            mac: getComputedStyle(t.querySelector('th.col-mac')).display,
+            desborde: document.documentElement.scrollWidth > innerWidth,
+        };
+    })()
+JS);
+comprobarIgual(['texto' => 'Buscar en la red', 'cabe' => true, 'botones' => true, 'mac' => 'none', 'desborde' => false], $r, 'proyector 1024×768: botón «Buscar en la red», la tabla cabe sin la MAC y «Agregar»/«Registrado» quedan a la vista');
+capturar($navegador, 'busqueda-1024');
+
+$navegador->tamano(390, 844, true);
+abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarHasta("document.querySelectorAll('.tarjeta-dispositivo-movil:not(.tarjeta-equipo)').length === 6", 8);
+clic($navegador, '#buscar-red');
+esperarFinBusqueda($navegador, 10);
+$r = $navegador->evaluar(<<<'JS'
+    (() => {
+        const boton = document.getElementById('buscar-red');
+        const tarjetas = [...document.querySelectorAll('#busqueda-red .tarjeta-equipo')];
+        const agregar = document.querySelector('#busqueda-red .tarjeta-equipo [data-accion="agregar-equipo"]');
+        return {
+            tabla: getComputedStyle(document.querySelector('.tabla-equipos')).display,
+            tarjetas: tarjetas.map((t) => t.querySelector('.tarjeta-dispositivo-movil__nombre').textContent),
+            nombreAccesible: boton.innerText.trim(),
+            botonAncho: Math.round(boton.getBoundingClientRect().width),
+            altoAgregar: Math.round(agregar.getBoundingClientRect().height),
+            desborde: document.documentElement.scrollWidth > innerWidth,
+        };
+    })()
+JS);
+comprobarIgual(['tabla' => 'none', 'tarjetas' => ['una-computadora-con-nombre-largo.mshome.net', 'Sin nombre'], 'nombreAccesible' => 'Buscar dispositivos en la red', 'botonAncho' => 44, 'altoAgregar' => 44, 'desborde' => false], $r,
+    'celular 390 px: tarjetas en lugar de tabla, botón de 44 px con solo el ícono (y su nombre para lectores de pantalla) y sin desplazamiento horizontal');
+capturar($navegador, 'busqueda-390');
+$navegador->quitarIntercepciones();
+$navegador->tamano(1440, 900);
+
+abrirPagina($navegador, 'componentes.html');
+$navegador->esperarHasta("document.querySelector('#demo-busqueda-tarjetas article')", 8);
+$r = $navegador->evaluar("({ tablas: document.querySelectorAll('#s33 ~ * .tabla-equipos, .seccion [id^=\"demo-busqueda\"] .tabla-equipos').length, tarjetas: document.querySelectorAll('#demo-busqueda-tarjetas .tarjeta-equipo').length, piezas: document.querySelectorAll('#demo-busqueda-piezas > *').length })");
+comprobarIgual(['tablas' => 2, 'tarjetas' => 3, 'piezas' => 6], $r, 'componentes.html, sección 33: las piezas, las tablas (buscando y resultado) y las tarjetas de celular');
+comprobarIgual([], array_values(array_filter($navegador->erroresJs, fn($e) => !str_contains($e, 'status of 401'))), '  sin errores de JavaScript');
+quitarRedSimulada();
+recargarBaseDeDatos();
+
+// =====================================================================
 seccion('8.1 · Títulos de pestaña, favicon y resoluciones de proyector');
 
 $titulos = ['login.html' => 'Iniciar sesión', 'index.html' => 'Dashboard', 'dispositivos.html' => 'Dispositivos', 'monitoreos.html' => 'Monitoreos', 'alertas.html' => 'Alertas', 'componentes.html' => 'Componentes'];
@@ -1619,6 +1891,27 @@ comprobarIgual([['2 dispositivos no respondieron', 'Monitoreo completado'], true
     contadorDelMenu($navegador),
 ], '  la Impresora pasa a inactiva (primera alerta en vivo), con el Servidor de respaldo: el contador va de 1 a 3');
 cerrarNotificaciones($navegador);
+
+// Integrante 2: «Buscar dispositivos en la red» (en la demo, el hotspot del equipo; aquí,
+// la red simulada 192.0.2.0/24, donde 192.0.2.77 hace del segundo teléfono).
+simularRed(['ip_propia' => '192.0.2.1', 'puerta_enlace' => '192.0.2.254', 'arp' => tablaArpDeEjemplo([
+    ['192.0.2.20', '00:11:22:33:44:55', 'REACHABLE'],
+    ['192.0.2.77', 'aa:bb:cc:dd:ee:01', 'REACHABLE'],
+])]);
+abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8);
+$inicioBusqueda = microtime(true);
+clic($navegador, '#buscar-red');
+comprobar(esperarFinBusqueda($navegador), sprintf('Integrante 2: «Buscar dispositivos en la red» recorre los 4 lotes (%.1f s)', microtime(true) - $inicioBusqueda));
+comprobarIgual(['192.0.2.0/24 · 2 equipos encontrados · 1 sin registrar', ['192.0.2.20', '192.0.2.77']], [$navegador->evaluar("document.querySelector('.panel-busqueda__subtitulo').textContent"), estadoBusqueda($navegador)['ips']], '  la lista muestra el equipo registrado y el nuevo, con su «Agregar»');
+clic($navegador, '#busqueda-red tr[data-ip="192.0.2.77"] [data-accion="agregar-equipo"]');
+esperarModal($navegador, 'modal-dispositivo', true);
+comprobarIgual('192.0.2.77', $navegador->evaluar("document.getElementById('campo-ip').value"), '  «Agregar» abre el formulario con la IP escrita');
+clic($navegador, '#modal-dispositivo [data-bs-dismiss="modal"].btn');
+esperarModal($navegador, 'modal-dispositivo', false);
+clic($navegador, '#busqueda-red .panel-busqueda__cerrar');
+comprobarIgual([true, 6], [$navegador->evaluar("document.getElementById('busqueda-red').hidden"), (int) valorBd('SELECT COUNT(*) FROM dispositivos')], '  «Cancelar» no guarda nada y ✕ cierra el panel');
+quitarRedSimulada();
 
 // Integrante 2: agregar (primero con una IP mala) y monitorear.
 abrirPagina($navegador, 'dispositivos.html');

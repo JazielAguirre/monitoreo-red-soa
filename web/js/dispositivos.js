@@ -3,6 +3,7 @@
  * - Filtros por estado (con contadores), tipo y búsqueda, todo en el navegador.
  * - Tabla en escritorio y tarjetas en celular (se generan las dos; CSS muestra una).
  * - Monitorear una fila o todos, agregar, editar y eliminar (con confirmación).
+ * - «Buscar dispositivos en la red» (Fase 9): equipos de la red local con «Agregar».
  * Los datos de la API se insertan siempre con textContent (modulos/piezas.js).
  */
 
@@ -15,6 +16,7 @@ import { elemento, icono, crearInsigniaEstado, crearTipo, iconoTipo, urlHistoria
 import { crearProgreso, monitorearTodos, notificarResumen, ponerBotonMonitoreando } from './modulos/monitorear-todos.js';
 import { abrirFormulario } from './modulos/formulario-dispositivo.js';
 import { abrirModal, cerrarModal } from './modulos/modales.js';
+import { crearBusquedaRed, datosParaAgregar } from './modulos/busqueda-red.js';
 
 /**
  * Botón visible (tabla o tarjeta) de una acción de un dispositivo, para devolverle el foco.
@@ -36,6 +38,7 @@ const $ = (id) => document.getElementById(id);
 const contenido = $('contenido-dispositivos');
 const botonesTodos = [$('monitorear-todos-escritorio'), $('monitorear-todos-movil')];
 const progreso = crearProgreso($('progreso-monitoreo'));
+const busqueda = crearBusquedaRed($('busqueda-red'), { boton: $('buscar-red'), alAgregar: agregarEquipo });
 
 await iniciarPagina(); // confirma la sesión antes de pedir datos
 conectarControles();
@@ -48,6 +51,7 @@ async function cargar() {
         estado.dispositivos = await api.dispositivos.listar();
         estado.cargado = true;
         render();
+        busqueda.sincronizarRegistrados(estado.dispositivos);
     } catch (error) {
         estado.cargado = false;
         $('pie-dispositivos').hidden = true;
@@ -100,6 +104,7 @@ function conectarControles() {
     $('filtro-estado').addEventListener('change', (e) => { estado.filtros.estado = e.target.value; render(); });
     $('limpiar-filtros').addEventListener('click', limpiarFiltros);
     $('agregar-dispositivo').addEventListener('click', (e) => abrirFormulario({ modo: 'agregar', alGuardar, origen: e.currentTarget }));
+    $('buscar-red').addEventListener('click', () => busqueda.buscar());
     botonesTodos.forEach((b) => b.addEventListener('click', monitorearTodosLosDispositivos));
     $('confirmar-eliminar').addEventListener('click', confirmarEliminar);
     $('modal-eliminar').addEventListener('hidden.bs.modal', () => { estado.eliminar = null; });
@@ -410,6 +415,22 @@ function alGuardar(dispositivo, modo) {
         ? { tipo: 'info', icono: 'bi-plus-lg', titulo: 'Dispositivo agregado', texto: `${dispositivo.nombre} se registró correctamente.` }
         : { tipo: 'exito', titulo: 'Cambios guardados', texto: `${dispositivo.nombre} se actualizó.` });
     cargar();
+}
+
+/**
+ * «Agregar» de un equipo encontrado en la red: el formulario de siempre, con la IP
+ * y el nombre (DNS) ya escritos. Al guardar, la lista se recarga y el equipo pasa a
+ * «Registrado» (sincronizarRegistrados).
+ */
+function agregarEquipo(equipo, boton) {
+    abrirFormulario({
+        modo: 'agregar',
+        dispositivo: datosParaAgregar(equipo),
+        alGuardar,
+        origen: boton,
+        alternativa: () => [...document.querySelectorAll(`#busqueda-red [data-ip="${equipo.ip}"] a, #busqueda-red [data-ip="${equipo.ip}"] button`)]
+            .find((nodo) => nodo.offsetParent !== null) ?? $('buscar-red'),
+    });
 }
 
 function pedirEliminar(d, boton) {

@@ -3,6 +3,11 @@
  * Ping a un dispositivo: construye el comando según el sistema operativo,
  * lo ejecuta y extrae si respondió y su tiempo de respuesta.
  * Solo acepta IPv4. Espera máxima: 1 segundo.
+ *
+ * Infraestructura compartida (sin reglas de negocio): la usan Monitoreo
+ * (hacerPing) y Descubrimiento (construirComandoPing y la lectura de la salida,
+ * con varios pings en paralelo). Vive en comun/ porque un servicio nunca hace
+ * require del código de otro.
  */
 
 declare(strict_types=1);

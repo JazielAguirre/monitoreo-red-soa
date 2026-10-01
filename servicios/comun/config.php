@@ -20,6 +20,7 @@ const URL_DISPOSITIVOS = URL_SERVICIOS . '/dispositivos';
 const URL_ALERTAS = URL_SERVICIOS . '/alertas';
 const URL_MONITOREO = URL_SERVICIOS . '/monitoreo';
 const URL_AUTH = URL_SERVICIOS . '/auth';
+const URL_DESCUBRIMIENTO = URL_SERVICIOS . '/descubrimiento';
 
 // Conexión a MySQL/MariaDB (usuario root sin contraseña, solo desarrollo).
 const DB_HOST = '127.0.0.1';

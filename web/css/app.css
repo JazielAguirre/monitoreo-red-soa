@@ -2444,6 +2444,257 @@ a.encabezado-movil__boton:hover {
     }
 }
 
+/* ============================================================ Búsqueda en la red (Dispositivos, Fase 9) */
+
+.panel-busqueda {
+    container: busqueda / inline-size;
+}
+
+.panel-busqueda__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.panel-busqueda__textos {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.panel-busqueda__titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: var(--texto-titulo-tarjeta-tamano);
+    line-height: var(--texto-titulo-tarjeta-alto);
+    font-weight: 600;
+}
+
+.panel-busqueda__titulo .bi {
+    color: var(--color-acento);
+}
+
+.panel-busqueda__subtitulo {
+    margin: 0;
+    font-size: var(--texto-secundario-tamano);
+    line-height: var(--texto-secundario-alto);
+    color: var(--color-texto-2);
+}
+
+.panel-busqueda__acciones {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+}
+
+.panel-busqueda__progreso {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 20px;
+    background-color: var(--color-superficie-hover);
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.panel-busqueda__progreso[hidden] {
+    display: none;
+}
+
+.panel-busqueda .table > thead > tr > th {
+    border-top: 0;
+}
+
+.equipo-ip {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.equipo-nombre {
+    display: inline-block;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+/* "Esta computadora" y "Puerta de enlace". */
+.marca-equipo {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    font-size: 11.5px;
+    line-height: 16px;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--color-acento-texto);
+    background-color: var(--color-acento-fondo);
+    border-radius: var(--radio-sm);
+}
+
+.equipo-registrado {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--texto-secundario-tamano);
+    color: var(--color-texto-2);
+    white-space: nowrap;
+}
+
+.equipo-registrado .bi {
+    color: var(--color-activo-texto);
+}
+
+.equipo-registrado .enlace-discreto {
+    color: var(--color-texto);
+    font-weight: 500;
+}
+
+.boton-agregar-equipo {
+    gap: 6px;
+}
+
+/* Proyector: si la tarjeta no alcanza, se oculta primero la MAC; después el tiempo, la
+   marca baja debajo de la IP, los nombres se recortan y «Registrado ·» queda solo para
+   lectores de pantalla. Detección, IP, nombre y «Agregar»/«Registrado» siempre a la vista. */
+@container busqueda (max-width: 959.98px) {
+    .tabla-equipos .col-mac {
+        display: none;
+    }
+}
+
+@container busqueda (max-width: 819.98px) {
+    .tabla-equipos .col-respuesta {
+        display: none;
+    }
+
+    .tabla-equipos .equipo-ip {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .tabla-equipos .equipo-nombre {
+        max-width: 160px;
+    }
+
+    .tabla-equipos .equipo-registrado .enlace-discreto {
+        display: inline-block;
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+    }
+
+    .tabla-equipos .equipo-registrado__etiqueta {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+}
+
+/* Tarjetas de equipo (celular): las piezas de la tarjeta de dispositivo. */
+.lista-tarjetas-equipo {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tarjeta-equipo__datos {
+    grid-template-columns: 1.6fr 1fr;
+}
+
+.tarjeta-equipo__pie {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+.tarjeta-equipo__pie > .btn-tarjeta {
+    margin-left: auto;
+    padding: 0 18px;
+}
+
+.tarjeta-equipo__marcas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+@media (max-width: 991.98px) {
+    .tabla-equipos {
+        display: none;
+    }
+
+    .lista-tarjetas-equipo {
+        display: flex;
+    }
+
+    /* Como el panel de Dispositivos en celular: sin tarjeta exterior. */
+    .panel-busqueda {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        overflow: visible;
+        background: none;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .panel-busqueda__cabecera {
+        padding: 0;
+        border-bottom: 0;
+    }
+
+    .panel-busqueda__progreso {
+        padding: 14px 16px;
+        background-color: var(--color-superficie);
+        border: 1px solid var(--color-borde);
+        border-radius: var(--radio-lg);
+    }
+
+    .panel-busqueda .pie-tabla {
+        padding: 0;
+        border-top: 0;
+    }
+
+    .panel-busqueda .estado-vacio,
+    .panel-busqueda .vista-error,
+    .panel-busqueda .esqueleto-lista {
+        background-color: var(--color-superficie);
+        border: 1px solid var(--color-borde);
+        border-radius: var(--radio-lg);
+    }
+}
+
+@media (max-width: 575.98px) {
+    .panel-busqueda__acciones .btn {
+        width: var(--alto-control-tactil);
+        height: var(--alto-control-tactil);
+        padding: 0;
+        justify-content: center;
+    }
+
+    .boton-buscar-red {
+        width: var(--alto-control-tactil);
+        padding: 0;
+        justify-content: center;
+    }
+}
+
 /* ============================================================ Dashboard */
 
 .boton-dashboard {

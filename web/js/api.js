@@ -120,4 +120,8 @@ export const api = {
         historial: (filtros = {}) => peticion('GET', 'monitoreo', { consulta: filtros }),
         recientes: (limite = 10) => peticion('GET', 'monitoreo/recientes', { consulta: { limite } }),
     },
+    descubrimiento: {
+        red: () => peticion('GET', 'descubrimiento/red'),
+        escanearLote: (numero) => peticion('POST', `descubrimiento/red/lotes/${numero}`),
+    },
 };
