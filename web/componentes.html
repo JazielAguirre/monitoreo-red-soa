@@ -1222,6 +1222,68 @@
             </div>
         </div>
     </section>
+    <!-- ============================================================ 33 Búsqueda en la red (Fase 9) -->
+    <section class="seccion" aria-labelledby="s33">
+        <h2 class="seccion__titulo" id="s33">
+            <span class="seccion__numero">33</span><span class="seccion__nombre">Búsqueda en la red</span>
+            <span class="seccion__nota">Dispositivos · «Buscar dispositivos en la red» · detección (ping o solo ARP, siempre punto + texto) · marcas · registrado o «Agregar» · buscando · resultado · vacío · error · tarjetas en celular · MAC y respuesta se ocultan si la tarjeta no alcanza (container query)</span>
+        </h2>
+        <div class="piezas-busqueda" id="demo-busqueda-piezas"></div>
+        <div class="tabla-tarjeta panel-busqueda">
+            <div class="panel-busqueda__cabecera">
+                <div class="panel-busqueda__textos">
+                    <p class="panel-busqueda__titulo" role="presentation"><i class="bi bi-radar" aria-hidden="true"></i>Equipos en la red</p>
+                    <p class="panel-busqueda__subtitulo">Buscando en 192.168.1.0/24…</p>
+                </div>
+                <div class="panel-busqueda__acciones">
+                    <button type="button" class="btn btn-secondary btn-sm" disabled><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>Buscar de nuevo</button>
+                    <button type="button" class="modal-formulario__cerrar" aria-label="Cerrar la búsqueda" disabled><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                </div>
+            </div>
+            <div class="panel-busqueda__progreso">
+                <div class="progreso-monitoreo__cabecera">
+                    <span class="progreso-monitoreo__actual"><span class="punto-estado punto-estado--monitoreando punto-estado--pulso"></span>Enviando ping a 192.168.1.0/24</span>
+                    <span class="progreso-monitoreo__detalle">Lote 2 de 4 · 2 encontrados</span>
+                </div>
+                <div class="progreso-monitoreo__barra" role="progressbar" aria-label="Progreso de la búsqueda en la red (ejemplo)" aria-valuemin="0" aria-valuemax="4" aria-valuenow="1"><div class="progreso-monitoreo__relleno" style="--progreso: 25%"></div></div>
+            </div>
+            <div class="panel-busqueda__contenido" id="demo-busqueda-buscando"></div>
+            <div class="pie-tabla"><span class="pie-tabla__nota"><i class="bi bi-shield-check" aria-hidden="true"></i>Solo busca en la red de esta computadora. Úsalo en redes propias o con permiso.</span></div>
+        </div>
+        <div class="tabla-tarjeta panel-busqueda">
+            <div class="panel-busqueda__cabecera">
+                <div class="panel-busqueda__textos">
+                    <p class="panel-busqueda__titulo" role="presentation"><i class="bi bi-radar" aria-hidden="true"></i>Equipos en la red</p>
+                    <p class="panel-busqueda__subtitulo">192.168.1.0/24 · 5 equipos encontrados · 2 sin registrar</p>
+                </div>
+                <div class="panel-busqueda__acciones">
+                    <button type="button" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>Buscar de nuevo</button>
+                    <button type="button" class="modal-formulario__cerrar" aria-label="Cerrar la búsqueda"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                </div>
+            </div>
+            <div class="panel-busqueda__contenido" id="demo-busqueda-resultado"></div>
+            <div class="pie-tabla"><span class="pie-tabla__nota"><i class="bi bi-shield-check" aria-hidden="true"></i>Solo busca en la red de esta computadora. Úsalo en redes propias o con permiso.</span></div>
+        </div>
+        <div class="rejilla rejilla--2">
+            <div class="tabla-tarjeta">
+                <div class="estado-vacio estado-vacio--neutro bloque-sin-borde">
+                    <span class="estado-vacio__icono"><i class="bi bi-radar" aria-hidden="true"></i></span>
+                    <h3 class="estado-vacio__titulo">No se encontró ningún equipo</h3>
+                    <p class="estado-vacio__texto">Revisa que la computadora y los equipos estén conectados a la misma red y vuelve a buscar.</p>
+                    <button type="button" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>Buscar de nuevo</button>
+                </div>
+            </div>
+            <div class="tabla-tarjeta">
+                <div class="vista-error bloque-sin-borde" role="presentation">
+                    <span class="vista-error__icono"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+                    <h3 class="vista-error__titulo">No se pudo buscar en la red</h3>
+                    <p class="vista-error__texto">No se detectó una red local. Conecta la computadora a una red WiFi o cableada.</p>
+                    <button type="button" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>Reintentar</button>
+                </div>
+            </div>
+        </div>
+        <div class="rejilla rejilla--2 rejilla-tres" id="demo-busqueda-tarjetas"></div>
+    </section>
 </main>
 
 <!-- Modal real (se abre con "Abrir el modal real"). -->

@@ -9,6 +9,7 @@ import { crearError, mostrarBloque } from './modulos/vistas.js';
 import { llenarBarraLateral, llenarEncabezadoMovil } from './modulos/estructura.js';
 import { crearProgreso } from './modulos/monitorear-todos.js';
 import { crearGraficaArea, crearGraficaLineas, estiloSerie } from './modulos/graficas.js';
+import { crearInsigniaHallazgo, crearRegistro, crearTablaEquipos, crearTarjetaEquipo } from './modulos/busqueda-red.js';
 
 const NOTIFICACIONES_DE_EJEMPLO = {
     exito: { tipo: 'exito', titulo: 'Monitoreo completado', texto: '4 de 6 dispositivos responden.' },
@@ -111,4 +112,34 @@ if (lienzoArea && window.Chart) {
     crearGraficaArea(lienzoArea, {
         puntos: tiempos.map((ms, i) => ({ etiqueta: `09:${String(i * 5).padStart(2, '0')}`, ms })),
     });
+}
+
+// Búsqueda en la red (Fase 9): las mismas piezas de modulos/busqueda-red.js con equipos de ejemplo.
+const EQUIPOS_DE_EJEMPLO = [
+    { ip: '192.168.1.1', mac: 'be:1e:a4:da:96:d3', nombre: 'router.lan', responde_ping: false, tiempo_respuesta_ms: null, en_arp: true, es_esta_computadora: false, es_puerta_enlace: true, dispositivo: { id: 2, nombre: 'Router principal' } },
+    { ip: '192.168.1.20', mac: '00:11:22:33:44:55', nombre: 'impresora-lab.lan', responde_ping: true, tiempo_respuesta_ms: 2.75, en_arp: true, es_esta_computadora: false, es_puerta_enlace: false, dispositivo: { id: 5, nombre: 'Impresora Laboratorio' } },
+    { ip: '192.168.1.35', mac: null, nombre: 'pc-recepcion.lan', responde_ping: true, tiempo_respuesta_ms: 0, en_arp: false, es_esta_computadora: true, es_puerta_enlace: false, dispositivo: { id: 3, nombre: 'PC Recepción' } },
+    { ip: '192.168.1.143', mac: '94:bb:43:b5:29:72', nombre: 'LAPTOP-ANA.lan', responde_ping: false, tiempo_respuesta_ms: null, en_arp: true, es_esta_computadora: false, es_puerta_enlace: false, dispositivo: null },
+    { ip: '192.168.1.220', mac: '86:f1:ba:40:ec:9f', nombre: null, responde_ping: true, tiempo_respuesta_ms: 34.9, en_arp: true, es_esta_computadora: false, es_puerta_enlace: false, dispositivo: null },
+];
+const agregarDeEjemplo = (equipo) => mostrarNotificacion({ tipo: 'info', icono: 'bi-plus-lg', titulo: 'Agregar', texto: `En Dispositivos se abre el formulario con ${equipo.ip} ya escrita.` });
+
+const piezasBusqueda = document.getElementById('demo-busqueda-piezas');
+if (piezasBusqueda) {
+    const marcas = ['Esta computadora', 'Puerta de enlace'].map((texto) => {
+        const marca = document.createElement('span');
+        marca.className = 'marca-equipo';
+        marca.textContent = texto;
+        return marca;
+    });
+    piezasBusqueda.append(
+        crearInsigniaHallazgo(EQUIPOS_DE_EJEMPLO[1]),
+        crearInsigniaHallazgo(EQUIPOS_DE_EJEMPLO[3]),
+        ...marcas,
+        crearRegistro(EQUIPOS_DE_EJEMPLO[0]),
+        crearRegistro(EQUIPOS_DE_EJEMPLO[3], { alAgregar: agregarDeEjemplo }),
+    );
+    document.getElementById('demo-busqueda-buscando').replaceChildren(crearTablaEquipos(EQUIPOS_DE_EJEMPLO.slice(0, 2), { alAgregar: agregarDeEjemplo }));
+    document.getElementById('demo-busqueda-resultado').replaceChildren(crearTablaEquipos(EQUIPOS_DE_EJEMPLO, { alAgregar: agregarDeEjemplo }));
+    document.getElementById('demo-busqueda-tarjetas').replaceChildren(...[0, 3, 4].map((i) => crearTarjetaEquipo(EQUIPOS_DE_EJEMPLO[i], { alAgregar: agregarDeEjemplo })));
 }
