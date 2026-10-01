@@ -31,7 +31,7 @@ Después de la Fase 1, el backend y el frontend pueden avanzar en paralelo. La F
 | 6 | Pantallas | Integrante 4 | ✅ Completa |
 | 7 | Inicio de sesión | Todo el equipo | ✅ Completa |
 | 8 | Integración, pruebas y demo | Todo el equipo | ✅ Completa (quedan el ensayo en vivo y la prueba en Windows) |
-| 9 | Descubrimiento de red | Todo el equipo | 🔄 En curso (rama `descubrimiento-red`) |
+| 9 | Descubrimiento de red | Todo el equipo | ✅ Completa en la rama `descubrimiento-red` (falta la revisión para fusionar; quedan la prueba en Windows y el ensayo en vivo) |
 
 ## Pruebas automáticas
 
@@ -233,7 +233,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
   - [ ] Pendiente del equipo: ensayarlo en vivo, cronometrado.
 - [x] La aplicación se ve bien en el proyector y en un celular (`interfaz.php` a 1024×768, 1280×720 y 390 px; celular real en las Fases 6 y 7).
 
-## Fase 9 · Descubrimiento de red 🔄
+## Fase 9 · Descubrimiento de red ✅
 
 **Objetivo:** que el sistema encuentre los equipos conectados a la red local, aunque no estén registrados, y que el usuario elija cuáles agregar. Un servicio nuevo que muestra el bajo acoplamiento: los servicios existentes no cambian.
 
@@ -255,17 +255,18 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 **Listo cuando:**
 
-- [ ] `GET /descubrimiento/red` devuelve la /24 de la IP propia calculada en el servidor; sin red o con una IP que no es privada responde 503 con su mensaje, sin enviar nada.
-- [ ] `POST /descubrimiento/red/lotes/{n}` escanea el lote pedido: un lote de 64 direcciones que no responden tarda menos de 3 segundos a través de Apache (usuario `daemon`), no 64.
-- [ ] Los equipos que bloquean el ping aparecen por la tabla ARP ("Solo en ARP") con su MAC. Las entradas incompletas, fallidas, broadcast y multicast se descartan. Los parsers de Linux (`ip neigh` y `/proc/net/arp`), Windows (en inglés y en español) y macOS se prueban con salidas de ejemplo.
-- [ ] El nombre por DNS inverso nunca retrasa el lote más de 0.8 segundos; sin respuesta queda en `null`.
-- [ ] Los equipos ya registrados se marcan con su dispositivo, pidiéndolo a Dispositivos por HTTP. Si Dispositivos no responde → 502.
-- [ ] Lote fuera de rango → 404; método no permitido → 405; sin sesión → 401. Siempre en JSON.
-- [ ] **Regla SOA:** `servicios/descubrimiento/` no contiene SQL ni `require` de otros servicios (se revisa con `grep`), y en `servicios/dispositivos/`, `alertas/` y `auth/` no cambió nada (`git diff main`); en `monitoreo/` solo la línea del `require` de `ping.php`.
-- [ ] Pantalla Dispositivos: "Buscar dispositivos en la red" muestra el progreso por lote y la lista (IP, MAC, nombre, ping o solo ARP, registrado o no). "Agregar" abre el formulario con la IP y el nombre escritos. Estados de carga, vacío y error; se ve bien a 390 px y en el proyector; colores solo desde `tokens.css`; piezas nuevas en `componentes.html`.
-- [ ] `pruebas/descubrimiento.php` pasa sin depender de la red de quien la corre (red simulada), las secciones nuevas de `pruebas/interfaz.php` pasan, y las 5 suites anteriores siguen pasando.
-- [ ] Probado a través de Apache en una red propia (hotspot), con un equipo que bloquea el ping si es posible.
-- [ ] README y `docs/DEMO.md` explican el uso responsable, y el guion incluye el tramo del escáner.
+- [x] `GET /descubrimiento/red` devuelve la /24 de la IP propia calculada en el servidor; sin red o con una IP que no es privada responde 503 con su mensaje, sin enviar nada.
+- [x] `POST /descubrimiento/red/lotes/{n}` escanea el lote pedido: un lote de 64 direcciones que no responden tarda menos de 3 segundos a través de Apache (usuario `daemon`), no 64.
+- [x] Los equipos que bloquean el ping aparecen por la tabla ARP ("Solo en ARP") con su MAC. Las entradas incompletas, fallidas, broadcast y multicast se descartan. Los parsers de Linux (`ip neigh` y `/proc/net/arp`), Windows (en inglés y en español) y macOS se prueban con salidas de ejemplo.
+- [x] El nombre por DNS inverso nunca retrasa el lote más de 0.8 segundos; sin respuesta queda en `null`.
+- [x] Los equipos ya registrados se marcan con su dispositivo, pidiéndolo a Dispositivos por HTTP. Si Dispositivos no responde → 502.
+- [x] Lote fuera de rango → 404; método no permitido → 405; sin sesión → 401. Siempre en JSON.
+- [x] **Regla SOA:** `servicios/descubrimiento/` no contiene SQL ni `require` de otros servicios (se revisa con `grep`), y en `servicios/dispositivos/`, `alertas/` y `auth/` no cambió nada (`git diff main`); en `monitoreo/` solo la línea del `require` de `ping.php`. En `comun/`: `ping.php` movido sin cambios de código y `URL_DESCUBRIMIENTO` en `config.php`.
+- [x] Pantalla Dispositivos: "Buscar dispositivos en la red" muestra el progreso por lote y la lista (IP, MAC, nombre, ping o solo ARP, registrado o no). "Agregar" abre el formulario con la IP y el nombre escritos. Estados de carga, vacío y error; se ve bien a 390 px y en el proyector; colores solo desde `tokens.css`; piezas nuevas en `componentes.html`.
+- [x] `pruebas/descubrimiento.php` pasa sin depender de la red de quien la corre (red simulada), las secciones nuevas de `pruebas/interfaz.php` pasan, y las 5 suites anteriores siguen pasando: 1172 de 1172 (dispositivos 207, alertas 154, monitoreo 221, auth 126, descubrimiento 112, interfaz 352). Se rompió el código a propósito (12 roturas) y cada una la detectó alguna prueba.
+- [x] Probado a través de Apache en una red propia (hotspot del equipo, 192.168.137.0/24): 4 lotes en ~4.4 s, 7 equipos con MAC y nombre; el hotspot y una computadora con Windows bloquean el ping y aparecen «Solo en ARP». Revisado en Chrome a 1440, 1024 y 390 px.
+  - [ ] Pendiente del equipo: probarlo en Windows (`docs/WINDOWS.md`, paso 7) y ensayar el tramo del escáner en vivo con el segundo teléfono.
+- [x] README y `docs/DEMO.md` explican el uso responsable, y el guion incluye el tramo del escáner.
 
 ## Extras (solo si sobra tiempo)
 

@@ -42,19 +42,29 @@ cd C:\xampp\htdocs\monitoreo-red-soa
   ```
   Compara las IPs del resumen con las de `ipconfig` ("Puerta de enlace predeterminada" e "IPv4").
 
-- [ ] **5. Las 5 suites.** Cada una debe terminar en `Resultado: N de N comprobaciones correctas.`:
+- [ ] **5. Las 6 suites.** Cada una debe terminar en `Resultado: N de N comprobaciones correctas.`:
   ```powershell
-  foreach ($s in 'dispositivos','alertas','monitoreo','auth','interfaz') { C:/xampp/php/php.exe pruebas/$s.php | Select-String 'Resultado|✗' }
+  foreach ($s in 'dispositivos','alertas','monitoreo','auth','descubrimiento','interfaz') { C:/xampp/php/php.exe pruebas/$s.php | Select-String 'Resultado|✗' }
   ```
+  `descubrimiento.php` prueba la lectura de `arp -a` de Windows en inglés y en español
+  con salidas de ejemplo, y escanea la red simulada (nunca tu red).
   `interfaz.php` y la última parte de `auth.php` usan Chrome o Edge; tardan varios minutos.
 
 - [ ] **6. Desde el celular.** Con la URL que imprimió el paso 4, en la misma WiFi.
   Si no carga: Firewall de Windows → permitir *Apache HTTP Server* en redes privadas.
 
+- [ ] **7. Buscar dispositivos en la red** (Fase 9). **Solo en tu red de casa o en el
+  hotspot del equipo**, nunca en una red ajena. En Dispositivos, pulsa *Buscar
+  dispositivos en la red*: debe terminar en unos 5–10 segundos y mostrar al menos el
+  router (por ping o «Solo en ARP») y esta computadora («Esta computadora»), con su
+  MAC. Compara con `arp -a` en PowerShell: las IPs con «dinámico» de tu red deben
+  aparecer en la lista.
+
 ## Si algo falla, envía esto
 
 1. La salida completa del paso que falló (copiar y pegar el texto, no una foto).
 2. Para el ping: la `salida` del paso 2 (el texto que imprime `ping`) y el idioma de Windows.
+   Para el escáner: la salida de `arp -a` (puedes borrar las MAC).
 3. Las últimas líneas de `C:\xampp\php\logs\php_error_log` y de `C:\xampp\apache\logs\error.log`.
 
 ## Lo que más probablemente falle en Windows
@@ -67,4 +77,7 @@ cd C:\xampp\htdocs\monitoreo-red-soa
 | **Chrome de las pruebas** | Rutas de `chrome.exe`/`msedge.exe`, cierre del proceso y borrado del perfil temporal, que Windows puede mantener bloqueado un momento después de cerrar Chrome | `pruebas/navegador.php` |
 | **Comandos con redirección** | `exec()` de PHP pasa por `cmd.exe`: las comillas de `escapeshellarg()` y el `<` para cargar el SQL se escribieron para funcionar ahí, pero no se han visto correr | `herramientas/base-de-datos.php` |
 | **Socket que no responde** | La prueba del 502 por tiempo agotado abre un socket local que nunca contesta; Windows maneja la cola de conexiones de otra forma y podría rechazar en vez de esperar | `socketQueNoResponde()` en `pruebas/ayudas.php` |
+| **Escáner: 64 pings a la vez** | Cada ping es un proceso de `proc_open` que pasa por `cmd.exe`; en Windows crear procesos es más lento y un lote podría tardar más de 1–2 s (el tope es 3 s por lote: lo que no termine cuenta como sin respuesta) | `hacerPingsEnParalelo()` en `servicios/descubrimiento/escaneo.php` |
+| **Escáner: tabla ARP** | `arp -a` solo se probó con salidas de ejemplo en inglés y en español | `entradasArpWindows()` en `servicios/descubrimiento/arp.php` |
+| **Escáner: nombres** | Windows no tiene `/etc/resolv.conf`: el DNS inverso solo le pregunta a la puerta de enlace. Si el router no conoce los nombres, la columna Nombre queda en «—» (no es un error) | `servidoresDns()` en `servicios/descubrimiento/dns.php` |
 | **Finales de línea** | Con `core.autocrlf=true`, git convierte los archivos a CRLF. PHP, SQL y `.htaccess` funcionan igual; solo puede hacer que `git status` muestre archivos "modificados" | configuración de git |
