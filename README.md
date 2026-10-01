@@ -249,7 +249,9 @@ de la red donde se presenta y comprueba que todo responde.
 
 Al final muestra un resumen (fechas nuevas, IPs, URL para el celular) y una
 **comprobación previa** con ✓ o ✗ en cada línea: Apache, servicios, base de datos y
-ping al router. Si algo falla, dice qué hacer.
+ping al router. Si algo falla, dice qué hacer. Si el router bloquea el ping pero
+aparece en la tabla ARP (pasa con muchos hotspots), sale ⚠ «El router bloquea el
+ping, pero está conectado (aparece en ARP)»: es un aviso, no un fallo.
 
 Durante la parte de SOA de la demo, en otra terminal:
 

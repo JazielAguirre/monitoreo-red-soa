@@ -9,7 +9,7 @@
  *   /opt/lampp/bin/php herramientas/preparar-demo.php --sin-red           plan B sin WiFi
  *   (Windows: C:/xampp/php/php.exe herramientas/preparar-demo.php …)
  *
- * Termina con código 0 si todas las comprobaciones pasan, 1 si alguna falla y 2 si
+ * Termina con código 0 si todas las comprobaciones pasan (un ⚠ es solo un aviso), 1 si alguna falla y 2 si
  * no pudo preparar la base.
  */
 
@@ -26,6 +26,7 @@ require_once __DIR__ . '/../servicios/comun/config.php';
 require_once __DIR__ . '/../servicios/comun/db.php';
 require_once __DIR__ . '/../servicios/comun/http.php';       // archivoRegistroLlamadas()
 require_once __DIR__ . '/../servicios/comun/ping.php';       // hacerPing(), la misma función de Monitoreo
+require_once __DIR__ . '/../servicios/descubrimiento/arp.php'; // tablaArpDelServicio(), la lectura del escáner
 
 const MINUTOS_DESDE_LA_ULTIMA_RONDA = 10;
 const ID_ROUTER = 2;          // "Router principal" en seed.sql
@@ -250,12 +251,14 @@ function mostrarResumen(PDO $conexion, array $ips, int $segundos): void
 }
 
 /**
- * Comprobación previa: ✓ o ✗ por línea y, si algo falla, qué hacer.
+ * Comprobación previa: ✓ o ✗ por línea y, si algo falla, qué hacer. Un ⚠ avisa de
+ * algo que no impide la demo (no cuenta como fallo).
  */
 function comprobarTodo(PDO $conexion, array $ips): bool
 {
     echo "Comprobación previa\n";
     $bien = true;
+    $avisos = 0;
     $linea = function (bool $ok, string $texto, ?string $queHacer = null) use (&$bien): void {
         echo ($ok ? '  ✓ ' : '  ✗ ') . $texto . "\n";
         if (!$ok) {
@@ -264,6 +267,10 @@ function comprobarTodo(PDO $conexion, array $ips): bool
                 echo "      Qué hacer: $queHacer\n";
             }
         }
+    };
+    $aviso = function (string $texto, string $nota) use (&$avisos): void {
+        $avisos++;
+        echo "  ⚠ $texto\n      $nota\n";
     };
 
     [$codigoWeb] = pedirUrl(URL_INTERFAZ . '/login.html');
@@ -289,7 +296,16 @@ function comprobarTodo(PDO $conexion, array $ips): bool
         $linea(!$ping['responde'], "Plan sin red: el router ({$ips['router']}) no responde, como se espera; servirá para mostrar la alerta");
     } else {
         $tiempo = $ping['responde'] ? ', ' . ($ping['tiempo_respuesta_ms'] === 0.0 ? '< 1' : $ping['tiempo_respuesta_ms']) . ' ms' : '';
-        $linea($ping['responde'], "El router ({$ips['router']}) " . ($ping['responde'] ? 'responde' : 'no responde') . " al ping (hacerPing de ping.php$tiempo)", QUE_HACER['router']);
+        // Muchos routers y hotspots bloquean el ping: si está en la tabla ARP, sí está conectado.
+        $mac = $ping['responde'] ? null : (tablaArpDelServicio()[$ips['router']] ?? null);
+        if ($mac !== null) {
+            $aviso(
+                "El router bloquea el ping, pero está conectado (aparece en ARP): {$ips['router']}, MAC $mac",
+                'En la demo, «Monitorear todos» lo mostrará Inactivo con una alerta (el contador llega a 4); «Buscar dispositivos en la red» sí lo encuentra.'
+            );
+        } else {
+            $linea($ping['responde'], "El router ({$ips['router']}) " . ($ping['responde'] ? 'responde' : 'no responde') . " al ping (hacerPing de ping.php$tiempo)", QUE_HACER['router']);
+        }
     }
     $pingPc = hacerPing($ips['pc']);
     $linea($pingPc['responde'], "PC Recepción ({$ips['pc']}) " . ($pingPc['responde'] ? 'responde' : 'no responde') . ' al ping', 'Es esta computadora: revisa la IP indicada con --pc.');
@@ -304,7 +320,11 @@ function comprobarTodo(PDO $conexion, array $ips): bool
     echo "  • Inicia sesión en la computadora y en el celular antes de empezar.\n";
     echo "  • El ping de esta comprobación corre con tu usuario; el de la demo lo hace Apache (normalmente da lo mismo).\n";
 
-    echo $bien ? "\nTodo listo para la demo.\n" : "\nHay comprobaciones con ✗: revisa «Qué hacer» antes de presentar.\n";
+    if (!$bien) {
+        echo "\nHay comprobaciones con ✗: revisa «Qué hacer» antes de presentar.\n";
+    } else {
+        echo $avisos > 0 ? "\nTodo listo para la demo (lee los avisos con ⚠).\n" : "\nTodo listo para la demo.\n";
+    }
 
     return $bien;
 }

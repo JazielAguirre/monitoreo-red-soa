@@ -14,6 +14,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/simulacion.php';
+
 const FORMATO_IP_NEIGH = 'ip-neigh';
 const FORMATO_PROC_NET_ARP = 'proc-net-arp';
 const FORMATO_WINDOWS = 'windows';
@@ -32,6 +34,22 @@ function leerTablaArp(): array
     [$formato, $texto] = leerTextoArpDelSistema();
 
     return $texto === null ? [] : interpretarTablaArp($formato, $texto);
+}
+
+/**
+ * La tabla ARP que usa el servicio: la del sistema o, si hay una red simulada
+ * vigente (solo en las pruebas), la de su texto. También la usa
+ * herramientas/preparar-demo.php para saber si el router está conectado.
+ */
+function tablaArpDelServicio(): array
+{
+    $simulada = leerRedSimulada();
+
+    if ($simulada !== null) {
+        return interpretarTablaArp(formatoArpDelSistema(), $simulada['arp'] ?? '');
+    }
+
+    return leerTablaArp();
 }
 
 /**

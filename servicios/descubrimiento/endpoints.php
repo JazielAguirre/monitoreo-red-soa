@@ -83,20 +83,6 @@ function obtenerRedOResponder503(): array
 }
 
 /**
- * La tabla ARP del sistema, o la del texto de la red simulada.
- */
-function tablaArpDelServicio(): array
-{
-    $simulada = leerRedSimulada();
-
-    if ($simulada !== null) {
-        return interpretarTablaArp(formatoArpDelSistema(), $simulada['arp'] ?? '');
-    }
-
-    return leerTablaArp();
-}
-
-/**
  * El objeto equipo de la API.
  */
 function armarEquipo(string $ip, array $red, array $ping, ?string $mac, ?string $nombre, ?array $dispositivo): array

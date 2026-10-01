@@ -29,14 +29,20 @@ En la computadora que va al proyector:
    computadora, el celular que se muestra al final y **un segundo teléfono** de otro
    integrante, con la pantalla encendida, para que el escáner tenga un equipo nuevo
    que encontrar. El teléfono del hotspot hace de «Router principal».
+   **En el hotspot solo deben estar conectados equipos del equipo:** los nombres de
+   los equipos que encuentra el escáner (por ejemplo «S25-de-Ana») se ven en el
+   proyector. Antes de empezar, revisen en el teléfono la lista de conectados y
+   saquen cualquier equipo ajeno (o cambien la contraseña del hotspot).
 3. **Preparar la demo** en el hotspot:
    ```bash
    /opt/lampp/bin/php herramientas/preparar-demo.php
    ```
-   Todas las líneas de la comprobación previa deben quedar en ✓. Anoten la **URL para
-   el celular** que imprime al final. Si algo sale con ✗, sigan su «Qué hacer» o la
-   tabla [Si pasa X, haz Y](#si-pasa-x-haz-y). (Si el hotspot no responde al ping, el
-   router sale con ✗: no importa para la demo, el escáner lo encuentra por ARP.)
+   Todas las líneas de la comprobación previa deben quedar en ✓ (o ⚠). Anoten la
+   **URL para el celular** que imprime al final. Si algo sale con ✗, sigan su «Qué
+   hacer» o la tabla [Si pasa X, haz Y](#si-pasa-x-haz-y). Si el hotspot bloquea el
+   ping, el router sale con ⚠ «El router bloquea el ping, pero está conectado (aparece
+   en ARP)»: no impide la demo, solo que «Monitorear todos» lo mostrará Inactivo y el
+   contador de alertas llegará a 4.
 4. **Abrir dos ventanas** (se cambia entre ellas con **Alt+Tab**):
    - El navegador en <http://localhost/monitoreo-red-soa/web/>, con sesión iniciada
      (`admin` / `admin123`), en el **Dashboard**, zoom al 100 %.
@@ -151,7 +157,8 @@ unos 5:05. El Integrante 1 cierra igual.
 | ¿Por qué 192.0.2.x nunca responde? | Integrante 2 | Es el rango TEST-NET-1 (RFC 5737), reservado para documentación: ningún equipo real lo usa y no se enruta. Sirve para mostrar y probar un dispositivo caído en cualquier red, o sin red |
 | ¿Cómo se evita que una alerta se duplique? | Integrante 4 | En la tabla `alertas`, una columna calculada vale el id del dispositivo si la alerta está pendiente, o nada si ya se atendió, y tiene un índice único. La base no deja guardar dos pendientes del mismo dispositivo, ni con peticiones simultáneas; el servicio devuelve la que ya existía (el 200 del registro). Las atendidas no chocan, por eso después de atender puede nacer una nueva |
 | ¿Escanear la red no es un ataque? ¿Cómo encuentra un equipo que no responde al ping? | Integrante 2 | Solo busca en la red de esta computadora (su /24, calculada en el servidor: el navegador no puede pedir otra) y solo si es privada; un ping por dirección, nada más. Aun así, solo lo usamos en redes propias o con permiso, por eso la demo va en nuestro hotspot. Para los que bloquean el ping: antes de enviar un ping, la computadora pregunta por ARP qué tarjeta de red tiene esa IP; el equipo contesta aunque luego ignore el ping, y esa respuesta queda en la tabla ARP con su MAC |
-| ¿Qué prueban las suites? | Integrante 1 | Seis suites, 1172 comprobaciones: Dispositivos (207), Alertas (154), Monitoreo (221, incluido el 502 y la regla de que ningún servicio toca tablas ajenas), Autenticación (126: login, cookie, 401/403), Descubrimiento (112: el escáner con una red simulada, sin tocar la red real) e Interfaz (352, en un Chrome sin ventana: pantallas, celular, proyector, teclado y este mismo guion). Cada una recarga la base al empezar |
+| ¿Por qué el router aparece inactivo si hay internet? | Integrante 2 | Muchos routers y hotspots bloquean el ping por seguridad: siguen funcionando, pero no contestan. El monitoreo usa ping, así que lo marca inactivo y genera una alerta. El escáner, además del ping, lee la tabla ARP de la computadora, donde aparecen los equipos que contestaron en la red aunque ignoren el ping; por eso lo encuentra igual («Solo en ARP»). `preparar-demo.php` también lo revisa y lo marca con ⚠ en lugar de ✗ |
+| ¿Qué prueban las suites? | Integrante 1 | Seis suites, 1174 comprobaciones: Dispositivos (207), Alertas (154), Monitoreo (223, incluido el 502 y la regla de que ningún servicio toca tablas ajenas), Autenticación (126: login, cookie, 401/403), Descubrimiento (112: el escáner con una red simulada, sin tocar la red real) e Interfaz (352, en un Chrome sin ventana: pantallas, celular, proyector, teclado y este mismo guion). Cada una recarga la base al empezar |
 
 ---
 
@@ -187,6 +194,7 @@ Son los mismos casos que revisa la comprobación previa de `preparar-demo.php`.
 | ✗ *Los servicios contestan* (Apache sí responde) | La carpeta debe llamarse `monitoreo-red-soa` dentro de `htdocs` y Apache debe leer los `.htaccess` (README, "Instalación") |
 | Las pantallas dicen **"Error interno del servidor"** / ✗ *La base tiene los datos* / el script dice que no puede conectar con MySQL | Encender MySQL: `sudo /opt/lampp/lampp startmysql` (Windows: panel). Si no arranca en Linux: `tmpdir = /tmp` debajo de `[mysqld]` en `/opt/lampp/etc/my.cnf` |
 | ✗ *El router responde al ping* | La computadora no está en la red de la demo: conectarla, indicar la IP con `--router=IP` o usar `--sin-red` |
+| ⚠ *El router bloquea el ping, pero está conectado (aparece en ARP)* | Nada que corregir: el router está conectado pero no contesta el ping. En la demo saldrá Inactivo con una alerta (el contador llega a 4) y el escáner lo mostrará como «Solo en ARP». Si preguntan, ver «¿Por qué el router aparece inactivo si hay internet?» |
 | **Aparece la pantalla de inicio de sesión** a mitad de la demo | La sesión dura 8 horas; volver a entrar con `admin` / `admin123`: regresa a la pantalla donde estaban |
 | **El celular no carga la página** | Misma WiFi que la computadora; la URL que imprimió `preparar-demo.php`; cortafuegos: `sudo ufw allow from <red>/24 to any port 80 proto tcp` (Linux) o permitir Apache en el Firewall de Windows. Si sigue sin cargar: hotspot (Plan B) |
 | Se ve **una versión vieja** de la interfaz | Recarga forzada `Ctrl+Shift+R` (en el celular, cerrar la pestaña y abrirla de nuevo). Desde la Fase 8 las páginas se revalidan solas, así que no debería pasar |
