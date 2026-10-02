@@ -427,4 +427,76 @@ comprobarRespuesta(peticion('GET', '/dispositivos/abc', null, ['sesion' => false
 comprobarRespuesta(peticion('PATCH', '/dispositivos', null, ['sesion' => false]), 405, '  y un método no permitido, 405', 'Método no permitido');
 recargarBaseDeDatos();
 
+// =====================================================================
+seccion('11. Base de pruebas: las suites nunca usan tu base (pruebas/.base-de-pruebas.json)');
+
+/**
+ * Escribe un contenido en el archivo de la base de pruebas, ejecuta $accion y deja
+ * el archivo vigente otra vez (también si $accion falla). Mientras dura, la base de
+ * pruebas puede quedar inactiva: $accion solo lee la base del usuario.
+ */
+function conArchivoDeBase(?string $contenido, callable $accion): mixed
+{
+    $GLOBALS['renovacion_en_pausa'] = true; // si no, una petición podría renovarlo… o detener la suite
+    $contenido === null ? @unlink(ARCHIVO_BASE_DE_PRUEBAS) : file_put_contents(ARCHIVO_BASE_DE_PRUEBAS, $contenido);
+    try {
+        return $accion();
+    } finally {
+        escribirArchivoBaseDePruebas();
+        $GLOBALS['renovacion_en_pausa'] = false;
+    }
+}
+
+/**
+ * Corre código PHP en otro proceso (como una herramienta o una suite anidada): [código de salida, salida].
+ */
+function correrPhp(string $codigo): array
+{
+    exec(escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg('chdir(' . var_export(dirname(__DIR__), true) . '); ' . $codigo) . ' 2>&1', $salida, $codigoSalida);
+
+    return [$codigoSalida, implode("\n", $salida)];
+}
+
+comprobarIgual([true, DB_NOMBRE_PRUEBAS], [baseDePruebasActiva(), nombreDeLaBase()], 'mientras corre la suite, la base activa es ' . DB_NOMBRE_PRUEBAS);
+comprobarIgual(DB_NOMBRE_PRUEBAS, valorBd('SELECT DATABASE()'), '  y las comprobaciones directas en SQL también la usan');
+
+foreach ([
+    'ya caducó' => json_encode(['expira' => time() - 1]),
+    'caduca en más de 60 s' => json_encode(['expira' => time() + 120]),
+    'no tiene el campo expira' => json_encode(['base' => DB_NOMBRE_PRUEBAS]),
+    'no es JSON' => 'base de pruebas',
+] as $caso => $contenido) {
+    comprobarIgual([false, DB_NOMBRE], conArchivoDeBase($contenido, fn() => [baseDePruebasActiva(), nombreDeLaBase()]), "un archivo que $caso se ignora: vuelve a " . DB_NOMBRE);
+}
+comprobarIgual([false, DB_NOMBRE], conArchivoDeBase(null, fn() => [baseDePruebasActiva(), nombreDeLaBase()]), 'sin el archivo se usa ' . DB_NOMBRE);
+
+// A través de Apache: el servicio sigue al interruptor. Solo lectura de tu base.
+peticion('POST', '/dispositivos', ['nombre' => 'Solo en la base de pruebas', 'ip' => '192.0.2.77', 'tipo' => 'servidor', 'ubicacion' => 'Pruebas']);
+$enPruebas = count(peticion('GET', '/dispositivos')['json']['data'] ?? []);
+comprobarIgual((int) valorBd('SELECT COUNT(*) FROM dispositivos'), $enPruebas, 'GET /dispositivos (Apache) lee la base de pruebas');
+$enTuBase = (int) (filasBdUsuario('SELECT COUNT(*) AS n FROM dispositivos')[0]['n'] ?? -1);
+$conCaducado = conArchivoDeBase(json_encode(['expira' => time() - 1]), fn() => count(peticion('GET', '/dispositivos')['json']['data'] ?? []));
+comprobar($conCaducado === $enTuBase, "con el archivo caducado, el servicio vuelve a tu base ($conCaducado dispositivos, como " . DB_NOMBRE . '): se desactiva solo', "pruebas: $enPruebas, tu base: $enTuBase, obtenido: $conCaducado");
+
+$contexto = stream_context_create(['http' => ['ignore_errors' => true, 'timeout' => 10]]);
+@file_get_contents(dirname(URL_SERVICIOS) . '/pruebas/.base-de-pruebas.json', false, $contexto);
+comprobarIgual(404, leerCabeceras($http_response_header ?? [])['codigo'], 'pruebas/.base-de-pruebas.json no es accesible por HTTP (404)');
+
+[$codigo, $salida] = conArchivoDeBase(json_encode(['expira' => time() - 1]), fn() => correrPhp('require "herramientas/base-de-datos.php"; cargarSchemaYSeed();'));
+comprobar($codigo === 2 && str_contains($salida, 'Solo se recarga la base de pruebas'), 'sin la base de pruebas activa, la recarga se niega (código 2) y no toca ' . DB_NOMBRE, $salida);
+
+// La huella detecta cualquier cambio (se prueba con la base de pruebas, nunca con la tuya).
+$antes = huellaDeLaBase(DB_NOMBRE_PRUEBAS);
+$id = peticion('POST', '/dispositivos', ['nombre' => 'Huella', 'ip' => '192.0.2.78', 'tipo' => 'servidor', 'ubicacion' => 'Pruebas'])['json']['data']['id'] ?? 0;
+peticion('DELETE', "/dispositivos/$id");
+$despuesDeBorrar = huellaDeLaBase(DB_NOMBRE_PRUEBAS);
+comprobar(is_array($antes) && $antes !== $despuesDeBorrar && ($antes['dispositivos'] ?? '') !== ($despuesDeBorrar['dispositivos'] ?? ''), 'la huella cambia aunque se agregue y se borre una fila (siguiente id)', exportar([$antes['dispositivos'] ?? null, $despuesDeBorrar['dispositivos'] ?? null]));
+peticion('PUT', '/dispositivos/1', ['nombre' => 'Mi PC cambiada', 'ip' => '127.0.0.1', 'tipo' => 'computadora', 'ubicacion' => 'Laboratorio']);
+comprobar(huellaDeLaBase(DB_NOMBRE_PRUEBAS) !== $despuesDeBorrar, '  y si cambia un dato sin cambiar el número de filas (CHECKSUM TABLE)');
+
+[$codigo, $salida] = correrPhp('require "pruebas/ayudas.php"; echo "suite anidada\n";');
+comprobar(str_contains($salida, 'suite anidada') && str_contains($salida, 'Tu base (' . DB_NOMBRE . ') quedó idéntica.'), 'una suite anidada (como la del ensayo del guion) usa la base de pruebas y comprueba tu base al cerrar', $salida);
+comprobar(baseDePruebasActiva(), '  y al terminar no desactiva la base de pruebas de la suite que la llamó');
+
+
 terminarPruebas();

@@ -3,6 +3,12 @@
  * Funciones comunes de las pruebas automáticas (docs/PLAN.md, "Pruebas automáticas"):
  * peticiones a través de Apache, comprobaciones y recarga de la base de datos.
  *
+ * Las suites trabajan en su propia base (DB_NOMBRE_PRUEBAS), nunca en la del
+ * usuario: al cargar este archivo se activa pruebas/.base-de-pruebas.json (ver
+ * comun/db.php), que los servicios, a través de Apache, y las herramientas de
+ * terminal también respetan. Al terminar, cada suite comprueba que la base del
+ * usuario quedó idéntica.
+ *
  * Solo para línea de comandos:
  *   Linux:   /opt/lampp/bin/php pruebas/<servicio>.php
  *   Windows: C:/xampp/php/php.exe pruebas/<servicio>.php
@@ -27,35 +33,135 @@ $GLOBALS['pruebas_fallidas'] = [];
 $GLOBALS['pruebas_avisos'] = [];
 $GLOBALS['cookie_sesion'] = null; // id de la sesión de iniciarSesionDePrueba()
 
-// ---------------------------------------------------------------- Base de datos
+// ---------------------------------------------------------------- Base de pruebas
+
+const RENOVAR_BASE_DE_PRUEBAS_CADA = 15; // segundos; el archivo dura 60
+
+activarBaseDePruebas();
 
 /**
- * Recrea la base con schema.sql y seed.sql usando el cliente mysql de XAMPP.
- * Se puede indicar otro binario con la variable de entorno MYSQL_BIN.
- *
- * La primera llamada también programa otra recarga al terminar el script (aunque
- * las pruebas fallen, lancen una excepción o se interrumpan con Ctrl+C), para que
- * la base quede con el seed limpio y se pueda usar a mano.
+ * Toma la huella de la base del usuario y activa la base de pruebas. Si ya la
+ * activó otra suite (el ensayo del guion corre pruebas/dispositivos.php dentro de
+ * pruebas/interfaz.php), la usa sin borrarla al terminar: la borra quien la activó.
+ */
+function activarBaseDePruebas(): void
+{
+    $GLOBALS['huella_de_tu_base'] = huellaDeTuBase();
+    $GLOBALS['huella_comprobada'] = false;
+    $GLOBALS['base_de_pruebas_propia'] = !baseDePruebasActiva();
+    escribirArchivoBaseDePruebas();
+    terminarAlInterrumpir();
+    // Registrada desde una función de cierre, corre después de todas las demás
+    // (cerrar Chrome, quitar el fallo simulado…): hasta el final se usa la base de pruebas.
+    register_shutdown_function(fn() => register_shutdown_function('cerrarBaseDePruebas'));
+}
+
+function escribirArchivoBaseDePruebas(): void
+{
+    file_put_contents(ARCHIVO_BASE_DE_PRUEBAS, json_encode(['expira' => time() + VIGENCIA_MAXIMA_BASE_DE_PRUEBAS]));
+}
+
+/**
+ * Renueva la base de pruebas cada RENOVAR_BASE_DE_PRUEBAS_CADA segundos. La llaman
+ * las peticiones, las comprobaciones y el Chrome de las pruebas mientras espera.
+ * Si el archivo ya no está vigente (pasó más de un minuto sin renovarse), detiene
+ * las pruebas: seguir mandaría las peticiones a la base del usuario.
+ */
+function renovarBaseDePruebas(): void
+{
+    static $ultima = 0;
+
+    if (!empty($GLOBALS['renovacion_en_pausa']) || time() - $ultima < RENOVAR_BASE_DE_PRUEBAS_CADA) {
+        return;
+    }
+
+    if (!baseDePruebasActiva()) {
+        fwrite(STDERR, "\n\u{2717} La base de pruebas se desactivó (pasó más de un minuto sin renovarse). Las pruebas se detienen para no tocar tu base (" . DB_NOMBRE . ").\n");
+        exit(2);
+    }
+
+    escribirArchivoBaseDePruebas();
+    $ultima = time();
+}
+
+/**
+ * Al cerrar: si la suite terminó antes de comprobarlo (error, Ctrl+C), muestra si
+ * la base del usuario quedó idéntica; después desactiva la base de pruebas si la
+ * activó esta suite.
+ */
+function cerrarBaseDePruebas(): void
+{
+    if (!$GLOBALS['huella_comprobada']) {
+        $identica = huellaDeTuBase() === $GLOBALS['huella_de_tu_base'];
+        echo ($identica ? "\u{2713}" : "\u{2717}") . ' Tu base (' . DB_NOMBRE . ') ' . ($identica ? 'quedó idéntica.' : 'CAMBIÓ durante las pruebas.') . "\n";
+    }
+
+    if ($GLOBALS['base_de_pruebas_propia'] && is_file(ARCHIVO_BASE_DE_PRUEBAS)) {
+        unlink(ARCHIVO_BASE_DE_PRUEBAS);
+    }
+}
+
+function huellaDeTuBase(): array|string
+{
+    return huellaDeLaBase(DB_NOMBRE);
+}
+
+/**
+ * Huella de una base: por tabla, filas, CHECKSUM TABLE y el siguiente
+ * AUTO_INCREMENT (cambia aunque se agregue y se borre una fila). Un texto si la
+ * base no existe o MySQL no responde.
+ */
+function huellaDeLaBase(string $base): array|string
+{
+    try {
+        $pdo = new PDO(sprintf('mysql:host=%s;port=%d;charset=%s', DB_HOST, DB_PUERTO, DB_CHARSET), DB_USUARIO, DB_CLAVE, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    } catch (PDOException) {
+        return 'MySQL no responde';
+    }
+
+    $consulta = $pdo->prepare('SELECT TABLE_NAME, AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = :base ORDER BY TABLE_NAME');
+    $consulta->execute(['base' => $base]);
+    $tablas = $consulta->fetchAll(PDO::FETCH_KEY_PAIR);
+
+    if ($tablas === []) {
+        return 'no existe o no tiene tablas';
+    }
+
+    $huella = [];
+    foreach ($tablas as $tabla => $siguienteId) {
+        $nombre = '`' . str_replace('`', '``', $base) . '`.`' . str_replace('`', '``', $tabla) . '`';
+        $filas = (int) $pdo->query("SELECT COUNT(*) FROM $nombre")->fetchColumn();
+        $checksum = $pdo->query("CHECKSUM TABLE $nombre")->fetch(PDO::FETCH_NUM)[1];
+        $huella[$tabla] = "$filas filas, checksum $checksum, siguiente id $siguienteId";
+    }
+
+    return $huella;
+}
+
+/**
+ * Consulta de solo lectura en la base del usuario (DB_NOMBRE), con su propia
+ * conexión. Solo para comprobar que el interruptor se desactiva solo.
+ */
+function filasBdUsuario(string $sql): array
+{
+    $pdo = new PDO(sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s', DB_HOST, DB_PUERTO, DB_NOMBRE, DB_CHARSET), DB_USUARIO, DB_CLAVE, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+
+    return $pdo->query($sql)->fetchAll();
+}
+
+/**
+ * Recrea la base de PRUEBAS con schema.sql, inicial.sql y seed.sql (cargarSchemaYSeed()
+ * se niega a tocar otra base). Se puede indicar otro binario con MYSQL_BIN.
  */
 function recargarBaseDeDatos(): void
 {
-    static $restauracionProgramada = false;
-
-    if (!$restauracionProgramada) {
-        $restauracionProgramada = true;
-        register_shutdown_function(function (): void {
-            cargarSchemaYSeed();
-            echo "Base de datos restaurada (schema.sql + seed.sql).\n";
-        });
-        terminarAlInterrumpir();
-    }
-
+    renovarBaseDePruebas();
     cargarSchemaYSeed();
 }
 
 /**
  * Con Ctrl+C (o SIGTERM) el script termina con exit(), así se ejecutan las
- * funciones de cierre (restaurar la base, cerrar el Chrome de las pruebas).
+ * funciones de cierre (cerrar el Chrome de las pruebas, desactivar la base de pruebas).
  */
 function terminarAlInterrumpir(): void
 {
@@ -73,6 +179,7 @@ function terminarAlInterrumpir(): void
  */
 function valorBd(string $sql, array $parametros = []): mixed
 {
+    renovarBaseDePruebas();
     $consulta = obtenerConexion()->prepare($sql);
     $consulta->execute($parametros);
 
@@ -84,6 +191,7 @@ function valorBd(string $sql, array $parametros = []): mixed
  */
 function filasBd(string $sql, array $parametros = []): array
 {
+    renovarBaseDePruebas();
     $consulta = obtenerConexion()->prepare($sql);
     $consulta->execute($parametros);
 
@@ -246,6 +354,7 @@ function cabecerasDePrueba(array $opciones): array
  */
 function peticion(string $metodo, string $ruta, array|string|null $cuerpo = null, array $opciones = []): array
 {
+    renovarBaseDePruebas();
     $contenido = is_array($cuerpo)
         ? json_encode($cuerpo, JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION)
         : ($cuerpo ?? '');
@@ -301,6 +410,7 @@ function cookieDeSesionEnviada(array $cookies): ?string
  */
 function peticionesSimultaneas(array $peticiones, array $opciones = []): array
 {
+    renovarBaseDePruebas();
     $multi = curl_multi_init();
     $manejadores = [];
 
@@ -388,6 +498,7 @@ function leerCabeceras(array $lineas): array
  */
 function comprobar(bool $condicion, string $descripcion, string $detalle = ''): bool
 {
+    renovarBaseDePruebas();
     if ($condicion) {
         $GLOBALS['pruebas_correctas']++;
         echo "  \u{2713} $descripcion\n";
@@ -525,6 +636,10 @@ function seccion(string $titulo): void
  */
 function terminarPruebas(): never
 {
+    seccion('Tu base de datos');
+    comprobarIgual($GLOBALS['huella_de_tu_base'], huellaDeTuBase(), 'Tu base (' . DB_NOMBRE . ') quedó idéntica: las pruebas usaron ' . DB_NOMBRE_PRUEBAS);
+    $GLOBALS['huella_comprobada'] = true;
+
     $fallidas = $GLOBALS['pruebas_fallidas'];
     $total = $GLOBALS['pruebas_correctas'] + count($fallidas);
 

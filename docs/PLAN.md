@@ -40,7 +40,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 - `pruebas/ayudas.php`: funciones comunes para hacer peticiones a través de Apache, comprobar resultados y recargar la base de datos (`schema.sql` + `seed.sql`).
 - Un archivo por servicio: `pruebas/dispositivos.php`, `pruebas/alertas.php`, `pruebas/monitoreo.php`, `pruebas/auth.php` y, desde la Fase 9, `pruebas/descubrimiento.php`.
-- Cada script recarga la base de datos al empezar, para que los resultados no dependan de pruebas anteriores. **Borra los datos que hayas agregado a mano.**
+- Cada script recarga la base de datos **de pruebas** al empezar, para que los resultados no dependan de pruebas anteriores. Desde la Fase 10 las suites nunca tocan la base del usuario (ver "Base de pruebas" abajo).
 - Se ejecutan con `/opt/lampp/bin/php pruebas/<servicio>.php` (en Windows, `C:/xampp/php/php.exe`) y terminan con código de salida distinto de 0 si algo falla.
 - `pruebas/` no debe ser accesible por HTTP.
 - `pruebas/interfaz.php` prueba las pantallas con un Chrome headless propio (`pruebas/navegador.php`, cliente del protocolo de depuración escrito en PHP): perfil temporal, puerto elegido por Chrome, nunca se conecta al Chrome del usuario, y se cierra y borra el perfil al terminar, también ante un error o Ctrl+C. Emula 390 px y `prefers-reduced-motion`, y simula servicios caídos interceptando las peticiones de la página. Si no hay Chrome, Chromium o Edge, se omite con un aviso.
@@ -51,6 +51,15 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - **Solo lo usan las pruebas:** lo crean y lo borran `pruebas/monitoreo.php` y `pruebas/auth.php` (al empezar, al terminar y ante un error fatal), con las funciones de `pruebas/ayudas.php`. Está en `.gitignore`.
 - **Caduca solo:** lleva un campo `expira`; `http.php` lo ignora si ya pasó o si está a más de 60 segundos en el futuro. Si la prueba se interrumpe (Ctrl+C, `kill -9`), el sistema vuelve a funcionar en cuanto caduca (las pruebas usan 30 s), y la siguiente corrida lo borra.
 - **No puede activarse por HTTP:** ningún endpoint escribe archivos y `pruebas/` responde 404.
+
+**Base de pruebas (`pruebas/.base-de-pruebas.json`, Fase 10).** Las suites trabajan en `monitoreo_red_soa_pruebas`, nunca en la base del usuario (`monitoreo_red_soa`):
+
+- **Qué es:** mientras el archivo existe y está vigente, `comun/db.php` usa la base de pruebas, tanto en los servicios (a través de Apache) como en las herramientas de terminal que corren las suites (`preparar-demo.php`, `crear-base.php`). No elige la base: el único destino posible es `DB_NOMBRE_PRUEBAS` de `config.php`.
+- **Solo lo usan las suites:** lo crea `pruebas/ayudas.php` al cargarse, lo renueva cada 15 s mientras corre (peticiones, comprobaciones y esperas de Chrome) y lo borra al terminar, después de todas las demás funciones de cierre. Una suite anidada (la del ensayo del guion) lo usa sin borrarlo. Está en `.gitignore`.
+- **Caduca solo** (60 s como máximo). Si una suite muere con `kill -9`, en menos de un minuto todo vuelve a la base del usuario. Si una suite lo encuentra caducado, se detiene en lugar de seguir contra la base del usuario.
+- **Candado:** `cargarSchemaYSeed()` se niega a recrear una base que no sea la de pruebas.
+- **No puede activarse por HTTP:** ningún endpoint escribe archivos y `pruebas/` responde 404.
+- **Comprobación:** cada suite toma al empezar una huella de la base del usuario (filas, `CHECKSUM TABLE` y siguiente `AUTO_INCREMENT` de cada tabla) y al terminar comprueba que quedó idéntica; si la suite termina antes (error, Ctrl+C), lo muestra su función de cierre.
 
 **Archivo de red simulada (`pruebas/.red-simulada.json`, Fase 9).** Sirve para probar el Servicio de Descubrimiento a través de Apache sin depender de la red de quien corre las pruebas y sin enviar nada a la red local. Sigue el mismo modelo que el fallo simulado:
 

@@ -26,6 +26,7 @@ if (PHP_SAPI !== 'cli') {
 }
 
 require_once __DIR__ . '/../servicios/comun/config.php';
+require_once __DIR__ . '/../servicios/comun/db.php'; // nombreDeLaBase(): la de pruebas solo si las suites la activaron
 
 const ARCHIVO_SCHEMA = __DIR__ . '/../database/schema.sql';
 const ARCHIVO_INICIAL = __DIR__ . '/../database/inicial.sql';
@@ -34,12 +35,19 @@ const CARPETA_RESPALDOS = __DIR__ . '/../respaldos';
 const TABLAS_DE_LA_BASE = ['dispositivos', 'monitoreos', 'alertas', 'usuarios'];
 
 /**
- * Recrea la base con schema.sql, inicial.sql y seed.sql (datos de ejemplo).
- * Termina con código 2 si falla.
+ * Recrea la base de PRUEBAS con schema.sql, inicial.sql y seed.sql (datos de
+ * ejemplo). Candado: si la base de pruebas no está activa (pruebas/ayudas.php la
+ * activa), se niega y termina con código 2: nunca borra la base del usuario.
  */
 function cargarSchemaYSeed(): void
 {
-    recrearBase(DB_NOMBRE, [ARCHIVO_SCHEMA, ARCHIVO_INICIAL, ARCHIVO_SEED]);
+    if (nombreDeLaBase() !== DB_NOMBRE_PRUEBAS) {
+        fwrite(STDERR, '✗ Solo se recarga la base de pruebas (' . DB_NOMBRE_PRUEBAS . '), y no está activa: no se tocó ' . DB_NOMBRE . ".
+");
+        exit(2);
+    }
+
+    recrearBase(DB_NOMBRE_PRUEBAS, [ARCHIVO_SCHEMA, ARCHIVO_INICIAL, ARCHIVO_SEED]);
 }
 
 /**

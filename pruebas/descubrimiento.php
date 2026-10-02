@@ -425,19 +425,19 @@ comprobar(preg_match('/\b(SELECT|INSERT|UPDATE|DELETE)\b\s|obtenerConexion|comun
 comprobar(preg_match('#require[^;]*/(dispositivos|alertas|monitoreo|auth)/#', $codigoServicio) !== 1, 'servicios/descubrimiento/ no hace require del código de otro servicio');
 
 $raiz = escapeshellarg(dirname(__DIR__));
-exec("git -C $raiz rev-parse --verify --quiet main 2>&1", $salida, $codigoGit);
+exec("git -C $raiz rev-parse --verify --quiet v1.0 2>&1", $salida, $codigoGit); // la versión anterior al escáner
 if ($codigoGit === 0) {
-    exec("git -C $raiz diff --name-only main -- servicios/dispositivos servicios/alertas servicios/auth 2>&1", $cambiados);
-    comprobarIgual([], $cambiados, 'Dispositivos, Alertas y Auth no cambiaron respecto a main (git diff)');
+    exec("git -C $raiz diff --name-only v1.0 -- servicios/dispositivos servicios/alertas servicios/auth 2>&1", $cambiados);
+    comprobarIgual([], $cambiados, 'Dispositivos, Alertas y Auth no cambiaron respecto a v1.0, la versión sin el escáner (git diff)');
     // ping.php se movió a comun/ en la Fase 9: se compara aparte.
-    exec("git -C $raiz diff -U0 main -- servicios/monitoreo ':!servicios/monitoreo/ping.php' 2>&1", $diferencia);
+    exec("git -C $raiz diff -U0 v1.0 -- servicios/monitoreo ':!servicios/monitoreo/ping.php' 2>&1", $diferencia);
     $lineasCambiadas = array_values(array_filter($diferencia, fn($l) => preg_match('/^[+-](?![+-])/', $l) === 1));
     comprobar(
         array_filter($lineasCambiadas, fn($l) => !str_contains($l, "ping.php';")) === [] && count($lineasCambiadas) <= 2,
         'En Monitoreo solo cambió la línea del require de ping.php',
         implode(' | ', $lineasCambiadas)
     );
-    exec("git -C $raiz show main:servicios/monitoreo/ping.php 2>&1", $pingAnterior, $codigoPing);
+    exec("git -C $raiz show v1.0:servicios/monitoreo/ping.php 2>&1", $pingAnterior, $codigoPing);
     if ($codigoPing === 0) {
         $pingActual = file(__DIR__ . '/../servicios/comun/ping.php', FILE_IGNORE_NEW_LINES);
         $agregadas = array_diff($pingActual, $pingAnterior);
@@ -446,9 +446,11 @@ if ($codigoGit === 0) {
             'comun/ping.php es el ping.php de Monitoreo sin cambios de código (solo se agregó comentario)',
             implode(' | ', $agregadas)
         );
+    } else {
+        avisar('No se pudo leer servicios/monitoreo/ping.php de v1.0: no se comparó con comun/ping.php.');
     }
 } else {
-    avisar('No hay git o no existe la rama main: no se comparó el código de los otros servicios.');
+    avisar('No hay git o no existe la etiqueta v1.0: no se comparó el código de los otros servicios.');
 }
 
 simularRed(['ip_propia' => '192.0.2.1']);

@@ -211,9 +211,16 @@ Para entrar desde el celular (misma red WiFi): `http://<IP de la computadora>/mo
 
 ## 6. Pruebas automáticas
 
-Cada suite **recarga la base al empezar y la deja con el seed limpio al terminar**
-(también si falla o si la interrumpes con Ctrl+C): **borra lo que hayas agregado a
-mano**. Necesitan Apache y MySQL encendidos.
+Las suites **nunca tocan tu base**: trabajan en su propia base,
+`monitoreo_red_soa_pruebas`, que recrean con los datos de ejemplo al empezar. Mientras
+corren, un archivo que caduca solo (`pruebas/.base-de-pruebas.json`) hace que los
+servicios usen esa base; al terminar se borra, y si la suite muere de golpe, en menos
+de un minuto todo vuelve a tu base. Cada suite termina comprobando que tu base quedó
+**idéntica** («Tu base (monitoreo_red_soa) quedó idéntica»), también si falla o la
+interrumpes con Ctrl+C. Necesitan Apache y MySQL encendidos.
+
+> Mientras corre una suite, la aplicación en el navegador muestra la base de pruebas
+> (los dispositivos de ejemplo). Al terminar vuelve sola a la tuya.
 
 ```bash
 cd ~/Proyectos/monitoreo-red-soa

@@ -45,7 +45,7 @@ if ($archivo === null) {
     exit(2);
 }
 
-$base = DB_NOMBRE;
+$base = nombreDeLaBase(); // la del usuario (o la de pruebas, solo mientras corren las suites)
 $actual = contarFilas($base);
 $respaldoActual = $actual === null ? null : respaldarBase($base, 'antes-de-restaurar');
 if ($respaldoActual !== null) {

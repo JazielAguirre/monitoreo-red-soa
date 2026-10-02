@@ -36,7 +36,7 @@ if (!mysqlResponde()) {
     exit(2);
 }
 
-$base = DB_NOMBRE;
+$base = nombreDeLaBase(); // la del usuario (o la de pruebas, solo mientras corren las suites)
 
 if (crearBaseInicial($base)) {
     echo "✓ Base $base creada: sin dispositivos, monitoreos ni alertas. Usuario admin / admin123.\n";

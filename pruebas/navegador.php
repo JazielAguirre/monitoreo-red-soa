@@ -349,6 +349,10 @@ final class Navegador
 
     private function procesarUno(float $espera): void
     {
+        // Mientras Chrome espera, la base de pruebas sigue activa (pruebas/ayudas.php).
+        if (function_exists('renovarBaseDePruebas')) {
+            renovarBaseDePruebas();
+        }
         $texto = $this->conexion->recibirTexto(min($espera, 0.5));
 
         if ($texto === null) {
