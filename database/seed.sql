@@ -1,6 +1,8 @@
 -- Sistema de Monitoreo de Red SOA
--- seed.sql: datos de prueba. Se carga después de schema.sql:
---   /opt/lampp/bin/mysql -u root monitoreo_red_soa < database/seed.sql
+-- seed.sql: datos de EJEMPLO. Se carga después de schema.sql e inicial.sql, solo en
+-- la base de pruebas (monitoreo_red_soa_pruebas, la recrean las suites) o con
+-- preparar-demo.php --datos-de-ejemplo, que antes respalda tu base y pide confirmación.
+-- La base de uso diario empieza sin estos datos (herramientas/crear-base.php).
 --
 -- Dispositivos pensados para comportarse de forma predecible en la red de desarrollo:
 --   Mi PC, Router principal y PC Recepción responden de verdad.
@@ -106,7 +108,4 @@ INSERT INTO alertas (dispositivo_id, tipo, mensaje, fecha, atendida, fecha_atend
     (2, 'sin_respuesta', 'El dispositivo Router principal no respondió al monitoreo.', '2026-09-25 14:10:00', 1, '2026-09-25 14:32:00'),
     (4, 'sin_respuesta', 'El dispositivo Servidor principal no respondió al monitoreo.', '2026-09-27 09:30:01', 0, NULL);
 
--- Usuario administrador. Contraseña de desarrollo: admin123.
--- Solo se guarda el hash, generado con password_hash() del PHP de XAMPP.
-INSERT INTO usuarios (usuario, nombre, contrasena_hash, fecha_registro) VALUES
-    ('admin', 'Administrador', '$2y$10$btGdvE74lpXuAtWF97LMb.GPX5KOpH2t6sfx.La/eJG7NrEYPQ9D2', '2026-09-20 08:00:00');
+-- El usuario admin está en inicial.sql.

@@ -18,3 +18,6 @@ logs/
 # Archivos temporales de las pruebas (fallo simulado entre servicios y red simulada del escáner)
 pruebas/.fallo-simulado.json
 pruebas/.red-simulada.json
+
+# Respaldos de la base (herramientas/crear-base.php, preparar-demo.php, restaurar-respaldo.php)
+respaldos/

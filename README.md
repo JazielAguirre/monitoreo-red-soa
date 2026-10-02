@@ -31,7 +31,7 @@ red](#8-buscar-dispositivos-en-la-red).
 1. [Requisitos](#1-requisitos)
 2. [Instalación en Linux](#2-instalación-en-linux)
 3. [Instalación en Windows](#3-instalación-en-windows)
-4. [Cargar la base de datos](#4-cargar-la-base-de-datos)
+4. [Crear la base de datos](#4-crear-la-base-de-datos)
 5. [Comprobar que funciona](#5-comprobar-que-funciona)
 6. [Pruebas automáticas](#6-pruebas-automáticas)
 7. [Preparar la demo](#7-preparar-la-demo)
@@ -123,7 +123,7 @@ sudo ufw status
 sudo ufw allow from 192.168.0.0/24 to any port 80 proto tcp
 ```
 
-Sigue en [Cargar la base de datos](#4-cargar-la-base-de-datos).
+Sigue en [Crear la base de datos](#4-crear-la-base-de-datos).
 
 ---
 
@@ -156,25 +156,36 @@ también la lista de [`docs/WINDOWS.md`](docs/WINDOWS.md).
 
 ---
 
-## 4. Cargar la base de datos
+## 4. Crear la base de datos
 
-Desde la carpeta del proyecto. `schema.sql` **borra y recrea** la base
-`monitoreo_red_soa`; `seed.sql` carga los datos de prueba (6 dispositivos,
-56 monitoreos, 4 alertas y el usuario `admin`).
+La base de uso diario, `monitoreo_red_soa`, **empieza vacía**: solo el usuario
+`admin`, sin dispositivos, monitoreos ni alertas. Ahí solo aparece lo que tú agregues
+(a mano o con [Buscar dispositivos en la red](#8-buscar-dispositivos-en-la-red)).
 
 ```bash
-# Linux
-cd ~/Proyectos/monitoreo-red-soa
-/opt/lampp/bin/mysql -u root < database/schema.sql
-/opt/lampp/bin/mysql -u root monitoreo_red_soa < database/seed.sql
+# Linux, desde la carpeta del proyecto
+/opt/lampp/bin/php herramientas/crear-base.php
 ```
 
 ```powershell
-# Windows (PowerShell): el operador < no existe, se usa cmd /c
-cd C:\xampp\htdocs\monitoreo-red-soa
-cmd /c "C:\xampp\mysql\bin\mysql.exe -u root < database\schema.sql"
-cmd /c "C:\xampp\mysql\bin\mysql.exe -u root monitoreo_red_soa < database\seed.sql"
+# Windows (PowerShell)
+C:/xampp/php/php.exe herramientas/crear-base.php
 ```
+
+- Si la base ya existe, **no la toca**: dice cuántos dispositivos tiene y termina.
+  Puedes correrlo cuantas veces quieras.
+- `--reemplazar` la vacía para empezar de cero: primero guarda un **respaldo** en
+  `respaldos/` y pide escribir `SI`. Para volver atrás:
+  `php herramientas/restaurar-respaldo.php` (sin argumentos, lista los respaldos;
+  con el nombre de uno, lo restaura, también respaldando antes y pidiendo `SI`).
+
+Archivos de `database/`:
+
+| Archivo | Qué tiene | Dónde se usa |
+|---|---|---|
+| `schema.sql` | Las 4 tablas. No crea ni borra la base: correrlo por error no borra nada | Todas las bases |
+| `inicial.sql` | El usuario `admin` | Base de uso diario y base de pruebas |
+| `seed.sql` | Datos de **ejemplo** (6 dispositivos, 56 monitoreos, 4 alertas) | Solo la base de pruebas, o a pedido con `preparar-demo.php --datos-de-ejemplo` |
 
 La base usa el usuario `root` sin contraseña (solo desarrollo local), como viene
 XAMPP.
@@ -347,10 +358,11 @@ curl -s -b cookies.txt -X POST http://localhost/monitoreo-red-soa/servicios/desc
 ## 10. Estructura del proyecto
 
 ```
-database/       schema.sql (recrea la base), seed.sql (datos de prueba)
+database/       schema.sql (las tablas), inicial.sql (usuario admin), seed.sql (datos de ejemplo)
 docs/           API.md (contrato de los endpoints), PLAN.md (fases), DEMO.md (guion),
                 WINDOWS.md (verificación en Windows), diseno/ (referencia visual)
-herramientas/   preparar-demo.php, ver-llamadas.php y sus funciones (solo línea de comandos)
+herramientas/   crear-base.php, restaurar-respaldo.php, preparar-demo.php, ver-llamadas.php y sus
+                funciones (solo línea de comandos)
 pruebas/        las 6 suites y sus ayudas (solo línea de comandos)
 servicios/      comun/ (infraestructura) y un servicio por carpeta: auth, dispositivos, monitoreo,
                 alertas y descubrimiento

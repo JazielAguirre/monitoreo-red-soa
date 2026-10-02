@@ -151,16 +151,6 @@ function validarIps(string $router, string $pc): ?string
     return $router === $pc ? "El router y PC Recepción no pueden tener la misma IP ($router)." : null;
 }
 
-function mysqlResponde(): bool
-{
-    try {
-        new PDO(sprintf('mysql:host=%s;port=%d', DB_HOST, DB_PUERTO), DB_USUARIO, DB_CLAVE, [PDO::ATTR_TIMEOUT => 3]);
-        return true;
-    } catch (PDOException) {
-        return false;
-    }
-}
-
 /**
  * La IP elegida no puede ser la de otro dispositivo del seed (la columna ip es UNIQUE).
  */

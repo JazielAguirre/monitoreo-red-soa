@@ -1,5 +1,8 @@
 -- Sistema de Monitoreo de Red SOA
--- schema.sql: recrea desde cero la base de datos monitoreo_red_soa.
+-- schema.sql: crea las tablas en la base que se elija. No crea ni borra la base:
+-- así, correrlo por error nunca borra los datos de nadie (desde la Fase 10).
+--   Base de uso diario:  /opt/lampp/bin/php herramientas/crear-base.php  (schema.sql + inicial.sql)
+--   Base de pruebas:     la recrean las suites (schema.sql + inicial.sql + seed.sql)
 -- Fuente de verdad del modelo: docs/API.md, sección "Modelo de datos".
 --
 -- Cada tabla pertenece a un solo servicio:
@@ -12,13 +15,6 @@
 -- DEFAULT CURRENT_TIMESTAMP ni NOW().
 
 SET NAMES utf8mb4;
-
-DROP DATABASE IF EXISTS monitoreo_red_soa;
-CREATE DATABASE monitoreo_red_soa
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-
-USE monitoreo_red_soa;
 
 CREATE TABLE dispositivos (
     id                  INT UNSIGNED NOT NULL AUTO_INCREMENT,

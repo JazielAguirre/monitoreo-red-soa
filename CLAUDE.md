@@ -28,9 +28,9 @@ sudo /opt/lampp/lampp startmysql
 /opt/lampp/bin/php herramientas/preparar-demo.php            # --router=IP --pc=IP, o --sin-red
 /opt/lampp/bin/php herramientas/ver-llamadas.php             # llamadas entre servicios en vivo
 
-# Recrear la base de datos desde cero y cargar datos de prueba
-/opt/lampp/bin/mysql -u root < database/schema.sql
-/opt/lampp/bin/mysql -u root monitoreo_red_soa < database/seed.sql
+# Base de uso diario (vacía: solo el usuario admin). Si ya existe, no la toca.
+/opt/lampp/bin/php herramientas/crear-base.php                 # --reemplazar la vacía: respalda en respaldos/ y pide SI
+/opt/lampp/bin/php herramientas/restaurar-respaldo.php         # lista los respaldos; con ARCHIVO, lo restaura (respalda y pide SI)
 
 # Pruebas automáticas de un servicio (recargan la base de datos al empezar)
 /opt/lampp/bin/php pruebas/dispositivos.php
@@ -62,7 +62,7 @@ curl -s -X POST -H "Content-Type: application/json" \
 Arquitectura
 Interfaz web (web/)  →  HTTP + JSON  →  Servicios (servicios/)  →  MySQL
 .htaccess        solo expone por HTTP web/ y los servicios; el resto responde 404, / redirige a web/
-database/        schema.sql (recrea la BD completa), seed.sql (datos de prueba)
+database/        schema.sql (solo las tablas: no crea ni borra la base), inicial.sql (usuario admin: la base de uso diario es schema + inicial), seed.sql (datos de ejemplo: solo base de pruebas o preparar-demo.php --datos-de-ejemplo)
 docs/            PLAN.md (fases del proyecto), API.md (contrato de endpoints), diseno/ (referencia visual)
 servicios/
 ├── comun/       config.php, db.php, respuesta.php, peticion.php, enrutador.php (acceso por ruta), http.php (cliente entre servicios), auth.php (sesión y clave de servicio), ping.php (ping del sistema; lo usan Monitoreo y Descubrimiento) (.htaccess: Require all denied)
@@ -76,7 +76,7 @@ web/
 ├── js/          api.js (único punto de acceso a la API, URL base relativa; con 401 lleva al login) + modulos/ (formatos, notificaciones, vistas, estructura, sesion, gráficas, busqueda-red…) + un módulo ES por página
 ├── vendor/      bootstrap, bootstrap-icons, chart.js, fuentes Inter y JetBrains Mono
 └── *.html       login, index (dashboard), dispositivos, monitoreos, alertas, componentes
-herramientas/    base-de-datos.php (recarga schema y seed; la usan las pruebas y la demo), red.php (detecta puerta de enlace e IP propia con las funciones de servicios/descubrimiento/red.php), preparar-demo.php, ver-llamadas.php. Solo línea de comandos; no accesible por HTTP
+herramientas/    base-de-datos.php (crear, recrear, respaldar con mysqldump y confirmar con SI; la usan las pruebas y las herramientas), crear-base.php, restaurar-respaldo.php, red.php (detecta puerta de enlace e IP propia con las funciones de servicios/descubrimiento/red.php), preparar-demo.php, ver-llamadas.php. Solo línea de comandos; no accesible por HTTP
 pruebas/         ayudas.php (peticiones con la cookie de iniciarSesionDePrueba() o con la clave en peticionInterna(), fallo simulado) + un script por servicio (dispositivos.php, ..., auth.php, descubrimiento.php) + interfaz.php con navegador.php (cliente del protocolo de Chrome); la red simulada del escáner (simularRed(), tablaArpDeEjemplo()) también está en ayudas.php. Solo línea de comandos; no accesible por HTTP
 Reglas SOA (no negociables)
 Cada servicio solo lee y escribe sus propias tablas.
@@ -213,7 +213,7 @@ Ejecuta php -l en los archivos modificados.
 Prueba con curl (curl.exe en Windows) los endpoints afectados, incluyendo los casos de error.
 Reporta qué probaste y qué resultado dio.
 No instales librerías, frameworks ni herramientas nuevas sin preguntar.
-Si cambias la estructura de la base de datos, actualiza database/schema.sql (y seed.sql si hace falta) en el mismo cambio.
+Si cambias la estructura de la base de datos, actualiza database/schema.sql (y inicial.sql o seed.sql si hace falta) en el mismo cambio. Las bases que ya existen no se recrean solas: el cambio necesita una migración que conserve los datos.
 Git:
 Las Fases 0 y 1 van en main, porque son la base que todos necesitan.
 Desde la Fase 2: una rama por servicio o pantalla (por ejemplo servicio-dispositivos o interfaz-dashboard), que se fusiona a main cuando cumple el "Listo cuando" de su fase en docs/PLAN.md.
@@ -222,7 +222,9 @@ Estado actual
 
 Actualiza esta sección al cerrar cada fase.
 
-Fase actual: ninguna. Las Fases 0–9 están completas y fusionadas a main. Etiquetas: v1.1 es la versión actual, con el escáner de red (Fase 9); v1.0 queda como respaldo sin el escáner (la que se presenta si el escáner no puede usarse). Repositorio: https://github.com/JazielAguirre/monitoreo-red-soa (remoto origin por SSH).
+Fase actual: Fase 10 — Datos reales, en la rama datos-reales (sin push ni fusión hasta que el usuario revise). Objetivo: la base de uso diario solo tiene lo que agrega el usuario y nada la borra. Decisiones aprobadas: las suites usan su propia base (monitoreo_red_soa_pruebas) elegida con un archivo que caduca solo; --datos-de-ejemplo se conserva con respaldo y confirmación; herramienta monitorear-rondas.php (intervalos cortos, resumen por ronda, falla clara si se cae la sesión o la red); guion de la demo con los equipos reales (modo avión para la alerta en vivo, un tercer equipo para «Agregar»). NO vaciar la base del usuario: él decide cuándo correr crear-base.php --reemplazar; al terminar la rama, avisarle y darle el comando exacto. Respaldo de precaución de su base (6 dispositivos de ejemplo, 68 monitoreos, 8 alertas): respaldos/monitoreo_red_soa-20261002-085732-antes-de-datos-reales.sql.
+Fase 10, subpasos: [x] 1 inicial.sql, schema.sql sin DROP, crear-base.php y restaurar-respaldo.php (adelantado del 3), README · [ ] 2 base de pruebas con interruptor y huella · [ ] 3 preparar-demo.php sin recargar y --datos-de-ejemplo · [ ] 4 estados vacíos en interfaz.php · [ ] 5 monitorear-rondas.php · [ ] 6 DEMO.md, ensayo y cierre. Hasta el subpaso 2 no se corre ninguna suite (recargarían la base del usuario).
+Las Fases 0–9 están completas y fusionadas a main. Etiquetas: v1.1 es la versión actual, con el escáner de red (Fase 9); v1.0 queda como respaldo sin el escáner (la que se presenta si el escáner no puede usarse). Repositorio: https://github.com/JazielAguirre/monitoreo-red-soa (remoto origin por SSH).
 Pendientes del equipo (no requieren código):
 - Probar «Buscar dispositivos en la red» en Windows (docs/WINDOWS.md, paso 7) y ensayar su tramo en vivo con un segundo teléfono en el hotspot.
 - Confirmar con el profesor el tiempo disponible (el guion dura ~5:30; ~5:05 sin la recarga del celular).
