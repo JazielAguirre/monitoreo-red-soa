@@ -464,13 +464,12 @@ seccion('13. Preparación de la demo (herramientas/preparar-demo.php)');
 require_once __DIR__ . '/../herramientas/red.php';
 
 /**
- * Corre preparar-demo.php con los argumentos dados: [código de salida, salida].
+ * Corre preparar-demo.php: [código de salida, salida]. $entrada es lo que se
+ * escribiría en la terminal (la confirmación de --datos-de-ejemplo).
  */
-function prepararDemo(string $argumentos): array
+function prepararDemo(string $argumentos, string $entrada = ''): array
 {
-    exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/../herramientas/preparar-demo.php') . " $argumentos 2>&1", $salida, $codigo);
-
-    return [$codigo, implode("\n", $salida)];
+    return correrHerramienta('herramientas/preparar-demo.php', $argumentos, $entrada);
 }
 
 /**
@@ -490,55 +489,131 @@ function fechasDeLaBase(): array
     return $fechas;
 }
 
+/**
+ * Comprueba que la salida incluya cada texto.
+ */
+function comprobarSalida(string $salida, array $textos, string $prefijo = '  la salida incluye'): void
+{
+    foreach ($textos as $texto) {
+        comprobar(str_contains($salida, $texto), "$prefijo «" . trim($texto) . '»', $salida);
+    }
+}
+
 $ipPropia = detectarIpPropia();
 $puerta = detectarPuertaDeEnlace();
 $formaValida = fn(?string $ip): bool => $ip === null || (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false && !str_starts_with($ip, '127.'));
 comprobar($formaValida($ipPropia) && $formaValida($puerta), 'la detección devuelve una IPv4 de red o null (sin red), nunca otra cosa', json_encode([$ipPropia, $puerta]));
-
-recargarBaseDeDatos();
-$antesFechas = fechasDeLaBase();
-[$codigo, $salida] = prepararDemo('--router=192.0.2.30 --pc=127.0.0.2');
-comprobarIgual(0, $codigo, 'preparar-demo.php --router=192.0.2.30 --pc=127.0.0.2 termina bien (código 0)', $salida);
-$despues = fechasDeLaBase();
-$diferencias = array_unique(array_map(fn($clave) => $despues[$clave] - $antesFechas[$clave], array_keys($antesFechas)));
-comprobar(count($diferencias) === 1 && array_keys($antesFechas) === array_keys($despues), 'todas las fechas se movieron lo mismo: se conservan las distancias entre ellas', json_encode(array_values($diferencias)));
-$ultima = strtotime((string) valorBd('SELECT MAX(fecha) FROM monitoreos'));
-comprobar(abs(time() - 600 - $ultima) <= 60, '  la última ronda de monitoreo quedó de hace unos 10 minutos', date('Y-m-d H:i:s', $ultima));
-comprobar(strtotime((string) valorBd('SELECT MAX(fecha_atendida) FROM alertas')) < strtotime('today'), '  las alertas atendidas siguen siendo de días anteriores');
-comprobarIgual(['192.0.2.30', '127.0.0.2', '127.0.0.1'], [valorBd('SELECT ip FROM dispositivos WHERE id = 2'), valorBd('SELECT ip FROM dispositivos WHERE id = 3'), valorBd('SELECT ip FROM dispositivos WHERE id = 1')], 'el router y PC Recepción tienen las IPs indicadas; los demás, las del seed');
-comprobarIgual([['192.0.2.30'], ['127.0.0.2']], [array_column(filasBd('SELECT DISTINCT ip FROM monitoreos WHERE dispositivo_id = 2'), 'ip'), array_column(filasBd('SELECT DISTINCT ip FROM monitoreos WHERE dispositivo_id = 3'), 'ip')], '  también en su historial de monitoreos');
-foreach (['Router principal ... 192.0.2.30 (indicada)', '✓ Apache responde', '✓ Los servicios contestan', '✓ La base tiene los datos de la demo', 'no responde, como se espera', '✓ PC Recepción (127.0.0.2) responde al ping', 'Todo listo para la demo.'] as $texto) {
-    comprobar(str_contains($salida, $texto), "  el resumen y la comprobación previa incluyen «{$texto}»");
-}
-
-// Un router que bloquea el ping pero está en la tabla ARP (como muchos hotspots): ⚠, no ✗.
-// La tabla ARP viene de la red simulada (la misma lectura que el escáner), así que no depende de la red.
 register_shutdown_function('quitarRedSimulada');
+register_shutdown_function('borrarRespaldosDePrueba');
+borrarRespaldosDePrueba();
+
+// --- Sin opciones: comprueba sin cambiar la base. (127.0.0.3 hace de router; 127.0.0.1 es Mi PC.)
+recargarBaseDeDatos();
+$huella = huellaDeLaBase(DB_NOMBRE_PRUEBAS);
+[$codigo, $salida] = prepararDemo('--router=127.0.0.3 --pc=127.0.0.1');
+comprobarIgual(0, $codigo, 'sin opciones (--router=127.0.0.3 --pc=127.0.0.1) termina bien (código 0)', $salida);
+comprobarIgual($huella, huellaDeLaBase(DB_NOMBRE_PRUEBAS), '  y NO cambia la base: ni fechas, ni IPs, ni datos');
+comprobarSalida($salida, [
+    'Tu base (' . DB_NOMBRE_PRUEBAS . ') no se modifica.',
+    'Dispositivos (6)',
+    '✓ Apache responde',
+    '✓ Los servicios contestan',
+    '✓ Tu base tiene 6 dispositivos, 56 monitoreos y 1 alerta pendiente',
+    '⚠ El último monitoreo fue hace',
+    'monitorear-rondas.php --rondas=12 --cada=60',
+    '✓ El router (127.0.0.3) responde al ping',
+    '⚠ El router (127.0.0.3) no está en tu base',
+    '✓ Esta computadora (127.0.0.1) está en tu base como «Mi PC»',
+    'Los teléfonos registrados deben tener la pantalla encendida',
+    'Todo listo para la demo (lee los avisos con ⚠).',
+]);
+comprobarIgual(0, respaldosDePrueba() === [] ? 0 : count(respaldosDePrueba()), '  sin opciones no hace respaldos: no toca la base');
+
+// Con historial reciente y el router registrado, todo en ✓.
+peticion('POST', '/dispositivos', ['nombre' => 'Router de pruebas', 'ip' => '127.0.0.3', 'tipo' => 'router', 'ubicacion' => 'Laboratorio']);
+peticion('POST', '/monitoreo/1');
+[$codigo, $salida] = prepararDemo('--router=127.0.0.3 --pc=127.0.0.1');
+comprobarSalida($salida, ['✓ Hay historial reciente: el último monitoreo fue hace 0 min', '✓ El router (127.0.0.3) está en tu base como «Router de pruebas»', "Todo listo para la demo.\n"], 'con historial reciente y el router registrado, incluye');
+
+// Base vacía (la de uso diario recién creada).
+recrearBase(DB_NOMBRE_PRUEBAS, [ARCHIVO_SCHEMA, ARCHIVO_INICIAL]);
+[$codigo, $salida] = prepararDemo('--router=127.0.0.3 --pc=127.0.0.1');
+comprobarIgual(0, $codigo, 'con la base vacía termina bien (código 0)', $salida);
+comprobarSalida($salida, ['Dispositivos (0)', '(ninguno todavía)', '⚠ Tu base no tiene dispositivos todavía', '«Buscar dispositivos en la red»', '⚠ Todavía no hay historial de monitoreos']);
+
+// Sin base.
+ejecutarSentencias(null, 'DROP DATABASE ' . identificador(DB_NOMBRE_PRUEBAS) . ';');
+[$codigo, $salida] = prepararDemo('--router=127.0.0.3 --pc=127.0.0.1');
+comprobar($codigo === 1 && str_contains($salida, '✗ La base ' . DB_NOMBRE_PRUEBAS . ' no existe') && str_contains($salida, 'Qué hacer: Crea tu base vacía: php herramientas/crear-base.php'), 'si la base no existe → ✗ con «Qué hacer: crear-base.php» y código 1', $salida);
+comprobar(!existeBase(DB_NOMBRE_PRUEBAS), '  y no la crea por su cuenta');
+recargarBaseDeDatos();
+
+// Router que bloquea el ping pero está en la tabla ARP (como muchos hotspots): ⚠, no ✗.
+// La tabla ARP viene de la red simulada (la misma lectura que el escáner): no depende de la red.
 simularRed(['ip_propia' => '192.0.2.1', 'arp' => tablaArpDeEjemplo([['192.0.2.40', 'aa:bb:cc:dd:ee:40', 'REACHABLE']])]);
-[$codigo, $salida] = prepararDemo('--router=192.0.2.40 --pc=127.0.0.2');
+[$codigo, $salida] = prepararDemo('--router=192.0.2.40 --pc=127.0.0.1');
 comprobar(
-    $codigo === 0 && str_contains($salida, '⚠ El router bloquea el ping, pero está conectado (aparece en ARP): 192.0.2.40, MAC aa:bb:cc:dd:ee:40')
-        && !str_contains($salida, '✗') && str_contains($salida, 'Todo listo para la demo (lee los avisos con ⚠).'),
+    $codigo === 0 && str_contains($salida, '⚠ El router bloquea el ping, pero está conectado (aparece en ARP): 192.0.2.40, MAC aa:bb:cc:dd:ee:40') && !str_contains($salida, '✗'),
     'router que no responde al ping pero está en ARP → ⚠ «El router bloquea el ping, pero está conectado (aparece en ARP)», código 0',
     $salida
 );
 quitarRedSimulada();
-[$codigo, $salida] = prepararDemo('--router=192.0.2.40 --pc=127.0.0.2');
+[$codigo, $salida] = prepararDemo('--router=192.0.2.40 --pc=127.0.0.1');
 comprobar(
-    $codigo === 1 && str_contains($salida, '✗ El router (192.0.2.40) no responde al ping') && str_contains($salida, 'Qué hacer: El router no responde') && !str_contains($salida, '⚠'),
+    $codigo === 1 && str_contains($salida, '✗ El router (192.0.2.40) no responde al ping') && str_contains($salida, 'Qué hacer: El router no responde') && !str_contains($salida, 'aparece en ARP'),
     'si tampoco está en ARP → ✗ con «Qué hacer» y código 1',
     $salida
 );
 
-recargarBaseDeDatos();
-peticion('PUT', '/dispositivos/1', ['nombre' => 'Marca de la prueba', 'ip' => '127.0.0.1', 'tipo' => 'computadora', 'ubicacion' => 'Laboratorio']);
-foreach (['--router=300.1.1.1' => 'no es una IPv4 válida', '--router=192.0.2.40 --pc=192.0.2.40' => 'no pueden tener la misma IP', '--otra-opcion' => 'Uso:'] as $argumentos => $mensaje) {
+foreach (['--router=300.1.1.1' => 'no es una IPv4 válida', '--router=127.0.0.1 --pc=127.0.0.1' => 'no pueden tener la misma IP', '--otra-opcion' => 'Uso:', '--sin-red' => 'Uso:'] as $argumentos => $mensaje) {
     [$codigo, $salida] = prepararDemo($argumentos);
     comprobar($codigo === 2 && str_contains($salida, $mensaje), "$argumentos → código 2 y «{$mensaje}»", $salida);
 }
-comprobarIgual('Marca de la prueba', valorBd('SELECT nombre FROM dispositivos WHERE id = 1'), '  sin tocar la base de datos');
-[$codigo, $salida] = prepararDemo('--router=192.0.2.40 --pc=127.0.0.1');
-comprobar($codigo === 2 && str_contains($salida, 'ya es de «Mi PC»'), 'una IP que ya usa otro dispositivo (Mi PC) → código 2', $salida);
-comprobarIgual(['2026-09-27 09:45:03', '192.168.0.1'], [valorBd('SELECT MAX(fecha) FROM monitoreos'), valorBd('SELECT ip FROM dispositivos WHERE id = 2')], '  y la base queda con el seed sin mover fechas ni IPs');
+
+// --- --datos-de-ejemplo: respalda, pide confirmación y solo entonces reemplaza.
+recrearBase(DB_NOMBRE_PRUEBAS, [ARCHIVO_SCHEMA, ARCHIVO_INICIAL]);
+peticion('POST', '/dispositivos', ['nombre' => 'Mi equipo real', 'ip' => '127.0.0.9', 'tipo' => 'computadora', 'ubicacion' => 'Casa']);
+$huellaMia = huellaDeLaBase(DB_NOMBRE_PRUEBAS);
+
+[$codigo, $salida] = prepararDemo('--datos-de-ejemplo --router=192.0.2.30 --pc=127.0.0.2', "NO\n");
+comprobarIgual(1, $codigo, '--datos-de-ejemplo respondiendo NO → código 1', $salida);
+comprobarSalida($salida, ['Respaldo de tu base:', '(1 dispositivo, 0 monitoreos, 0 alertas) se reemplazará por los DATOS DE EJEMPLO', 'Escribe SI para continuar', 'Cancelado: la base ' . DB_NOMBRE_PRUEBAS . ' no cambió.']);
+comprobarIgual($huellaMia, huellaDeLaBase(DB_NOMBRE_PRUEBAS), '  la base no cambió');
+comprobarIgual(1, count(respaldosDePrueba()), '  y el respaldo ya quedó guardado en respaldos/');
+[$codigo] = prepararDemo('--datos-de-ejemplo --router=192.0.2.30 --pc=127.0.0.2');
+comprobar($codigo === 1 && huellaDeLaBase(DB_NOMBRE_PRUEBAS) === $huellaMia, '  sin respuesta (fin de la entrada) también cancela, sin cambiar la base');
+[$codigo, $salida] = prepararDemo('--datos-de-ejemplo --router=192.0.2.40 --pc=127.0.0.1', "SI\n");
+comprobar($codigo === 2 && str_contains($salida, 'ya es de «Mi PC» en los datos de ejemplo') && huellaDeLaBase(DB_NOMBRE_PRUEBAS) === $huellaMia, 'una IP que en los datos de ejemplo es de Mi PC → código 2, sin pedir confirmación ni tocar la base', $salida);
+borrarRespaldosDePrueba();
+
+$antesFechas = (function (): array {
+    recrearBase(DB_NOMBRE_PRUEBAS, [ARCHIVO_SCHEMA, ARCHIVO_INICIAL, ARCHIVO_SEED]);
+    return fechasDeLaBase();
+})();
+recrearBase(DB_NOMBRE_PRUEBAS, [ARCHIVO_SCHEMA, ARCHIVO_INICIAL]);
+peticion('POST', '/dispositivos', ['nombre' => 'Mi equipo real', 'ip' => '127.0.0.9', 'tipo' => 'computadora', 'ubicacion' => 'Casa']);
+$huellaMia = huellaDeLaBase(DB_NOMBRE_PRUEBAS);
+[$codigo, $salida] = prepararDemo('--datos-de-ejemplo --router=192.0.2.30 --pc=127.0.0.2', "SI\n");
+comprobarIgual(0, $codigo, '--datos-de-ejemplo --router=192.0.2.30 --pc=127.0.0.2 respondiendo SI termina bien (código 0)', $salida);
+$despues = fechasDeLaBase();
+$diferencias = array_unique(array_map(fn($clave) => $despues[$clave] - $antesFechas[$clave], array_keys($antesFechas)));
+comprobar(count($diferencias) === 1 && array_keys($antesFechas) === array_keys($despues), '  todas las fechas se movieron lo mismo: se conservan las distancias entre ellas', json_encode(array_values($diferencias)));
+$ultima = strtotime((string) valorBd('SELECT MAX(fecha) FROM monitoreos'));
+comprobar(abs(time() - 600 - $ultima) <= 60, '  la última ronda de monitoreo quedó de hace unos 10 minutos', date('Y-m-d H:i:s', $ultima));
+comprobar(strtotime((string) valorBd('SELECT MAX(fecha_atendida) FROM alertas')) < strtotime('today'), '  las alertas atendidas siguen siendo de días anteriores');
+comprobarIgual(['192.0.2.30', '127.0.0.2', '127.0.0.1'], [valorBd('SELECT ip FROM dispositivos WHERE id = 2'), valorBd('SELECT ip FROM dispositivos WHERE id = 3'), valorBd('SELECT ip FROM dispositivos WHERE id = 1')], '  el router y PC Recepción tienen las IPs indicadas; los demás, las del seed');
+comprobarIgual([['192.0.2.30'], ['127.0.0.2']], [array_column(filasBd('SELECT DISTINCT ip FROM monitoreos WHERE dispositivo_id = 2'), 'ip'), array_column(filasBd('SELECT DISTINCT ip FROM monitoreos WHERE dispositivo_id = 3'), 'ip')], '  también en su historial de monitoreos');
+comprobarSalida($salida, ['Router principal ... 192.0.2.30 (indicada)', '✓ La base tiene los datos de ejemplo', 'no responde, como se espera', '✓ PC Recepción (127.0.0.2) responde al ping', "Todo listo para la demo.\n"]);
+comprobarIgual(0, (int) valorBd("SELECT COUNT(*) FROM dispositivos WHERE nombre = 'Mi equipo real'"), '  «Mi equipo real» ya no está en la base…');
+
+$respaldo = respaldosDePrueba()[0] ?? '';
+[$codigo, $salida] = correrHerramienta('herramientas/restaurar-respaldo.php', escapeshellarg(basename($respaldo)), "SI\n");
+comprobar($codigo === 0 && str_contains($salida, '✓ Base ' . DB_NOMBRE_PRUEBAS . ' restaurada: 1 dispositivo, 0 monitoreos, 0 alertas.'), '  …pero el respaldo lo devuelve: restaurar-respaldo.php con SI → código 0', $salida);
+comprobarIgual($huellaMia, huellaDeLaBase(DB_NOMBRE_PRUEBAS), '  y la base queda exactamente como antes de los datos de ejemplo');
+
+[$codigo, $salida] = prepararDemo('--datos-de-ejemplo --sin-red', "SI\n");
+comprobarIgual(0, $codigo, '--datos-de-ejemplo --sin-red respondiendo SI termina bien (código 0)', $salida);
+comprobarIgual(['192.0.2.30', '127.0.0.2'], [valorBd('SELECT ip FROM dispositivos WHERE id = 2'), valorBd('SELECT ip FROM dispositivos WHERE id = 3')], '  con las IPs del plan sin red');
+borrarRespaldosDePrueba();
 
 terminarPruebas();

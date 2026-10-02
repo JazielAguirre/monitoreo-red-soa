@@ -250,26 +250,29 @@ no está en la ruta de siempre, indícalo con la variable `CHROME_BIN`.
 
 ## 7. Preparar la demo
 
-Un solo comando deja todo listo: recarga la base, mueve las fechas del seed para
-que la última ronda de monitoreo sea de **hace 10 minutos** (las alertas atendidas
-siguen siendo de días anteriores), pone las IPs del **router** y de **PC Recepción**
-de la red donde se presenta y comprueba que todo responde.
-
 ```bash
 /opt/lampp/bin/php herramientas/preparar-demo.php
 ```
 
-- Sin opciones, **detecta** la puerta de enlace (el router) y la IP de esta
-  computadora (hace de PC Recepción y es la dirección para el celular).
-- `--router=10.0.0.1 --pc=10.0.0.57` usa esas IPs en lugar de detectarlas.
-- `--sin-red` es el plan B sin WiFi: el router pasa a `192.0.2.30` (no responde:
-  sirve para mostrar una alerta) y PC Recepción a `127.0.0.2` (siempre responde).
+**No cambia tu base.** Comprueba que todo esté listo para presentar y dice qué falta:
 
-Al final muestra un resumen (fechas nuevas, IPs, URL para el celular) y una
-**comprobación previa** con ✓ o ✗ en cada línea: Apache, servicios, base de datos y
-ping al router. Si algo falla, dice qué hacer. Si el router bloquea el ping pero
-aparece en la tabla ARP (pasa con muchos hotspots), sale ⚠ «El router bloquea el
-ping, pero está conectado (aparece en ARP)»: es un aviso, no un fallo.
+- Apache, los servicios y tu base (cuántos dispositivos, monitoreos y alertas pendientes).
+- **Historial reciente:** si el último monitoreo es de hace más de una hora, avisa ⚠ y
+  te dice cómo generarlo con `herramientas/monitorear-rondas.php`.
+- **El router** (la puerta de enlace detectada) y **esta computadora**: si responden
+  al ping (⚠ si el router lo bloquea pero aparece en la tabla ARP) y si ya están en tu
+  base (⚠ si no: agrégalos con «Buscar dispositivos en la red»).
+- La **URL para el celular**.
+
+`--router=IP --pc=IP` usa esas IPs en lugar de detectarlas.
+
+**Datos de ejemplo (opcional):** `--datos-de-ejemplo` carga en tu base los datos de
+ejemplo de la versión 1.0 (6 dispositivos, historial y alertas, con las fechas movidas a
+hace 10 minutos y las IPs del router y de «PC Recepción» de la red donde estás;
+`--sin-red` es el plan B sin WiFi). **Reemplaza tus datos**, así que antes guarda un
+respaldo en `respaldos/` y pide escribir `SI`. Para volver a tus datos:
+`php herramientas/restaurar-respaldo.php` (lista los respaldos) y
+`php herramientas/restaurar-respaldo.php ARCHIVO`.
 
 Durante la parte de SOA de la demo, en otra terminal:
 

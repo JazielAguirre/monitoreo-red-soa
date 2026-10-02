@@ -96,8 +96,11 @@ function cerrarBaseDePruebas(): void
         echo ($identica ? "\u{2713}" : "\u{2717}") . ' Tu base (' . DB_NOMBRE . ') ' . ($identica ? 'quedó idéntica.' : 'CAMBIÓ durante las pruebas.') . "\n";
     }
 
-    if ($GLOBALS['base_de_pruebas_propia'] && is_file(ARCHIVO_BASE_DE_PRUEBAS)) {
-        unlink(ARCHIVO_BASE_DE_PRUEBAS);
+    if ($GLOBALS['base_de_pruebas_propia']) {
+        borrarRespaldosDePrueba(); // solo los de la base de pruebas; los del usuario nunca
+        if (is_file(ARCHIVO_BASE_DE_PRUEBAS)) {
+            unlink(ARCHIVO_BASE_DE_PRUEBAS);
+        }
     }
 }
 
@@ -291,6 +294,41 @@ function tablaArpDeEjemplo(array $entradas): string
     }
 
     return implode("\n", $lineas) . "\n";
+}
+
+// ---------------------------------------------------------------- Herramientas de terminal
+
+/**
+ * Corre una herramienta PHP del proyecto (ruta relativa a la raíz) con la base de
+ * pruebas activa. $entrada es lo que se escribiría en la terminal (por ejemplo
+ * "SI\n" para confirmar); sin entrada, la herramienta lee el fin del archivo.
+ * Devuelve [código de salida, salida (stdout y stderr)].
+ */
+function correrHerramienta(string $ruta, string $argumentos = '', string $entrada = ''): array
+{
+    renovarBaseDePruebas();
+    $comando = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(dirname(__DIR__) . "/$ruta") . " $argumentos 2>&1";
+    $proceso = proc_open($comando, [0 => ['pipe', 'r'], 1 => ['pipe', 'w']], $tuberias);
+    fwrite($tuberias[0], $entrada);
+    fclose($tuberias[0]);
+    $salida = (string) stream_get_contents($tuberias[1]);
+    fclose($tuberias[1]);
+
+    return [proc_close($proceso), $salida];
+}
+
+/**
+ * Respaldos que guardaron las herramientas de la base de PRUEBAS durante la suite.
+ * Los respaldos de la base del usuario nunca se tocan.
+ */
+function respaldosDePrueba(): array
+{
+    return glob(CARPETA_RESPALDOS . '/' . DB_NOMBRE_PRUEBAS . '-*.sql') ?: [];
+}
+
+function borrarRespaldosDePrueba(): void
+{
+    array_map('unlink', respaldosDePrueba());
 }
 
 // ---------------------------------------------------------------- Peticiones

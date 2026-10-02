@@ -499,4 +499,56 @@ comprobar(str_contains($salida, 'suite anidada') && str_contains($salida, 'Tu ba
 comprobar(baseDePruebasActiva(), '  y al terminar no desactiva la base de pruebas de la suite que la llamó');
 
 
+// =====================================================================
+seccion('12. Crear la base vacía y restaurar respaldos (crear-base.php, restaurar-respaldo.php)');
+
+register_shutdown_function('borrarRespaldosDePrueba');
+borrarRespaldosDePrueba();
+recargarBaseDeDatos();
+$huella = huellaDeLaBase(DB_NOMBRE_PRUEBAS);
+[$codigo, $salida] = correrHerramienta('herramientas/crear-base.php');
+comprobar($codigo === 0 && str_contains($salida, 'La base ' . DB_NOMBRE_PRUEBAS . ' ya existe (6 dispositivos, 56 monitoreos, 4 alertas): no se tocó.'), 'crear-base.php con la base existente → «ya existe… no se tocó» (código 0)', $salida);
+comprobar(huellaDeLaBase(DB_NOMBRE_PRUEBAS) === $huella && respaldosDePrueba() === [], '  sin cambiarla ni hacer respaldos');
+[$codigo, $salida] = correrHerramienta('herramientas/crear-base.php', '--otra');
+comprobar($codigo === 2 && str_contains($salida, 'Uso:'), 'una opción desconocida → código 2 y «Uso:»', $salida);
+
+ejecutarSentencias(null, 'DROP DATABASE ' . identificador(DB_NOMBRE_PRUEBAS) . ';');
+[$codigo, $salida] = correrHerramienta('herramientas/crear-base.php');
+comprobar($codigo === 0 && str_contains($salida, '✓ Base ' . DB_NOMBRE_PRUEBAS . ' creada: sin dispositivos, monitoreos ni alertas.'), 'sin la base, la crea (código 0)', $salida);
+comprobarIgual(['dispositivos' => 0, 'monitoreos' => 0, 'alertas' => 0, 'usuarios' => 1], contarFilas(DB_NOMBRE_PRUEBAS), '  vacía: solo el usuario admin (inicial.sql), sin los datos de ejemplo');
+comprobarIgual(200, peticion('POST', '/auth/login', ['usuario' => 'admin', 'contrasena' => 'admin123'], ['sesion' => false])['codigo'], '  y se puede entrar con admin / admin123');
+iniciarSesionDePrueba(); // la sesión anterior era de la base que se borró: se renueva
+
+peticion('POST', '/dispositivos', ['nombre' => 'Mi equipo real', 'ip' => '127.0.0.9', 'tipo' => 'computadora', 'ubicacion' => 'Casa']);
+$huellaMia = huellaDeLaBase(DB_NOMBRE_PRUEBAS);
+[$codigo, $salida] = correrHerramienta('herramientas/crear-base.php', '--reemplazar', "no\n");
+comprobar($codigo === 1 && str_contains($salida, '(1 dispositivo, 0 monitoreos, 0 alertas) y quedará vacía') && str_contains($salida, 'Cancelado: la base ' . DB_NOMBRE_PRUEBAS . ' no cambió.'), '--reemplazar respondiendo «no» → cancela (código 1)', $salida);
+comprobar(huellaDeLaBase(DB_NOMBRE_PRUEBAS) === $huellaMia && count(respaldosDePrueba()) === 1, '  la base no cambió y el respaldo ya estaba guardado antes de preguntar');
+borrarRespaldosDePrueba();
+
+[$codigo, $salida] = correrHerramienta('herramientas/crear-base.php', '--reemplazar', "SI\n");
+comprobar($codigo === 0 && str_contains($salida, '✓ La base ' . DB_NOMBRE_PRUEBAS . ' quedó vacía'), '--reemplazar respondiendo SI → la vacía (código 0)', $salida);
+comprobarIgual(['dispositivos' => 0, 'monitoreos' => 0, 'alertas' => 0, 'usuarios' => 1], contarFilas(DB_NOMBRE_PRUEBAS), '  solo queda el usuario admin');
+$respaldo = respaldosDePrueba()[0] ?? '';
+comprobar($respaldo !== '' && str_contains($salida, 'Para volver atrás: php herramientas/restaurar-respaldo.php ' . basename($respaldo)), '  y dice cómo volver atrás, con el nombre del respaldo', $salida);
+
+[$codigo, $salida] = correrHerramienta('herramientas/restaurar-respaldo.php');
+comprobar($codigo === 0 && str_contains($salida, basename($respaldo)), 'restaurar-respaldo.php sin argumentos lista los respaldos', $salida);
+[$codigo, $salida] = correrHerramienta('herramientas/restaurar-respaldo.php', escapeshellarg(basename($respaldo)), "NO\n");
+comprobar($codigo === 1 && contarFilas(DB_NOMBRE_PRUEBAS)['dispositivos'] === 0, 'restaurar respondiendo NO → cancela (código 1) sin cambiar la base', $salida);
+[$codigo, $salida] = correrHerramienta('herramientas/restaurar-respaldo.php', escapeshellarg(basename($respaldo)), "SI\n");
+comprobar($codigo === 0 && str_contains($salida, 'restaurada: 1 dispositivo, 0 monitoreos, 0 alertas.'), 'restaurar respondiendo SI → código 0', $salida);
+comprobarIgual($huellaMia, huellaDeLaBase(DB_NOMBRE_PRUEBAS), '  la base vuelve exactamente a como estaba antes de vaciarla');
+comprobar(count(respaldosDePrueba()) === 3, '  y antes de restaurar respaldó lo que había (también restaurar es reversible)', implode(', ', array_map('basename', respaldosDePrueba())));
+
+$falso = CARPETA_RESPALDOS . '/' . DB_NOMBRE_PRUEBAS . '-falso.sql';
+file_put_contents($falso, "CREATE DATABASE otra;\nUSE otra;\n-- Dump completed\n");
+foreach (['../.htaccess' => 'un archivo fuera de respaldos/', basename($falso) => 'un respaldo que cambia de base (CREATE DATABASE / USE)', 'no-existe.sql' => 'un archivo que no existe'] as $archivo => $caso) {
+    [$codigo, $salida] = correrHerramienta('herramientas/restaurar-respaldo.php', escapeshellarg($archivo), "SI\n");
+    comprobar($codigo === 2 && str_contains($salida, 'no es un respaldo de respaldos/'), "restaurar $caso → código 2, sin tocar la base", $salida);
+}
+comprobarIgual($huellaMia, huellaDeLaBase(DB_NOMBRE_PRUEBAS), '  la base no cambió');
+borrarRespaldosDePrueba();
+recargarBaseDeDatos();
+
 terminarPruebas();

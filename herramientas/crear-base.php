@@ -64,15 +64,3 @@ recrearBase($base, [ARCHIVO_SCHEMA, ARCHIVO_INICIAL]);
 echo "\n✓ La base $base quedó vacía: sin dispositivos, monitoreos ni alertas. Usuario admin / admin123.\n";
 echo "Para volver atrás: php herramientas/restaurar-respaldo.php " . basename($respaldo) . "\n";
 exit(0);
-
-/**
- * "3 dispositivos, 40 monitoreos, 2 alertas"
- */
-function describirConteos(?array $conteos): string
-{
-    if ($conteos === null) {
-        return 'no existe';
-    }
-
-    return sprintf('%d dispositivos, %d monitoreos, %d alertas', $conteos['dispositivos'], $conteos['monitoreos'], $conteos['alertas']);
-}

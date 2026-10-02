@@ -1870,7 +1870,7 @@ function correrScript(string $ruta, string $opciones = ''): array
 }
 
 // 127.0.0.3 hace de router que responde (como en la red de la demo); 127.0.0.2, de PC Recepción.
-[$codigoDemo, $salidaDemo] = correrScript('herramientas/preparar-demo.php', '--router=127.0.0.3 --pc=127.0.0.2');
+[$codigoDemo, $salidaDemo] = correrHerramienta('herramientas/preparar-demo.php', '--datos-de-ejemplo --router=127.0.0.3 --pc=127.0.0.2', "SI\n");
 comprobarIgual(0, $codigoDemo, 'antes de empezar: preparar-demo.php deja todo listo (comprobación previa en ✓)', $salidaDemo);
 $navegador->tamano(1280, 720);
 $navegador->erroresJs = [];
@@ -2007,7 +2007,7 @@ comprobar($codigoSuite === 0 && preg_match('/Resultado: (\d+) de \1 comprobacion
 abrirPagina($navegador, 'index.html');
 esperarDashboard($navegador);
 comprobar(!str_starts_with((string) $navegador->evaluar("document.getElementById('ultima-comprobacion').textContent"), date('d/m/Y')), '  después de la suite, el Dashboard muestra las fechas viejas del seed');
-[$codigoDemo, $salidaDemo] = correrScript('herramientas/preparar-demo.php', '--router=127.0.0.3 --pc=127.0.0.2');
+[$codigoDemo, $salidaDemo] = correrHerramienta('herramientas/preparar-demo.php', '--datos-de-ejemplo --router=127.0.0.3 --pc=127.0.0.2', "SI\n");
 abrirPagina($navegador, 'index.html');
 esperarDashboard($navegador);
 comprobarIgual([0, true, true], [

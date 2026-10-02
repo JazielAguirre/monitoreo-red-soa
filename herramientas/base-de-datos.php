@@ -122,6 +122,22 @@ function contarFilas(string $base): ?array
 }
 
 /**
+ * "1 dispositivo, 40 monitoreos, 2 alertas" (o "no existe" si $conteos es null).
+ */
+function describirConteos(?array $conteos): string
+{
+    if ($conteos === null) {
+        return 'no existe';
+    }
+
+    $plural = fn(int $n, string $uno, string $varios): string => $n . ' ' . ($n === 1 ? $uno : $varios);
+
+    return $plural($conteos['dispositivos'], 'dispositivo', 'dispositivos') . ', '
+        . $plural($conteos['monitoreos'], 'monitoreo', 'monitoreos') . ', '
+        . $plural($conteos['alertas'], 'alerta', 'alertas');
+}
+
+/**
  * Respaldo completo de la base con mysqldump en respaldos/ (fuera de git y sin
  * acceso por HTTP). Devuelve la ruta del archivo. Termina con código 2 si falla:
  * sin respaldo no se borra nada.
@@ -136,7 +152,12 @@ function respaldarBase(string $base, string $motivo): string
         exit(2);
     }
 
-    $archivo = realpath(CARPETA_RESPALDOS) . DIRECTORY_SEPARATOR . "$base-" . date('Ymd-His') . "-$motivo.sql";
+    // Nunca sobrescribe un respaldo: dos en el mismo segundo llevan -2, -3…
+    $inicio = realpath(CARPETA_RESPALDOS) . DIRECTORY_SEPARATOR . "$base-" . date('Ymd-His') . "-$motivo";
+    $archivo = "$inicio.sql";
+    for ($n = 2; file_exists($archivo); $n++) {
+        $archivo = "$inicio-$n.sql";
+    }
     $comando = escapeshellarg(binarioDeXampp('mysqldump')) . ' ' . opcionesDeConexion()
         . ' --single-transaction ' . escapeshellarg($base) . ' > ' . escapeshellarg($archivo) . ' 2>&1';
     exec($comando, $salida, $codigo);

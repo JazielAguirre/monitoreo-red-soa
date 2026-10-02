@@ -52,15 +52,13 @@ if ($respaldoActual !== null) {
     echo "Respaldo de lo que hay ahora: $respaldoActual\n\n";
 }
 
-$descripcion = $actual === null ? 'no existe' : sprintf('%d dispositivos, %d monitoreos, %d alertas', $actual['dispositivos'], $actual['monitoreos'], $actual['alertas']);
-if (!pedirConfirmacion("La base $base ($descripcion) se reemplazará por " . basename($archivo) . '.')) {
+if (!pedirConfirmacion("La base $base (" . describirConteos($actual) . ') se reemplazará por ' . basename($archivo) . '.')) {
     echo "Cancelado: la base $base no cambió.\n";
     exit(1);
 }
 
 recrearBase($base, [$archivo]);
-$despues = contarFilas($base);
-printf("\n✓ Base %s restaurada: %d dispositivos, %d monitoreos, %d alertas.\n", $base, $despues['dispositivos'], $despues['monitoreos'], $despues['alertas']);
+echo "\n✓ Base $base restaurada: " . describirConteos(contarFilas($base)) . ".\n";
 exit(0);
 
 /**
