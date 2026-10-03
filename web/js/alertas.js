@@ -171,6 +171,17 @@ function mostrarLista() {
 }
 
 function crearVacioDeLaPestana() {
+    if (estado.dispositivos?.size === 0 && (estado.conteo?.atendidas ?? 0) === 0) {
+        // Sin dispositivos, "Toda la red responde" sería engañoso: todavía no hay red que vigilar.
+        return crearVacio({
+            icono: 'bi-bell',
+            titulo: 'Aún no hay alertas',
+            texto: 'Se generan cuando un dispositivo registrado deja de responder. Primero agrega tus dispositivos.',
+            accion: { texto: 'Ir a Dispositivos', href: 'dispositivos.html' },
+            compacto: true,
+        });
+    }
+
     if (estado.pestana === 'pendientes') {
         const hayAtendidas = (estado.conteo?.atendidas ?? 0) > 0;
         return crearVacio({

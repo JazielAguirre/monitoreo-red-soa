@@ -1821,6 +1821,85 @@ quitarRedSimulada();
 recargarBaseDeDatos();
 
 // =====================================================================
+seccion('10 · Base vacía (la de uso diario recién creada): las 4 pantallas');
+
+recrearBase(DB_NOMBRE_PRUEBAS, [ARCHIVO_SCHEMA, ARCHIVO_INICIAL]); // solo el usuario admin
+$navegador->tamano(1440, 900);
+$navegador->erroresJs = [];
+
+abrirPagina($navegador, 'index.html');
+esperarDashboard($navegador);
+$navegador->esperarHasta("document.querySelector('#panel-grafica .estado-vacio')", 8);
+$r = $navegador->evaluar(<<<'JS'
+    (() => {
+        const t = (s) => document.querySelector(s)?.textContent.trim() ?? null;
+        return {
+            indicadores: ['total', 'activos', 'inactivos', 'alertas'].map((id) => t(`#indicador-${id}`)),
+            total: t('#indicador-total-detalle'),
+            ultima: t('#ultima-comprobacion'),
+            monitorearTodos: document.getElementById('monitorear-todos').disabled,
+            estado: [t('#panel-estado .estado-vacio__titulo'), document.querySelector('#panel-estado .estado-vacio a')?.getAttribute('href')],
+            tiempos: [t('#panel-grafica .estado-vacio__titulo'), t('#panel-grafica .estado-vacio__texto')],
+            canvas: !!document.querySelector('#panel-grafica canvas'),
+            alertas: t('#panel-alertas .estado-vacio__titulo'),
+        };
+    })()
+JS);
+comprobarIgual([
+    'indicadores' => ['0', '0', '0', '0'],
+    'total' => 'Sin dispositivos',
+    'ultima' => 'Nunca',
+    'monitorearTodos' => true,
+    'estado' => ['Aún no hay dispositivos', 'dispositivos.html'],
+    'tiempos' => ['Aún no hay tiempos para graficar', 'Aparecen cuando agregues dispositivos y alguno responda al monitoreo.'],
+    'canvas' => false,
+    'alertas' => 'Sin alertas',
+], $r, 'Dashboard: indicadores en 0, «Monitorear todos» deshabilitado, «Aún no hay dispositivos» con enlace a Dispositivos y la gráfica sin datos');
+capturar($navegador, 'vacia-dashboard');
+
+abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarHasta("document.querySelector('#contenido-dispositivos .estado-vacio')", 8);
+$r = $navegador->evaluar("({ titulo: document.querySelector('#contenido-dispositivos .estado-vacio__titulo').textContent, botones: [...document.querySelectorAll('#contenido-dispositivos .estado-vacio__acciones .btn')].map((b) => b.textContent.trim()), pie: document.getElementById('pie-dispositivos').hidden, subtitulo: document.getElementById('subtitulo-dispositivos').textContent })");
+comprobarIgual(['titulo' => 'Aún no hay dispositivos', 'botones' => ['Buscar dispositivos en la red', 'Agregar a mano'], 'pie' => true, 'subtitulo' => '0 dispositivos registrados'], $r, 'Dispositivos: «Aún no hay dispositivos» con «Buscar dispositivos en la red» y «Agregar a mano»');
+clic($navegador, '#contenido-dispositivos .estado-vacio__acciones .btn-secondary');
+comprobar(esperarModal($navegador, 'modal-dispositivo', true), '  «Agregar a mano» abre el formulario');
+$navegador->tecla('Escape');
+esperarModal($navegador, 'modal-dispositivo', false);
+$navegador->interceptar('descubrimiento/red/lotes/', ['codigo' => 200, 'cuerpo' => '{"ok":true,"data":{"lote":1,"desde":"192.0.2.1","hasta":"192.0.2.64","encontrados":[]}}']);
+$navegador->interceptar('descubrimiento/red', ['codigo' => 200, 'cuerpo' => '{"ok":true,"data":{"red":"192.0.2.0/24","ip_propia":"192.0.2.1","puerta_enlace":null,"lotes":4,"total_direcciones":254}}']);
+clic($navegador, '#contenido-dispositivos .estado-vacio__acciones .btn-primary');
+comprobar(esperarFinBusqueda($navegador, 10), '  «Buscar dispositivos en la red» abre la búsqueda (respuestas interceptadas: no se escanea ninguna red)');
+$navegador->quitarIntercepciones();
+clic($navegador, '#busqueda-red .panel-busqueda__cerrar');
+capturar($navegador, 'vacia-dispositivos');
+
+abrirPagina($navegador, 'monitoreos.html');
+esperarMonitoreos($navegador);
+$navegador->esperarHasta("document.querySelector('#panel-grafica .estado-vacio')", 8);
+$r = $navegador->evaluar("({ grafica: [document.querySelector('#panel-grafica .estado-vacio__titulo')?.textContent, document.querySelector('#panel-grafica .estado-vacio a')?.getAttribute('href')], historial: [document.querySelector('#contenido-historial .estado-vacio__titulo')?.textContent, document.querySelector('#contenido-historial .estado-vacio a')?.getAttribute('href')], opciones: document.querySelectorAll('#filtro-dispositivo option').length })");
+comprobarIgual(['grafica' => ['Aún no hay dispositivos', 'dispositivos.html'], 'historial' => ['Aún no hay comprobaciones', 'dispositivos.html'], 'opciones' => 1], $r, 'Monitoreos: gráfica e historial vacíos, con «Ir a Dispositivos» (en lugar de pedir elegir un dispositivo)');
+capturar($navegador, 'vacia-monitoreos');
+
+abrirPagina($navegador, 'alertas.html');
+esperarAlertas($navegador);
+$r = $navegador->evaluar("({ titulo: document.querySelector('#lista-alertas .estado-vacio__titulo')?.textContent, enlace: document.querySelector('#lista-alertas .estado-vacio a')?.getAttribute('href'), contadores: [...document.querySelectorAll('.nav-underline .contador')].map((c) => c.textContent) })");
+comprobarIgual(['titulo' => 'Aún no hay alertas', 'enlace' => 'dispositivos.html', 'contadores' => ['0', '0']], $r, 'Alertas: «Aún no hay alertas» (no «Toda la red responde», que sería engañoso sin dispositivos)');
+
+$navegador->tamano(390, 844, true);
+foreach (['index.html' => '#panel-estado .estado-vacio', 'dispositivos.html' => '#contenido-dispositivos .estado-vacio', 'monitoreos.html' => '#contenido-historial .estado-vacio', 'alertas.html' => '#lista-alertas .estado-vacio'] as $pagina => $selector) {
+    abrirPagina($navegador, $pagina);
+    $listo = $navegador->esperarHasta("document.querySelector('$selector')", 8);
+    comprobar($listo && $navegador->evaluar('document.documentElement.scrollWidth <= innerWidth') === true, "390 px, $pagina: estado vacío visible y sin desplazamiento horizontal");
+}
+capturar($navegador, 'vacia-dispositivos-390');
+$navegador->tamano(1440, 900);
+comprobarIgual([], array_values(array_filter($navegador->erroresJs, fn($e) => !str_contains($e, 'status of 401'))), 'las 4 pantallas vacías, sin errores de JavaScript');
+
+abrirPagina($navegador, 'componentes.html');
+comprobarIgual(['Buscar dispositivos en la red', 'Agregar a mano'], $navegador->evaluar("[...document.querySelectorAll('#s13 ~ * .estado-vacio__acciones .btn, .estado-vacio__acciones .btn')].map((b) => b.textContent.trim())"), 'componentes.html, sección 13: el estado vacío con dos acciones');
+recargarBaseDeDatos();
+
+// =====================================================================
 seccion('8.1 · Títulos de pestaña, favicon y resoluciones de proyector');
 
 $titulos = ['login.html' => 'Iniciar sesión', 'index.html' => 'Dashboard', 'dispositivos.html' => 'Dispositivos', 'monitoreos.html' => 'Monitoreos', 'alertas.html' => 'Alertas', 'componentes.html' => 'Componentes'];

@@ -1664,6 +1664,15 @@ a.encabezado-movil__boton:hover {
     margin-top: 6px;
 }
 
+/* Dos acciones (por ejemplo «Buscar dispositivos en la red» y «Agregar a mano»). */
+.estado-vacio__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
 .estado-vacio--neutro {
     --vacio-icono-fondo: var(--color-icono-fondo);
     --vacio-icono-color: var(--color-base-2);

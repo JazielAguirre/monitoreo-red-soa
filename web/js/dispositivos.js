@@ -133,8 +133,9 @@ function render() {
         mostrarBloque(contenido, crearVacio({
             icono: 'bi-hdd-network',
             titulo: 'Aún no hay dispositivos',
-            texto: 'Registra el primer equipo de la red para empezar a monitorearlo.',
-            accion: { texto: 'Agregar dispositivo', icono: 'bi-plus-lg', clase: 'btn btn-primary btn-sm', alHacerClic: () => $('agregar-dispositivo').click() },
+            texto: 'Encuentra los equipos conectados a tu red y agrégalos con un clic, o registra uno a mano.',
+            accion: { texto: 'Buscar dispositivos en la red', icono: 'bi-radar', clase: 'btn btn-primary btn-sm', alHacerClic: () => $('buscar-red').click() },
+            accionSecundaria: { texto: 'Agregar a mano', icono: 'bi-plus-lg', alHacerClic: () => $('agregar-dispositivo').click() },
             compacto: true,
         }));
         return;
