@@ -26,7 +26,7 @@ require_once __DIR__ . '/base-de-datos.php';
 
 $argumentos = array_slice($argv, 1);
 if (array_diff($argumentos, ['--reemplazar']) !== []) {
-    fwrite(STDERR, "Uso: php herramientas/crear-base.php [--reemplazar]\n");
+    fwrite(STDERR, 'Uso: ' . comandoPhp() . " herramientas/crear-base.php [--reemplazar]\n");
     exit(2);
 }
 $reemplazar = in_array('--reemplazar', $argumentos, true);
@@ -48,7 +48,7 @@ $resumen = describirConteos($conteos);
 
 if (!$reemplazar) {
     echo "La base $base ya existe ($resumen): no se tocó.\n";
-    echo "Para vaciarla y empezar de cero: php herramientas/crear-base.php --reemplazar (respalda y pide confirmación).\n";
+    echo 'Para vaciarla y empezar de cero: ' . comandoPhp() . " herramientas/crear-base.php --reemplazar (respalda y pide confirmación).\n";
     exit(0);
 }
 
@@ -62,5 +62,5 @@ if (!pedirConfirmacion("Se borrará todo lo que tiene la base $base ($resumen) y
 
 recrearBase($base, [ARCHIVO_SCHEMA, ARCHIVO_INICIAL]);
 echo "\n✓ La base $base quedó vacía: sin dispositivos, monitoreos ni alertas. Usuario admin / admin123.\n";
-echo "Para volver atrás: php herramientas/restaurar-respaldo.php " . basename($respaldo) . "\n";
+echo 'Para volver atrás: ' . comandoPhp() . ' herramientas/restaurar-respaldo.php ' . basename($respaldo) . "\n";
 exit(0);

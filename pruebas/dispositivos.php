@@ -504,6 +504,32 @@ comprobar($conCaducado === $enTuBase, "con el archivo caducado, el navegador del
 $marcada = conArchivoDeBase(json_encode(['expira' => time() - 1]), fn() => peticion('POST', '/dispositivos', ['nombre' => 'No debe llegar', 'ip' => '192.0.2.79', 'tipo' => 'servidor', 'ubicacion' => 'Pruebas']));
 comprobarRespuesta($marcada, 500, 'pero una petición de las pruebas (X-Pruebas-Automaticas) con el archivo caducado se rechaza', 'Error interno del servidor');
 comprobarIgual(0, (int) (filasBdUsuario("SELECT COUNT(*) AS n FROM dispositivos WHERE ip = '192.0.2.79'")[0]['n'] ?? -1), '  y no llegó a tu base');
+
+// La marca X-Pruebas-Automaticas enviada desde fuera por HTTP: solo puede provocar un error.
+// Nunca elige la base de pruebas ni otra base, ni activa o renueva el interruptor.
+$conMarca = peticion('GET', '/dispositivos', null, ['pruebas' => '1'])['json']['data'] ?? null;
+$sinMarca = peticion('GET', '/dispositivos', null, ['pruebas' => false])['json']['data'] ?? null;
+comprobar(is_array($conMarca) && $conMarca === $sinMarca, 'con la base de pruebas activa, la marca no cambia nada: con y sin ella se lee la misma base (la marca no elige base)');
+
+$caducado = json_encode(['expira' => time() - 1]);
+foreach (['1', '0', 'no', DB_NOMBRE_PRUEBAS, DB_NOMBRE] as $valor) {
+    [$conSesion, $sinSesion, $login, $archivo, $activa] = conArchivoDeBase($caducado, fn() => [
+        peticion('GET', '/dispositivos', null, ['pruebas' => $valor]),
+        peticion('GET', '/dispositivos', null, ['pruebas' => $valor, 'sesion' => false]),
+        peticion('POST', '/auth/login', ['usuario' => 'admin', 'contrasena' => 'admin123'], ['pruebas' => $valor, 'sesion' => false]),
+        file_get_contents(ARCHIVO_BASE_DE_PRUEBAS),
+        baseDePruebasActiva(),
+    ]);
+    comprobar(
+        $conSesion['codigo'] === 500 && ($conSesion['json']['error'] ?? null) === 'Error interno del servidor' && !isset($conSesion['json']['data'])
+            && $sinSesion['codigo'] === 401 && $login['codigo'] === 500 && $login['cookie'] === null,
+        "marca «{$valor}» desde fuera, sin base de pruebas activa: solo errores (con sesión 500, sin sesión 401, el login 500 y sin cookie), ningún dato de ninguna base",
+        "con sesión {$conSesion['codigo']}, sin sesión {$sinSesion['codigo']}, login {$login['codigo']}"
+    );
+    comprobar($archivo === $caducado && $activa === false, '  y no activó ni renovó la base de pruebas: el archivo sigue igual y caducado');
+}
+$sinArchivo = conArchivoDeBase(null, fn() => [peticion('GET', '/dispositivos', null, ['pruebas' => '1'])['codigo'], is_file(ARCHIVO_BASE_DE_PRUEBAS)]);
+comprobarIgual([500, false], $sinArchivo, 'sin el archivo, la marca también da error (500) y no crea el archivo');
 [$codigo, $salida] = conArchivoDeBase(json_encode(['expira' => time() - 1]), fn() => correrPhp('require "servicios/comun/db.php"; try { obtenerConexion(); echo "conectó"; } catch (RuntimeException $e) { echo $e->getMessage(); }'));
 comprobar(str_contains($salida, 'no se usa la base del usuario') && !str_contains($salida, 'conectó'), 'una herramienta lanzada por las pruebas con el archivo caducado tampoco se conecta', $salida);
 
@@ -559,7 +585,7 @@ borrarRespaldosDePrueba();
 comprobar($codigo === 0 && str_contains($salida, '✓ La base ' . DB_NOMBRE_PRUEBAS . ' quedó vacía'), '--reemplazar respondiendo SI → la vacía (código 0)', $salida);
 comprobarIgual(['dispositivos' => 0, 'monitoreos' => 0, 'alertas' => 0, 'usuarios' => 1], contarFilas(DB_NOMBRE_PRUEBAS), '  solo queda el usuario admin');
 $respaldo = respaldosDePrueba()[0] ?? '';
-comprobar($respaldo !== '' && str_contains($salida, 'Para volver atrás: php herramientas/restaurar-respaldo.php ' . basename($respaldo)), '  y dice cómo volver atrás, con el nombre del respaldo', $salida);
+comprobar($respaldo !== '' && str_contains($salida, 'Para volver atrás: ' . comandoPhp() . ' herramientas/restaurar-respaldo.php ' . basename($respaldo)), '  y dice cómo volver atrás, con el nombre del respaldo', $salida);
 
 [$codigo, $salida] = correrHerramienta('herramientas/restaurar-respaldo.php');
 comprobar($codigo === 0 && str_contains($salida, basename($respaldo)), 'restaurar-respaldo.php sin argumentos lista los respaldos', $salida);

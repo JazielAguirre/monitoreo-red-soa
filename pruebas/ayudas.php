@@ -366,13 +366,15 @@ function peticionInterna(string $metodo, string $ruta, array|string|null $cuerpo
  * - 'sesion': true (por defecto) envía la cookie de iniciarSesionDePrueba(), false
  *   ninguna, o un texto con el valor completo de la cabecera Cookie.
  * - 'clave': true envía la CLAVE_SERVICIO de config.php, o un texto con otra clave.
- * - 'pruebas': false omite la marca X-Pruebas-Automaticas (como el navegador del usuario).
+ * - 'pruebas': false omite la marca X-Pruebas-Automaticas (como el navegador del usuario),
+ *   o un texto la envía con ese valor (como alguien que la manda desde fuera).
  */
 function cabecerasDePrueba(array $opciones): array
 {
     $cabeceras = ['Content-Type: application/json', 'Accept: application/json'];
-    if ($opciones['pruebas'] ?? true) {
-        $cabeceras[] = 'X-Pruebas-Automaticas: 1'; // ver comun/db.php
+    $marca = $opciones['pruebas'] ?? true;
+    if ($marca !== false) {
+        $cabeceras[] = 'X-Pruebas-Automaticas: ' . ($marca === true ? '1' : $marca); // ver comun/db.php
     }
     $sesion = $opciones['sesion'] ?? true;
     $clave = $opciones['clave'] ?? false;

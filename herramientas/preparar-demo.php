@@ -49,7 +49,6 @@ const COLUMNAS_DE_FECHA = [
     'usuarios' => ['fecha_registro'],
 ];
 const DATOS_DEL_SEED = ['dispositivos' => 6, 'monitoreos' => 56, 'alertas' => 4, 'usuarios' => 1];
-const COMANDO_RONDAS = 'php herramientas/monitorear-rondas.php --rondas=12 --cada=60';
 
 // Qué hacer si algo falla (los mismos casos que la tabla "Si pasa X, haz Y" de docs/DEMO.md).
 const QUE_HACER = [
@@ -60,15 +59,14 @@ const QUE_HACER = [
     'mysql' => PHP_OS_FAMILY === 'Windows'
         ? 'Enciende MySQL en el panel de XAMPP. Si no arranca, revisa el registro de MySQL en el panel.'
         : 'Enciende MySQL: sudo /opt/lampp/lampp startmysql. Si no arranca, agrega tmpdir = /tmp debajo de [mysqld] en /opt/lampp/etc/my.cnf (README).',
-    'base' => 'Crea tu base vacía: php herramientas/crear-base.php',
     'router' => 'El router no responde al ping: comprueba que la computadora esté conectada a la red de la demo (el hotspot) o indica la IP con --router=IP.',
     'red' => 'No se detectó la red: conecta la computadora al hotspot de la demo o indica las IPs con --router=IP --pc=IP.',
 ];
 
 $opciones = leerOpciones($argv);
 if ($opciones === null) {
-    fwrite(STDERR, "Uso: php herramientas/preparar-demo.php [--router=IP] [--pc=IP]\n"
-        . "     php herramientas/preparar-demo.php --datos-de-ejemplo [--router=IP] [--pc=IP] [--sin-red]\n");
+    fwrite(STDERR, 'Uso: ' . comandoPhp() . " herramientas/preparar-demo.php [--router=IP] [--pc=IP]\n"
+        . '     ' . comandoPhp() . " herramientas/preparar-demo.php --datos-de-ejemplo [--router=IP] [--pc=IP] [--sin-red]\n");
     exit(2);
 }
 
@@ -165,7 +163,7 @@ function comprobarTuBase(string $base, array $ips): bool
 
     $conteos = contarFilas($base);
     if ($conteos === null) {
-        $previa->linea(false, "La base $base no existe", QUE_HACER['base']);
+        $previa->linea(false, "La base $base no existe", 'Crea tu base vacía: ' . comandoPhp() . ' herramientas/crear-base.php');
         return $previa->terminar();
     }
 
@@ -182,7 +180,7 @@ function comprobarTuBase(string $base, array $ips): bool
     if ($minutos === null || $minutos > MINUTOS_HISTORIAL_RECIENTE) {
         $previa->aviso(
             $minutos === null ? 'Todavía no hay historial de monitoreos' : 'El último monitoreo fue hace ' . $minutos . ' min (' . formatoFecha((string) $ultimo) . ')',
-            'Para que el historial y las gráficas tengan datos, con los teléfonos con la pantalla encendida: ' . COMANDO_RONDAS
+            'Para que el historial y las gráficas tengan datos, con los teléfonos con la pantalla encendida: ' . comandoPhp() . ' herramientas/monitorear-rondas.php --rondas=12 --cada=60'
         );
     } else {
         $previa->linea(true, "Hay historial reciente: el último monitoreo fue hace $minutos min");
@@ -465,7 +463,7 @@ function mostrarUrls(?string $ipPc): void
         ? "  En el celular ......... sin red no hay URL para el celular (conecta la computadora al hotspot y vuelve a correr este script)\n"
         : '  En el celular ......... http://' . $ipPc . parse_url(URL_INTERFAZ, PHP_URL_PATH) . "/\n";
     echo "  Usuario ............... admin / admin123\n";
-    echo "  Llamadas entre servicios en vivo: php herramientas/ver-llamadas.php\n";
+    echo '  Llamadas entre servicios en vivo: ' . comandoPhp() . " herramientas/ver-llamadas.php\n";
     echo '  (registro: ' . archivoRegistroLlamadas() . ")\n\n";
 }
 

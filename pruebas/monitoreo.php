@@ -544,7 +544,7 @@ comprobarSalida($salida, ['Dispositivos (0)', '(ninguno todavía)', '⚠ Tu base
 // Sin base.
 ejecutarSentencias(null, 'DROP DATABASE ' . identificador(DB_NOMBRE_PRUEBAS) . ';');
 [$codigo, $salida] = prepararDemo('--router=127.0.0.3 --pc=127.0.0.1');
-comprobar($codigo === 1 && str_contains($salida, '✗ La base ' . DB_NOMBRE_PRUEBAS . ' no existe') && str_contains($salida, 'Qué hacer: Crea tu base vacía: php herramientas/crear-base.php'), 'si la base no existe → ✗ con «Qué hacer: crear-base.php» y código 1', $salida);
+comprobar($codigo === 1 && str_contains($salida, '✗ La base ' . DB_NOMBRE_PRUEBAS . ' no existe') && str_contains($salida, 'Qué hacer: Crea tu base vacía: ' . comandoPhp() . ' herramientas/crear-base.php'), 'si la base no existe → ✗ con «Qué hacer: crear-base.php» y código 1', $salida);
 comprobar(!existeBase(DB_NOMBRE_PRUEBAS), '  y no la crea por su cuenta');
 recargarBaseDeDatos();
 

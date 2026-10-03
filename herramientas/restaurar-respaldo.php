@@ -25,7 +25,7 @@ require_once __DIR__ . '/base-de-datos.php';
 
 $argumentos = array_slice($argv, 1);
 if (count($argumentos) > 1) {
-    fwrite(STDERR, "Uso: php herramientas/restaurar-respaldo.php [ARCHIVO]\n");
+    fwrite(STDERR, 'Uso: ' . comandoPhp() . " herramientas/restaurar-respaldo.php [ARCHIVO]\n");
     exit(2);
 }
 
@@ -78,7 +78,7 @@ function listarRespaldos(): void
     foreach ($archivos as $archivo) {
         printf("  %s  (%d KB)\n", basename($archivo), (int) ceil(filesize($archivo) / 1024));
     }
-    echo "\nPara restaurar uno: php herramientas/restaurar-respaldo.php ARCHIVO\n";
+    echo "\nPara restaurar uno: " . comandoPhp() . " herramientas/restaurar-respaldo.php ARCHIVO\n";
 }
 
 /**

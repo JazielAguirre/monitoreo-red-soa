@@ -176,7 +176,7 @@ C:/xampp/php/php.exe herramientas/crear-base.php
   Puedes correrlo cuantas veces quieras.
 - `--reemplazar` la vacía para empezar de cero: primero guarda un **respaldo** en
   `respaldos/` y pide escribir `SI`. Para volver atrás:
-  `php herramientas/restaurar-respaldo.php` (sin argumentos, lista los respaldos;
+  `/opt/lampp/bin/php herramientas/restaurar-respaldo.php` (sin argumentos, lista los respaldos;
   con el nombre de uno, lo restaura, también respaldando antes y pidiendo `SI`).
 
 Archivos de `database/`:
@@ -291,8 +291,8 @@ ejemplo de la versión 1.0 (6 dispositivos, historial y alertas, con las fechas 
 hace 10 minutos y las IPs del router y de «PC Recepción» de la red donde estás;
 `--sin-red` es el plan B sin WiFi). **Reemplaza tus datos**, así que antes guarda un
 respaldo en `respaldos/` y pide escribir `SI`. Para volver a tus datos:
-`php herramientas/restaurar-respaldo.php` (lista los respaldos) y
-`php herramientas/restaurar-respaldo.php ARCHIVO`.
+`/opt/lampp/bin/php herramientas/restaurar-respaldo.php` (lista los respaldos) y
+`/opt/lampp/bin/php herramientas/restaurar-respaldo.php ARCHIVO`.
 
 Durante la parte de SOA de la demo, en otra terminal:
 

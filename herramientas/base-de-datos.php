@@ -171,6 +171,15 @@ function respaldarBase(string $base, string $motivo): string
 }
 
 /**
+ * El PHP de XAMPP, como en el README, para escribir comandos que se puedan copiar tal
+ * cual (no "php" a secas: el de XAMPP es el mismo que usa Apache).
+ */
+function comandoPhp(): string
+{
+    return PHP_OS_FAMILY === 'Windows' ? 'C:/xampp/php/php.exe' : '/opt/lampp/bin/php';
+}
+
+/**
  * Pregunta en la terminal y devuelve true solo si se escribe exactamente SI.
  */
 function pedirConfirmacion(string $pregunta): bool

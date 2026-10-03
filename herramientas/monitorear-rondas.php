@@ -44,7 +44,7 @@ const TIEMPO_ESPERA_PETICION = 15; // un monitoreo tarda ~1 s; con margen para l
 
 $opciones = leerOpciones($argv);
 if ($opciones === null) {
-    fwrite(STDERR, "Uso: php herramientas/monitorear-rondas.php --rondas=N --cada=SEGUNDOS\n"
+    fwrite(STDERR, 'Uso: ' . (PHP_OS_FAMILY === 'Windows' ? 'C:/xampp/php/php.exe' : '/opt/lampp/bin/php') . " herramientas/monitorear-rondas.php --rondas=N --cada=SEGUNDOS\n"
         . '  --rondas: de 1 a ' . RONDAS_MAXIMAS . ' (12 si no se indica)' . "\n"
         . '  --cada:   segundos entre el inicio de una ronda y el de la siguiente, de ' . CADA_MINIMO . ' a ' . CADA_MAXIMO . " (60 si no se indica)\n"
         . "  Ejemplo: --rondas=12 --cada=60 deja 12 minutos de historial.\n");
