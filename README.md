@@ -358,6 +358,14 @@ Límites conocidos:
 - La tabla ARP guarda los equipos unos minutos: uno que se desconectó hace poco puede
   seguir apareciendo como «Solo en ARP».
 - En Windows y macOS, la lectura de la tabla ARP solo se probó con salidas de ejemplo.
+- **Los teléfonos suelen aparecer sin nombre («—»).** En la prueba real (red de casa,
+  con ufw activo) tres teléfonos con MAC aleatoria no contestaron por ningún método. Dos
+  de ellos se unen al grupo multicast de mDNS (ufw registró sus avisos IGMP hacia
+  224.0.0.251), pero usan mDNS para buscar servicios, como una televisión a la cual
+  transmitir, no para anunciar su nombre: no contestan la consulta inversa. No es culpa
+  del firewall: ufw no bloqueó ninguna respuesta UDP de los puertos 137, 5353 ni 1900; sus
+  únicos bloqueos fueron IGMP (protocolo 2), que el escáner no usa. Al pulsar «Agregar»
+  el nombre queda vacío para escribirlo.
 
 Probarlo desde la terminal (solo en una red propia: el lote 1 hace ping a 64 direcciones):
 

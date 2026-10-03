@@ -306,7 +306,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] Las 6 suites pasan: dispositivos 260, alertas 155, monitoreo 282, auth 127, descubrimiento 113, interfaz 363 (1300), y cada una comprueba que la base del usuario quedó idéntica. Roturas a propósito detectadas en cada subpaso (solo las que no podían tocar la base del usuario).
   - [ ] Pendiente del equipo: ensayar en vivo el guion nuevo con los equipos reales en el hotspot.
 
-## Mejora · Nombres en el escáner (rama `nombres-escaner`)
+## Mejora · Nombres en el escáner ✅ (fusionada a `main`, etiqueta `v1.3`)
 
 **Objetivo:** que «Equipos en la red» muestre el nombre de cada equipo aunque el router no conozca nombres por DNS: solo nombres que el propio equipo anuncia, nunca fabricantes.
 
@@ -322,7 +322,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] De punta a punta, a través de Apache, con un respondedor falso en `127.0.0.x`; en la interfaz, los nombres maliciosos se ven como texto.
 - [x] Un método que no contesta no retrasa a los demás ni el lote.
 - [x] Las 6 suites pasan: dispositivos 260, alertas 155, monitoreo 282, auth 127, descubrimiento 202, interfaz 372 (1398). Doce roturas a propósito detectadas (origen de las respuestas, URL de UPnP a otra IP o fuera de la red, DOCTYPE, tope de 64 KB, preferencia, espera innecesaria, nombres de grupo y bytes de control en NetBIOS, puerto 137 en la red simulada, `_gateway` e `innerHTML` en la interfaz).
-- [ ] Prueba real en la red de casa, con ufw activo, a través de Apache (3 de oct de 2026, 192.168.0.0/24, 7 equipos, red completa en 5.5 s): módem por UPnP («Technicolor CGA2121»), dos equipos por NetBIOS («BRCM-LVG», «DESKTOP-TGM75TV») y la laptop por mDNS; tres teléfonos con MAC aleatoria sin nombre por ningún método. Falta revisar el registro de ufw.
+- [x] Prueba real en la red de casa, con ufw activo, a través de Apache (3 de oct de 2026, 192.168.0.0/24, 7 equipos, red completa en 5.5 s): módem por UPnP («Technicolor CGA2121»), dos equipos por NetBIOS («BRCM-LVG», «DESKTOP-TGM75TV») y la laptop por mDNS; tres teléfonos con MAC aleatoria sin nombre por ningún método. El registro de ufw (`on (low)`) solo tenía bloqueos IGMP (protocolo 2: los avisos de los teléfonos para unirse al grupo de mDNS, 224.0.0.251, y las consultas del módem a 224.0.0.1), ninguno UDP desde los puertos 137, 5353 o 1900: ufw no bloqueó respuestas de nombres. Los teléfonos usan mDNS para buscar servicios, no para anunciar su nombre. Fusionada a `main`, etiqueta `v1.3`.
 
 ## Extras (solo si sobra tiempo)
 
