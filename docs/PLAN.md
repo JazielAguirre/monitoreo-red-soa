@@ -66,7 +66,8 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 - **Qué es:** si existe y está vigente, el Servicio de Descubrimiento usa como IP propia la que indica el archivo en lugar de detectarla, y lee la tabla ARP del texto que trae el archivo (en el formato del sistema operativo: `ip neigh`, `arp -a` o `arp -an`) en lugar de ejecutar el comando. Los pings son reales.
 - **Solo escanea dos redes:** IP propia `127.0.0.1` (la /24 `127.0.0.0/24`, donde todas las direcciones responden) o `192.0.2.1` (la /24 de documentación `192.0.2.0/24`, donde ninguna responde). Para probar los 503 sin desconectar nada admite además `null` (sin red) y `198.51.100.1` (documentación, no privada: se rechaza como cualquier red pública). Cualquier otro valor se ignora, así que el archivo no sirve para escanear otras redes.
-- **Solo lo usa `pruebas/descubrimiento.php`**, que lo crea y lo borra (al empezar, al terminar y ante un error fatal). Está en `.gitignore`.
+- **Nombres:** con la red simulada solo se pregunta por DNS. Si el archivo trae `puertos_nombres` (`{"netbios", "mdns", "ssdp"}`: puertos de 1024 a 65535, solo con IP propia `127.0.0.1`), también se pregunta por NetBIOS, mDNS y UPnP a esos puertos de `127.0.0.x`, donde contesta el respondedor falso de las pruebas (`pruebas/respondedor-nombres.php`, lanzado con `proc_open` en forma de arreglo y que termina solo en 60 s como máximo). Así nunca se envían consultas de nombres a la red local.
+- **Solo lo usan `pruebas/descubrimiento.php` y `pruebas/interfaz.php`**, que lo crean y lo borran (al empezar, al terminar y ante un error fatal). Está en `.gitignore`.
 - **Caduca solo** (campo `expira`, máximo 60 segundos en el futuro) y **no puede activarse por HTTP**, igual que el fallo simulado.
 
 ---
@@ -304,6 +305,24 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] `docs/DEMO.md` usa solo los equipos del equipo (tabla de equipos y papeles) y su ensayo automático pasa.
 - [x] Las 6 suites pasan: dispositivos 260, alertas 155, monitoreo 282, auth 127, descubrimiento 113, interfaz 363 (1300), y cada una comprueba que la base del usuario quedó idéntica. Roturas a propósito detectadas en cada subpaso (solo las que no podían tocar la base del usuario).
   - [ ] Pendiente del equipo: ensayar en vivo el guion nuevo con los equipos reales en el hotspot.
+
+## Mejora · Nombres en el escáner (rama `nombres-escaner`)
+
+**Objetivo:** que «Equipos en la red» muestre el nombre de cada equipo aunque el router no conozca nombres por DNS: solo nombres que el propio equipo anuncia, nunca fabricantes.
+
+**Tareas:**
+
+- Además del DNS inverso, preguntar por NetBIOS (estado del nodo, UDP 137), mDNS (PTR inverso, UDP 5353) y UPnP (M-SEARCH a UDP 1900 y `friendlyName` de la descripción), siempre unicast a la IP del equipo, todo en paralelo con el mismo límite de 0.8 s (`servicios/descubrimiento/nombres.php`).
+- Orden de preferencia UPnP → mDNS → NetBIOS → DNS (el nombre que mejor se entiende) y campo `nombre_origen` en la API.
+- Interfaz: el nombre con su origen pequeño al lado; sin nombre, «—» con ayuda; «Agregar» propone el nombre.
+
+**Listo cuando:**
+
+- [x] Cada método se prueba con paquetes fijos, incluidos un nombre malicioso por método, respuestas desde otra IP, URLs de UPnP a otra IP o fuera de la red, XML con XXE y descripciones gigantes o que nunca terminan.
+- [x] De punta a punta, a través de Apache, con un respondedor falso en `127.0.0.x`; en la interfaz, los nombres maliciosos se ven como texto.
+- [x] Un método que no contesta no retrasa a los demás ni el lote.
+- [x] Las 6 suites pasan: dispositivos 260, alertas 155, monitoreo 282, auth 127, descubrimiento 202, interfaz 372 (1398). Doce roturas a propósito detectadas (origen de las respuestas, URL de UPnP a otra IP o fuera de la red, DOCTYPE, tope de 64 KB, preferencia, espera innecesaria, nombres de grupo y bytes de control en NetBIOS, puerto 137 en la red simulada, `_gateway` e `innerHTML` en la interfaz).
+- [ ] Prueba real en la red de casa, con ufw activo, a través de Apache (3 de oct de 2026, 192.168.0.0/24, 7 equipos, red completa en 5.5 s): módem por UPnP («Technicolor CGA2121»), dos equipos por NetBIOS («BRCM-LVG», «DESKTOP-TGM75TV») y la laptop por mDNS; tres teléfonos con MAC aleatoria sin nombre por ningún método. Falta revisar el registro de ufw.
 
 ## Extras (solo si sobra tiempo)
 
