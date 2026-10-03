@@ -13,7 +13,7 @@ require_once __DIR__ . '/../comun/respuesta.php';
 require_once __DIR__ . '/red.php';
 require_once __DIR__ . '/escaneo.php';
 require_once __DIR__ . '/arp.php';
-require_once __DIR__ . '/dns.php';
+require_once __DIR__ . '/nombres.php';
 require_once __DIR__ . '/clientes.php';
 require_once __DIR__ . '/simulacion.php';
 
@@ -31,7 +31,7 @@ function consultarRed(): never
 
 /**
  * POST /descubrimiento/red/lotes/{n} [Interfaz]: ping en paralelo a las
- * direcciones del lote, tabla ARP, nombres y registrados.
+ * direcciones del lote, tabla ARP, nombres (UPnP, mDNS, NetBIOS y DNS) y registrados.
  */
 function escanearLote(int $numero): never
 {
@@ -48,14 +48,19 @@ function escanearLote(int $numero): never
         $direcciones,
         fn(string $ip): bool => $pings[$ip]['responde'] || isset($arp[$ip])
     ));
-    $nombres = buscarNombres($encontradas, servidoresDns($red['puerta_enlace']));
+    $nombres = buscarNombresDeEquipos(
+        $encontradas,
+        servidoresDns($red['puerta_enlace']),
+        prefijoDeRed($red['ip_propia']),
+        puertosDeNombres()
+    );
 
     responder([
         'lote' => $numero,
         'desde' => $direcciones[0],
         'hasta' => $direcciones[count($direcciones) - 1],
         'encontrados' => array_map(
-            fn(string $ip): array => armarEquipo($ip, $red, $pings[$ip], $arp[$ip] ?? null, $nombres[$ip] ?? null, $registrados[$ip] ?? null),
+            fn(string $ip): array => armarEquipo($ip, $red, $pings[$ip], $arp[$ip] ?? null, elegirNombre($nombres[$ip] ?? []), $registrados[$ip] ?? null),
             $encontradas
         ),
     ]);
@@ -83,14 +88,26 @@ function obtenerRedOResponder503(): array
 }
 
 /**
- * El objeto equipo de la API.
+ * Puertos de los métodos de nombres: los de siempre o, con la red simulada de
+ * las pruebas, solo los de sus respondedores falsos (sin ellos, solo DNS).
  */
-function armarEquipo(string $ip, array $red, array $ping, ?string $mac, ?string $nombre, ?array $dispositivo): array
+function puertosDeNombres(): array
+{
+    $simulada = leerRedSimulada();
+
+    return $simulada === null ? PUERTOS_NOMBRES : ($simulada['puertos_nombres'] ?? []);
+}
+
+/**
+ * El objeto equipo de la API. $nombre: el de elegirNombre().
+ */
+function armarEquipo(string $ip, array $red, array $ping, ?string $mac, array $nombre, ?array $dispositivo): array
 {
     return [
         'ip' => $ip,
         'mac' => $mac,
-        'nombre' => $nombre,
+        'nombre' => $nombre['nombre'],
+        'nombre_origen' => $nombre['origen'],
         'responde_ping' => $ping['responde'],
         'tiempo_respuesta_ms' => $ping['tiempo_respuesta_ms'],
         'en_arp' => $mac !== null,

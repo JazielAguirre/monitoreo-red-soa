@@ -427,10 +427,23 @@ En cada lote:
 
 1. Ping a todas sus direcciones **en paralelo** (máximo 64 a la vez), con el mismo comando y la misma lectura de la salida que el Servicio de Monitoreo (`comun/ping.php`): 1 intento y 1 segundo de espera.
 2. Lectura de la tabla ARP del sistema (Linux: `ip -4 neigh show`, o `/proc/net/arp` si no existe `ip`; Windows: `arp -a`; macOS: `arp -an`), sin depender del idioma. Así aparecen también los equipos que bloquean el ping (por ejemplo, computadoras con Windows) y se obtiene su dirección MAC. Se descartan las entradas incompletas o fallidas, broadcast y multicast.
-3. Nombre de cada equipo encontrado por DNS inverso, con un límite total de 0.8 segundos.
+3. Nombre de cada equipo encontrado, preguntado a la vez por cuatro métodos, con un límite total de 0.8 segundos (un método que no contesta no retrasa a los demás):
+   - **UPnP:** M-SEARCH de SSDP a `IP:1900` y, si contesta, su descripción en XML por HTTP (`friendlyName`). Televisiones, impresoras, consolas y módems.
+   - **mDNS:** consulta PTR inversa a `IP:5353`. iPhone, Mac, Linux e impresoras.
+   - **NetBIOS:** consulta de estado del nodo a `IP:137` (el nombre único con sufijo `<00>`). Computadoras con Windows.
+   - **DNS inverso:** consulta PTR al DNS del sistema y a la puerta de enlace.
+
+   Todas son unicast (directas a la IP de cada equipo o al servidor DNS, nunca a toda la red): las respuestas llegan desde la misma IP y puerto a los que se preguntó, así que el firewall de la computadora las deja pasar. Las de UPnP, mDNS y NetBIOS solo cuentan si llegan desde la IP consultada.
 4. `GET /dispositivos` para marcar los que ya están registrados.
 
-Un lote tarda alrededor de 1 a 2 segundos; la red completa, unos 5.
+Un lote con equipos tarda alrededor de 2 segundos (1 del ping y 0.8 de los nombres); la red completa, unos 7.
+
+**Qué nombre se muestra.** Si un equipo da nombres por varios métodos, gana el primero de este orden: **UPnP → mDNS → NetBIOS → DNS**. Es el orden del nombre que mejor se entiende: UPnP trae el nombre para mostrar de impresoras, televisiones y módems ("HP LaserJet M110w"), cuyo nombre mDNS suele ser un código ("HP1A2B3C.local"); iPhone, Mac y la mayoría de las computadoras con Windows no contestan por UPnP, así que para ellos gana mDNS o NetBIOS, el nombre que el dueño le puso al equipo; el DNS lo da el router y puede ser genérico.
+
+**Seguridad de los nombres.** Los controla cualquiera que esté en la red:
+
+- DNS y mDNS: solo letras, números, `-`, `_` y `.` (un nombre que empieza con `_`, como el `_gateway` que inventa systemd-resolved, se descarta). NetBIOS: ASCII imprimible. UPnP: texto UTF-8 sin caracteres de control ni de formato, máximo 100 caracteres. La interfaz los muestra siempre como texto, nunca como HTML.
+- UPnP: la descripción solo se descarga si la URL de `LOCATION` es `http://` con una IPv4 escrita, igual a la IP que contestó y dentro de la /24 escaneada (sin nombres de dominio ni `usuario@host`); sin seguir redirecciones, dentro del mismo límite de 0.8 s y con 64 KB como máximo. Un XML con `DOCTYPE` o `ENTITY` se rechaza sin procesarlo (sin entidades externas).
 
 ### Objeto `equipo`
 
@@ -438,7 +451,8 @@ Un lote tarda alrededor de 1 a 2 segundos; la red completa, unos 5.
 {
   "ip": "192.168.137.220",
   "mac": "86:f1:ba:40:ec:9f",
-  "nombre": "telefono-ana.lan",
+  "nombre": "iPhone-de-Ana.local",
+  "nombre_origen": "mdns",
   "responde_ping": false,
   "tiempo_respuesta_ms": null,
   "en_arp": true,
@@ -452,7 +466,8 @@ Un lote tarda alrededor de 1 a 2 segundos; la red completa, unos 5.
 |---|---|
 | `ip` | IPv4 del equipo, dentro de la /24 escaneada |
 | `mac` | Dirección MAC de la tabla ARP, en minúsculas y con `:` (`aa:bb:cc:dd:ee:ff`). `null` si no aparece en la tabla ARP (por ejemplo, la propia computadora) |
-| `nombre` | Nombre por DNS inverso, sin el punto final. `null` si no hay o no llegó a tiempo |
+| `nombre` | Nombre que anunció el equipo (o el DNS), elegido con el orden de preferencia; los de DNS y mDNS, sin el punto final. `null` si ningún método dio uno a tiempo |
+| `nombre_origen` | De dónde salió `nombre`: `"upnp"`, `"mdns"`, `"netbios"` o `"dns"`. `null` si `nombre` es `null` |
 | `responde_ping` | `true` si respondió al ping |
 | `tiempo_respuesta_ms` | Como en Monitoreo: milisegundos con hasta 2 decimales (`0` si fue menor a 1 ms). `null` si no respondió al ping |
 | `en_arp` | `true` si aparece en la tabla ARP con su MAC |

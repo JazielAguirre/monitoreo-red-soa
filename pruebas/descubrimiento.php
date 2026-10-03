@@ -6,8 +6,11 @@
  *   /opt/lampp/bin/php pruebas/descubrimiento.php
  *
  * No depende de la red de quien la corre ni envía nada a la red local:
- * - Las funciones de lectura (tabla ARP de cada sistema, DNS) se prueban con
- *   salidas de ejemplo fijas.
+ * - Las funciones de lectura (tabla ARP de cada sistema, DNS, NetBIOS, mDNS y
+ *   UPnP) se prueban con salidas y paquetes de ejemplo fijos.
+ * - Los nombres por NetBIOS, mDNS y UPnP, de punta a punta, los contesta un
+ *   respondedor falso (pruebas/respondedor-nombres.php) en 127.0.0.x, con los
+ *   puertos que indica la red simulada ("puertos_nombres").
  * - A través de Apache se usa la red simulada (pruebas/.red-simulada.json, ver
  *   servicios/descubrimiento/simulacion.php): 192.0.2.0/24, donde nada responde,
  *   con una tabla ARP de ejemplo, y 127.0.0.0/24, donde todo responde. Los pings
@@ -19,11 +22,11 @@ declare(strict_types=1);
 require_once __DIR__ . '/ayudas.php';
 require_once __DIR__ . '/../servicios/descubrimiento/red.php';
 require_once __DIR__ . '/../servicios/descubrimiento/escaneo.php';
-require_once __DIR__ . '/../servicios/descubrimiento/dns.php';
+require_once __DIR__ . '/../servicios/descubrimiento/nombres.php';
 
 const CLAVES_RED = ['red', 'ip_propia', 'puerta_enlace', 'lotes', 'total_direcciones'];
 const CLAVES_LOTE = ['lote', 'desde', 'hasta', 'encontrados'];
-const CLAVES_EQUIPO = ['ip', 'mac', 'nombre', 'responde_ping', 'tiempo_respuesta_ms', 'en_arp', 'es_esta_computadora', 'es_puerta_enlace', 'dispositivo'];
+const CLAVES_EQUIPO = ['ip', 'mac', 'nombre', 'nombre_origen', 'responde_ping', 'tiempo_respuesta_ms', 'en_arp', 'es_esta_computadora', 'es_puerta_enlace', 'dispositivo'];
 const MENSAJE_SIN_RED = 'No se detectó una red local. Conecta la computadora a una red WiFi o cableada.';
 const MENSAJE_RED_NO_PRIVADA = 'Solo se pueden escanear redes privadas (10.x, 172.16–31.x o 192.168.x).';
 const LIMITE_LOTE_SEGUNDOS = 3.0;
@@ -63,7 +66,9 @@ function comprobarFormaEquipos(array $equipos, string $descripcion): void
             : $e['tiempo_respuesta_ms'] === null;
         $dispositivoValido = $e['dispositivo'] === null
             || (is_array($e['dispositivo']) && array_keys($e['dispositivo']) === ['id', 'nombre'] && is_int($e['dispositivo']['id']));
-        if (!is_string($e['ip']) || !($e['mac'] === null || is_string($e['mac'])) || !($e['nombre'] === null || is_string($e['nombre']))
+        $nombreValido = ($e['nombre'] === null && $e['nombre_origen'] === null)
+            || (is_string($e['nombre']) && in_array($e['nombre_origen'], METODOS_POR_PREFERENCIA, true));
+        if (!is_string($e['ip']) || !($e['mac'] === null || is_string($e['mac'])) || !$nombreValido
             || !is_bool($e['responde_ping']) || !$tiempoValido || !is_bool($e['en_arp']) || $e['en_arp'] !== ($e['mac'] !== null)
             || !is_bool($e['es_esta_computadora']) || !is_bool($e['es_puerta_enlace']) || !$dispositivoValido) {
             $problemas[] = exportar($e);
@@ -229,12 +234,165 @@ $ciclo = substr($ciclo, 0, $posicionDatos) . "\xC0" . chr($posicionDatos); // pu
 comprobarIgual(null, leerRespuestaPtr($ciclo, 0x1234), 'Un puntero que apunta a sí mismo (ciclo) → null, sin colgarse');
 comprobarIgual(null, leerRespuestaPtr(substr(respuestaPtr($consulta, $nombreCodificado), 0, -4), 0x1234), 'Un paquete cortado → null');
 comprobarIgual(null, leerRespuestaPtr(respuestaPtr($consulta, "\x0d<img src=x>ab\x00"), 0x1234), 'Un nombre con caracteres raros (HTML) se descarta');
-comprobarIgual([], buscarNombres(['192.0.2.5'], []), 'Sin servidores DNS no se consulta nada');
+comprobarIgual(null, leerRespuestaPtr(respuestaPtr($consulta, "\x08_gateway\x00"), 0x1234), '"_gateway" (lo inventa systemd-resolved, no el equipo) se descarta');
+comprobarIgual('mi_equipo.lan', leerRespuestaPtr(respuestaPtr($consulta, "\x09mi_equipo\x03lan\x00"), 0x1234), 'Un guion bajo dentro del nombre sí vale');
+comprobarIgual([], buscarNombresDeEquipos(['192.0.2.5'], [], '192.0.2', []), 'Sin servidores DNS ni otros métodos no se consulta nada');
 
 $inicio = microtime(true);
-buscarNombres(['192.0.2.5', '192.0.2.6'], ['127.0.0.1'], 0.3);
+buscarNombresDeEquipos(['192.0.2.5', '192.0.2.6'], ['127.0.0.1'], '192.0.2', [], 0.3);
 $segundos = microtime(true) - $inicio;
 comprobar($segundos < 0.6, sprintf('Con un servidor que no contesta, respeta el límite de tiempo (%.2f s, límite 0.3 s)', $segundos));
+
+// =====================================================================
+seccion('3.1 · Nombres por NetBIOS (netbios.php)');
+
+comprobarIgual(
+    '123400000001000000000000' . '20' . '434b' . str_repeat('4141', 15) . '00' . '0021' . '0001',
+    bin2hex(construirConsultaNetbios(0x1234)),
+    'Consulta de estado del nodo: el nombre "*" codificado (CKAAAA…), tipo NBSTAT, clase IN'
+);
+
+$windows = respuestaNetbiosDeEjemplo([
+    ['GRUPO-TRABAJO', 0x00, true],
+    ['DESKTOP-ANA', 0x00, false],
+    ['DESKTOP-ANA', 0x20, false],
+]);
+$conId = fn(string $paquete, int $id = 0x1234): string => pack('n', $id) . substr($paquete, 2);
+comprobarIgual('DESKTOP-ANA', leerRespuestaNetbios($conId($windows), 0x1234), 'Respuesta de Windows → "DESKTOP-ANA" (el único <00>, no el de grupo)');
+comprobarIgual('SERVIDOR', leerRespuestaNetbios($conId(respuestaNetbiosDeEjemplo([['GRUPO', 0x00, true], ['SERVIDOR', 0x20, false]])), 0x1234), 'Sin un <00> único, el <20> único');
+comprobarIgual(null, leerRespuestaNetbios($conId(respuestaNetbiosDeEjemplo([['GRUPO', 0x00, true]])), 0x1234), 'Solo nombres de grupo → null');
+comprobarIgual(null, leerRespuestaNetbios($conId($windows), 0x9999), 'Otro id de consulta → null');
+comprobarIgual(null, leerRespuestaNetbios($conId(respuestaNetbiosDeEjemplo([['PC', 0x00, false]], 0x0000)), 0x1234), 'Un paquete que no es respuesta → null');
+comprobarIgual(null, leerRespuestaNetbios($conId(respuestaNetbiosDeEjemplo([['PC', 0x00, false]], 0x8403)), 0x1234), 'Una respuesta con error → null');
+comprobarIgual(null, leerRespuestaNetbios(substr($conId($windows), 0, 70), 0x1234), 'Un paquete cortado → null');
+$cantidadFalsa = $conId($windows);
+$cantidadFalsa[56] = chr(200); // dice traer 200 nombres
+comprobarIgual(null, leerRespuestaNetbios($cantidadFalsa, 0x1234), 'Una cantidad de nombres mayor que el paquete → null, sin leer de más');
+comprobarIgual('<b>hola</b>', leerRespuestaNetbios($conId(respuestaNetbiosDeEjemplo([['<b>hola</b>', 0x00, false]])), 0x1234), 'Nombre malicioso con HTML: llega como texto (la interfaz lo muestra con textContent)');
+comprobarIgual(null, leerRespuestaNetbios($conId(respuestaNetbiosDeEjemplo([["PC\x01\x1b[31m", 0x00, false]])), 0x1234), 'Un nombre con bytes de control se descarta');
+comprobarIgual(null, leerRespuestaNetbios($conId(respuestaNetbiosDeEjemplo([["CAF\xC9", 0x00, false]])), 0x1234), 'Un nombre que no es ASCII (otra página de códigos) se descarta');
+
+// =====================================================================
+seccion('3.2 · Nombres por mDNS (mdns.php)');
+
+$consultaMdns = construirConsultaMdns(0x4321, '192.168.1.20');
+comprobarIgual(
+    bin2hex(pack('nnnnnn', 0x4321, 0x0000, 1, 0, 0, 0) . "\x0220\x011\x03168\x03192\x07in-addr\x04arpa\x00" . pack('nn', 12, 1)),
+    bin2hex($consultaMdns),
+    'Consulta PTR inversa de mDNS: como la de DNS, sin "recursión deseada"'
+);
+$mdns = fn(string $nombre, int $id = 0x4321): string => pack('n', $id) . substr(respuestaMdnsDeEjemplo('192.168.1.20', $nombre), 2);
+comprobarIgual('MacBook-de-Ana.local', leerRespuestaMdns($mdns('MacBook-de-Ana.local'), 0x4321), 'Respuesta de mDNS → "MacBook-de-Ana.local"');
+comprobarIgual(null, leerRespuestaMdns($mdns('MacBook-de-Ana.local'), 0x1111), 'Otro id de consulta → null');
+comprobarIgual(null, leerRespuestaMdns(substr($mdns('MacBook-de-Ana.local'), 0, -5), 0x4321), 'Un paquete cortado → null');
+comprobarIgual(null, leerRespuestaMdns($mdns('<img src=x onerror=alert(1)>.local'), 0x4321), 'Nombre malicioso con HTML → se descarta (mismas reglas que el DNS)');
+
+// =====================================================================
+seccion('3.3 · Nombres por UPnP (upnp.php)');
+
+$msearch = construirMSearch('192.168.1.20');
+comprobar(
+    str_starts_with($msearch, "M-SEARCH * HTTP/1.1\r\nHOST: 192.168.1.20:1900\r\n") && str_contains($msearch, "MAN: \"ssdp:discover\"\r\n") && str_ends_with($msearch, "\r\n\r\n"),
+    'M-SEARCH unicast dirigido a la IP del equipo (HOST: IP:1900)'
+);
+comprobarIgual('http://192.168.1.20:49152/desc.xml', leerLocationSsdp(respuestaSsdpDeEjemplo('http://192.168.1.20:49152/desc.xml')), 'LOCATION de la respuesta de SSDP');
+comprobarIgual('http://192.168.1.20/d.xml', leerLocationSsdp("HTTP/1.1 200 OK\r\nlocation:http://192.168.1.20/d.xml\r\n\r\n"), '  sin distinguir mayúsculas ni exigir espacio');
+comprobarIgual(null, leerLocationSsdp("NOTIFY * HTTP/1.1\r\nLOCATION: http://192.168.1.20/d.xml\r\n\r\n"), '  una respuesta que no es "200 OK" → null');
+
+foreach ([
+    ['http://192.168.1.20:49152/desc.xml', ['puerto' => 49152, 'ruta' => '/desc.xml'], 'misma IP, con puerto'],
+    ['http://192.168.1.20/rootDesc.xml?x=1', ['puerto' => 80, 'ruta' => '/rootDesc.xml?x=1'], 'sin puerto: 80'],
+    ['http://192.168.1.20:8080', ['puerto' => 8080, 'ruta' => '/'], 'sin ruta: /'],
+    ['https://192.168.1.20/desc.xml', null, 'https'],
+    ['http://192.168.1.21/desc.xml', null, 'otra IP de la red'],
+    ['http://8.8.8.8/desc.xml', null, 'IP fuera de la red'],
+    ['http://impresora.lan/desc.xml', null, 'nombre de dominio'],
+    ['http://192.168.1.20@8.8.8.8/desc.xml', null, 'usuario@host (el host real es otro)'],
+    ['http://192.168.1.20:80@8.8.8.8/', null, 'usuario:contraseña@host'],
+    ['http://192.168.1.20:99999/desc.xml', null, 'puerto fuera de rango'],
+    ['http://192.168.1.20:0/desc.xml', null, 'puerto 0'],
+    ["http://192.168.1.20/desc.xml\r\nHost: otro", null, 'saltos de línea (inyección de cabeceras)'],
+    ['http://192.168.1.20/a b', null, 'espacios en la ruta'],
+    ['file:///etc/passwd', null, 'file://'],
+] as [$url, $esperado, $caso]) {
+    comprobarIgual($esperado, validarUrlDescripcion($url, '192.168.1.20', '192.168.1'), "URL de la descripción: $caso → " . ($esperado === null ? 'se rechaza' : 'se acepta'));
+}
+comprobarIgual(null, validarUrlDescripcion('http://192.168.1.20/d.xml', '192.168.1.20', '10.0.0'), '  aunque sea la IP que contestó, si no está en la /24 escaneada se rechaza');
+comprobarIgual("GET /desc.xml HTTP/1.0\r\nHost: 192.168.1.20:49152\r\nAccept: text/xml\r\nConnection: close\r\n\r\n", construirPeticionDescripcion('192.168.1.20', 49152, '/desc.xml'), 'Petición HTTP/1.0 de la descripción');
+
+comprobarIgual('[TV] Samsung 7 Series (55)', leerRespuestaDescripcion(respuestaHttpDeEjemplo(descripcionUpnpDeEjemplo('[TV] Samsung 7 Series (55)'))), 'friendlyName de la descripción');
+comprobarIgual('Televisión de la sala', leerRespuestaDescripcion(respuestaHttpDeEjemplo(descripcionUpnpDeEjemplo('Televisión de la sala'))), '  con acentos (UTF-8)');
+$sinEspacioDeNombres = "<?xml version=\"1.0\"?><root><device><friendlyName>Consola</friendlyName></device></root>";
+comprobarIgual('Consola', leerFriendlyName($sinEspacioDeNombres), '  sin el espacio de nombres de UPnP también');
+$conServicio = "<root xmlns=\"urn:schemas-upnp-org:device-1-0\"><device><friendlyName>Módem</friendlyName><deviceList><device><friendlyName>WANDevice</friendlyName></device></deviceList></device></root>";
+comprobarIgual('Módem', leerFriendlyName($conServicio), '  el del dispositivo raíz, no el de un subdispositivo');
+$chunked = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" . implode('', array_map(
+    fn(string $parte): string => dechex(strlen($parte)) . "\r\n$parte\r\n",
+    str_split(descripcionUpnpDeEjemplo('Impresora HP'), 40)
+)) . "0\r\n\r\n";
+comprobarIgual('Impresora HP', leerRespuestaDescripcion($chunked), '  respuesta "chunked" (aunque se pidió HTTP/1.0)');
+comprobarIgual(null, leerRespuestaDescripcion(respuestaHttpDeEjemplo(descripcionUpnpDeEjemplo('X'), '404 Not Found')), 'Una respuesta 404 → null');
+comprobarIgual(null, leerRespuestaDescripcion(respuestaHttpDeEjemplo(descripcionUpnpDeEjemplo('X') . str_repeat(' ', TAMANO_MAXIMO_DESCRIPCION))), 'Una descripción de más de 64 KB → null');
+comprobarIgual(null, leerFriendlyName('<root><device><friendlyName>sin cerrar'), 'Un XML mal formado → null');
+comprobarIgual(null, leerFriendlyName('<root><device><manufacturer>X</manufacturer></device></root>'), 'Sin friendlyName → null');
+$xxe = "<?xml version=\"1.0\"?>\n<!DOCTYPE root [<!ENTITY secreto SYSTEM \"file:///etc/passwd\">]>\n<root><device><friendlyName>&secreto;</friendlyName></device></root>";
+comprobarIgual(null, leerFriendlyName($xxe), 'XML con una entidad externa (XXE, file:///etc/passwd) → se rechaza sin procesarlo');
+$risas = "<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY a \"jaja\"><!ENTITY b \"&a;&a;&a;&a;&a;&a;&a;&a;\">]><root><device><friendlyName>&b;</friendlyName></device></root>";
+comprobarIgual(null, leerFriendlyName($risas), 'XML con entidades anidadas ("billion laughs") → se rechaza');
+comprobarIgual(null, leerFriendlyName("<!doctype root><root><device><friendlyName>X</friendlyName></device></root>"), '  DOCTYPE en minúsculas también');
+comprobarIgual('<img src=x onerror=alert(1)>', leerFriendlyName(descripcionUpnpDeEjemplo('<img src=x onerror=alert(1)>')), 'Nombre malicioso con HTML: llega como texto (la interfaz lo muestra con textContent)');
+comprobarIgual('Sala TV', leerFriendlyName(descripcionUpnpDeEjemplo("  Sala\u{202E}\t\n  T\u{200B}V ")), 'Se quitan los caracteres de formato (como el que invierte el texto) y se compactan los espacios');
+comprobarIgual('Sala TV', limpiarNombreLegible("Sala \x07\x1b TV\x00"), 'Se quitan los caracteres de control');
+comprobarIgual(100, mb_strlen((string) leerFriendlyName(descripcionUpnpDeEjemplo(str_repeat('ñ', 300)))), 'Un nombre larguísimo se recorta a 100 caracteres');
+comprobarIgual(null, limpiarNombreLegible("TV \xC3\x28"), 'Un nombre que no es UTF-8 válido → null');
+
+// =====================================================================
+seccion('3.4 · Preferencia y búsqueda en paralelo (nombres.php)');
+
+$todos = ['dns' => 'pc.lan', 'netbios' => 'PC-WIN', 'mdns' => 'pc.local', 'upnp' => 'Impresora HP'];
+comprobarIgual(['nombre' => 'Impresora HP', 'origen' => 'upnp'], elegirNombre($todos), 'Orden de preferencia: UPnP primero');
+unset($todos['upnp']);
+comprobarIgual(['nombre' => 'pc.local', 'origen' => 'mdns'], elegirNombre($todos), '  sin UPnP: mDNS');
+unset($todos['mdns']);
+comprobarIgual(['nombre' => 'PC-WIN', 'origen' => 'netbios'], elegirNombre($todos), '  sin mDNS: NetBIOS');
+unset($todos['netbios']);
+comprobarIgual(['nombre' => 'pc.lan', 'origen' => 'dns'], elegirNombre($todos), '  y al final, DNS');
+comprobarIgual(['nombre' => null, 'origen' => null], elegirNombre([]), '  sin nombres: null y null');
+
+// Con el respondedor falso, sin Apache. Un método sin respondedor nunca contesta.
+$puertosFalsos = ['netbios' => puertoLibreLocal(), 'mdns' => puertoLibreLocal(), 'ssdp' => puertoLibreLocal()];
+$puertoHttp = puertoLibreLocal();
+$respondedor = iniciarRespondedorDeNombres([
+    '127.0.0.2' => ['netbios' => respuestaNetbiosDeEjemplo([['PC-SOLO-NETBIOS', 0x00, false]])],
+    '127.0.0.3' => [
+        'ssdp' => respuestaSsdpDeEjemplo("http://127.0.0.3:$puertoHttp/desc.xml"),
+        'http' => ['puerto' => $puertoHttp, 'respuesta' => respuestaHttpDeEjemplo(descripcionUpnpDeEjemplo('Impresora rápida'))],
+    ],
+], $puertosFalsos, 20);
+
+if ($respondedor !== null) {
+    $inicio = microtime(true);
+    $nombres = buscarNombresDeEquipos(['127.0.0.2', '127.0.0.3'], [], '127.0.0', $puertosFalsos, 0.8);
+    $segundos = microtime(true) - $inicio;
+    comprobarIgual(
+        ['127.0.0.2' => ['netbios' => 'PC-SOLO-NETBIOS'], '127.0.0.3' => ['upnp' => 'Impresora rápida']],
+        $nombres,
+        'Cada equipo da su nombre por su método; los métodos que no contestan no aportan nada'
+    );
+    comprobar($segundos < 1.0, sprintf('  y no retrasan a los demás: todo en %.2f s (límite 0.8 s)', $segundos));
+
+    $inicio = microtime(true);
+    $nombres = buscarNombresDeEquipos(['127.0.0.3'], [], '127.0.0', $puertosFalsos, 0.8);
+    $segundos = microtime(true) - $inicio;
+    comprobar(
+        ($nombres['127.0.0.3']['upnp'] ?? null) === 'Impresora rápida' && $segundos < 0.4,
+        sprintf('Si ya llegó el nombre preferido (UPnP), no espera a los demás métodos: %.2f s', $segundos)
+    );
+    $peticiones = detenerRespondedorDeNombres($respondedor);
+    comprobarIgual(2, count(array_filter($peticiones, fn($p) => $p === '127.0.0.3 GET /desc.xml HTTP/1.0')), '  la descripción se pidió con GET a la IP que contestó (una vez por búsqueda)');
+} else {
+    avisar('No se pudo escuchar en 127.0.0.2/127.0.0.3: no se probó la búsqueda en paralelo.');
+}
 
 // =====================================================================
 seccion('4 · Ping en paralelo (escaneo.php, comandos reales)');
@@ -311,10 +469,13 @@ foreach ([
     'ya caducó' => ['ip_propia' => null, 'expira' => time() - 1],
     'caduca en más de 60 s' => ['ip_propia' => null, 'expira' => time() + 120],
     'sin el campo ip_propia' => ['expira' => time() + 30],
+    'puertos de nombres con otra IP propia (192.0.2.1)' => ['ip_propia' => '192.0.2.1', 'puertos_nombres' => ['netbios' => 40137], 'expira' => time() + 30],
+    'puerto de nombres privilegiado (137)' => ['ip_propia' => '127.0.0.1', 'puertos_nombres' => ['netbios' => 137], 'expira' => time() + 30],
+    'un método de nombres desconocido' => ['ip_propia' => '127.0.0.1', 'puertos_nombres' => ['http' => 40080], 'expira' => time() + 30],
 ] as $caso => $contenido) {
     file_put_contents(ARCHIVO_RED_SIMULADA, json_encode($contenido));
     $r = peticion('GET', '/descubrimiento/red');
-    $ignorado = ($r['codigo'] === 200 && ($r['json']['data']['ip_propia'] ?? null) !== '10.0.0.1')
+    $ignorado = ($r['codigo'] === 200 && !in_array($r['json']['data']['ip_propia'] ?? null, ['10.0.0.1', '192.0.2.1', '127.0.0.1'], true))
         || ($r['codigo'] === 503 && ($r['json']['error'] ?? null) === MENSAJE_SIN_RED && $caso === 'otra red (10.0.0.1)');
     comprobar($ignorado, "Red simulada con $caso: se ignora", "código {$r['codigo']}: {$r['texto']}");
 }
@@ -396,8 +557,90 @@ comprobarIgual(1, count(array_filter($encontrados, fn($e) => $e['es_esta_computa
 
 if (is_readable(ARCHIVO_RESOLV_CONF) && preg_match('/^\s*nameserver\s/m', (string) file_get_contents(ARCHIVO_RESOLV_CONF)) === 1) {
     comprobarIgual('localhost', $encontrados[0]['nombre'] ?? null, '  nombre de 127.0.0.1 por DNS inverso: "localhost"');
+    comprobarIgual('dns', $encontrados[0]['nombre_origen'] ?? null, '  con nombre_origen "dns"');
 } else {
     avisar('Sin /etc/resolv.conf: no se comprobó el nombre de 127.0.0.1 por DNS inverso.');
+}
+comprobarIgual(
+    [],
+    array_values(array_filter($encontrados, fn($e) => !in_array($e['nombre_origen'], [null, 'dns'], true))),
+    '  sin "puertos_nombres", la red simulada solo pregunta por DNS (nunca a los puertos reales de UPnP, mDNS ni NetBIOS)'
+);
+
+// =====================================================================
+seccion('8.1 · Nombres por UPnP, mDNS y NetBIOS de punta a punta (respondedor falso en 127.0.0.x)');
+
+$puertosFalsos = ['netbios' => puertoLibreLocal(), 'mdns' => puertoLibreLocal(), 'ssdp' => puertoLibreLocal()];
+$http = puertoLibreLocal();
+$descripcion = fn(string $nombre): array => ['puerto' => $http, 'respuesta' => respuestaHttpDeEjemplo(descripcionUpnpDeEjemplo($nombre))];
+$respondedor = iniciarRespondedorDeNombres([
+    '127.0.0.1' => ['mdns' => respuestaMdnsDeEjemplo('127.0.0.1', 'equipo-mdns.local')],
+    '127.0.0.2' => ['netbios' => respuestaNetbiosDeEjemplo([['GRUPO', 0x00, true], ['PC-NETBIOS', 0x00, false]])],
+    '127.0.0.3' => ['ssdp' => respuestaSsdpDeEjemplo("http://127.0.0.3:$http/desc.xml"), 'http' => $descripcion('Televisión de la sala')],
+    '127.0.0.4' => [
+        'netbios' => respuestaNetbiosDeEjemplo([['PC-WIN', 0x00, false]]),
+        'mdns' => respuestaMdnsDeEjemplo('127.0.0.4', 'hp1a2b3c.local'),
+        'ssdp' => respuestaSsdpDeEjemplo("http://127.0.0.4:$http/d.xml"),
+        'http' => $descripcion('Impresora HP'),
+    ],
+    '127.0.0.5' => [
+        'mdns' => respuestaMdnsDeEjemplo('127.0.0.5', '<img src=x onerror=alert(1)>.local'),
+        'netbios' => respuestaNetbiosDeEjemplo([['<b>hola</b>', 0x00, false]]),
+    ],
+    '127.0.0.6' => ['ssdp' => respuestaSsdpDeEjemplo("http://127.0.0.7:$http/desc.xml")], // apunta a otra IP
+    '127.0.0.7' => ['http' => $descripcion('No debería descargarse')],
+    '127.0.0.8' => ['ssdp' => respuestaSsdpDeEjemplo("http://127.0.0.8:$http/desc.xml"), 'http' => $descripcion('<img src=x onerror=alert(1)>')],
+    '127.0.0.9' => [
+        'netbios' => respuestaNetbiosDeEjemplo([['PC-LENTA', 0x00, false]]),
+        'ssdp' => respuestaSsdpDeEjemplo("http://127.0.0.9:$http/desc.xml"),
+        'http' => ['puerto' => $http, 'colgar' => true], // acepta y nunca contesta
+    ],
+    '127.0.0.10' => [
+        'ssdp' => respuestaSsdpDeEjemplo("http://127.0.0.10:$http/desc.xml"),
+        'http' => ['puerto' => $http, 'respuesta' => respuestaHttpDeEjemplo("<?xml version=\"1.0\"?>\n<!DOCTYPE root [<!ENTITY x SYSTEM \"file:///etc/passwd\">]>\n<root><device><friendlyName>&x;</friendlyName></device></root>")],
+    ],
+    '127.0.0.11' => [ // contesta desde otra IP (respuesta falsificada)
+        'netbios' => respuestaNetbiosDeEjemplo([['PC-FALSA', 0x00, false]]),
+        'mdns' => respuestaMdnsDeEjemplo('127.0.0.11', 'falsa.local'),
+        'desde' => '127.0.0.12',
+    ],
+    '127.0.0.13' => [
+        'ssdp' => respuestaSsdpDeEjemplo("http://127.0.0.13:$http/desc.xml"),
+        'http' => ['puerto' => $http, 'respuesta' => respuestaHttpDeEjemplo(descripcionUpnpDeEjemplo('Enorme') . str_repeat('<!-- relleno -->', 5000))],
+    ],
+], $puertosFalsos);
+
+if ($respondedor !== null) {
+    simularRed(['ip_propia' => '127.0.0.1', 'puertos_nombres' => $puertosFalsos]);
+    [$r, $segundos] = escanear(1);
+    comprobarRespuesta($r, 200, 'POST /descubrimiento/red/lotes/1 con los respondedores falsos');
+    comprobar($segundos < LIMITE_LOTE_SEGUNDOS, sprintf('  %.2f s (límite %.0f s), aunque una descripción nunca termina de llegar', $segundos, LIMITE_LOTE_SEGUNDOS));
+    $encontrados = array_column($r['json']['data']['encontrados'] ?? [], null, 'ip');
+    comprobarFormaEquipos(array_values($encontrados), '  cada equipo tiene las claves y tipos del contrato (con nombre_origen)');
+    $nombreDe = fn(string $ip): array => campos($encontrados[$ip] ?? null, ['nombre', 'nombre_origen']);
+
+    comprobarIgual(['equipo-mdns.local', 'mdns'], $nombreDe('127.0.0.1'), '127.0.0.1: el nombre de mDNS gana al de DNS ("localhost")');
+    comprobarIgual(['PC-NETBIOS', 'netbios'], $nombreDe('127.0.0.2'), '127.0.0.2: NetBIOS (el nombre único, no el de grupo)');
+    comprobarIgual(['Televisión de la sala', 'upnp'], $nombreDe('127.0.0.3'), '127.0.0.3: UPnP, con acentos');
+    comprobarIgual(['Impresora HP', 'upnp'], $nombreDe('127.0.0.4'), '127.0.0.4: con UPnP, mDNS y NetBIOS gana UPnP');
+    comprobarIgual(['<b>hola</b>', 'netbios'], $nombreDe('127.0.0.5'), '127.0.0.5: el mDNS malicioso se descarta; el NetBIOS con HTML llega como texto');
+    comprobar(!in_array($nombreDe('127.0.0.6')[1], ['upnp', 'mdns', 'netbios'], true), '127.0.0.6: una LOCATION que apunta a otra IP no da nombre');
+    comprobarIgual(['<img src=x onerror=alert(1)>', 'upnp'], $nombreDe('127.0.0.8'), '127.0.0.8: el friendlyName con HTML llega como texto');
+    comprobarIgual(['PC-LENTA', 'netbios'], $nombreDe('127.0.0.9'), '127.0.0.9: la descripción que nunca llega no impide usar su nombre NetBIOS');
+    comprobar(!in_array($nombreDe('127.0.0.10')[1], ['upnp', 'mdns', 'netbios'], true), '127.0.0.10: la descripción con una entidad externa (XXE) no da nombre');
+    comprobar(!in_array($nombreDe('127.0.0.11')[1], ['upnp', 'mdns', 'netbios'], true), '127.0.0.11: las respuestas que llegan desde otra IP (127.0.0.12) se ignoran');
+    comprobar(!in_array($nombreDe('127.0.0.13')[1], ['upnp', 'mdns', 'netbios'], true), '127.0.0.13: la descripción de más de 64 KB se abandona');
+    comprobar(
+        !str_contains($r['texto'], 'root:') && !str_contains($r['texto'], 'No debería descargarse'),
+        '  la respuesta no trae nada de /etc/passwd ni de la descripción de 127.0.0.7'
+    );
+
+    $peticiones = detenerRespondedorDeNombres($respondedor);
+    comprobarIgual([], array_values(array_filter($peticiones, fn($p) => str_starts_with($p, '127.0.0.7 '))), 'A 127.0.0.7 no se le pidió nada (la LOCATION de 127.0.0.6 apuntaba ahí)');
+    comprobarIgual(1, count(array_filter($peticiones, fn($p) => $p === '127.0.0.3 GET /desc.xml HTTP/1.0')), 'A 127.0.0.3 se le pidió su descripción una vez, con GET');
+    comprobarIgual([], array_values(array_filter($peticiones, fn($p) => !str_contains($p, ' GET /'))), '  todas las peticiones fueron GET');
+} else {
+    avisar('No se pudo escuchar en 127.0.0.x (en macOS solo existe 127.0.0.1): no se probaron los nombres de punta a punta.');
 }
 
 // =====================================================================

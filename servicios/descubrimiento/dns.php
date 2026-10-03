@@ -1,104 +1,23 @@
 <?php
 /**
- * Nombre de los equipos por DNS inverso (consultas PTR), con un tiempo total
- * corto. gethostbyaddr() no sirve aquí: no tiene límite de tiempo y consulta
- * una IP a la vez, así que diez equipos sin nombre podían tardar un minuto.
+ * Nombre de los equipos por DNS inverso (consultas PTR). gethostbyaddr() no
+ * sirve aquí: no tiene límite de tiempo y consulta una IP a la vez, así que
+ * diez equipos sin nombre podían tardar un minuto.
  *
- * Se arma la consulta DNS a mano (formato de RFC 1035) y se envían todas a la
- * vez por UDP, sin bloquear, al DNS del sistema (/etc/resolv.conf en Linux y
- * macOS) y a la puerta de enlace (el router suele conocer los nombres que
- * asignó por DHCP). La primera respuesta válida de cada IP gana.
+ * Se arma la consulta DNS a mano (formato de RFC 1035) para el DNS del sistema
+ * (/etc/resolv.conf en Linux y macOS) y la puerta de enlace (el router suele
+ * conocer los nombres que asignó por DHCP). La misma consulta, sin "recursión
+ * deseada", es la de mDNS (mdns.php). Las envía y espera nombres.php, junto con
+ * los demás métodos.
  */
 
 declare(strict_types=1);
 
-const LIMITE_SEGUNDOS_DNS = 0.8;
 const PUERTO_DNS = 53;
+const BANDERAS_CONSULTA_DNS = 0x0100; // recursión deseada
 const TIPO_PTR = 12;
 const ARCHIVO_RESOLV_CONF = '/etc/resolv.conf';
 const LONGITUD_MAXIMA_NOMBRE = 253;
-
-/**
- * Busca el nombre de cada IP. Devuelve [ip => nombre] solo con las que
- * respondieron a tiempo; las demás no aparecen.
- */
-function buscarNombres(array $ips, array $servidores, float $limiteSegundos = LIMITE_SEGUNDOS_DNS): array
-{
-    if ($ips === [] || $servidores === []) {
-        return [];
-    }
-
-    $consultas = []; // id de la consulta → ip
-    $paquetes = [];
-    foreach (array_values($ips) as $i => $ip) {
-        $id = ($i + random_int(1, 1000)) % 65536; // ids distintos entre sí y difíciles de adivinar
-        while (isset($consultas[$id])) {
-            $id = ($id + 1) % 65536;
-        }
-        $consultas[$id] = $ip;
-        $paquetes[] = construirConsultaPtr($id, $ip);
-    }
-
-    $sockets = abrirSocketsDns($servidores);
-    foreach ($sockets as $socket) {
-        foreach ($paquetes as $paquete) {
-            @fwrite($socket, $paquete);
-        }
-    }
-
-    $nombres = recibirRespuestasPtr($sockets, $consultas, $limiteSegundos);
-    array_map('fclose', $sockets);
-
-    return $nombres;
-}
-
-/**
- * Espera respuestas hasta que cada IP tenga nombre o una respuesta de todos los
- * servidores (aunque sea "no existe"), o hasta agotar el tiempo.
- */
-function recibirRespuestasPtr(array $sockets, array $consultas, float $limiteSegundos): array
-{
-    $nombres = [];
-    $sinContestar = array_fill_keys(array_keys($consultas), count($sockets)); // id → servidores que faltan
-    $contestadas = []; // "socket:id" ya contadas
-    $limite = hrtime(true) + (int) ($limiteSegundos * 1e9);
-
-    while (array_filter($sinContestar) !== []) {
-        $restante = ($limite - hrtime(true)) / 1e3; // microsegundos
-        if ($restante <= 0) {
-            break;
-        }
-
-        $lectura = $sockets;
-        $escritura = $excepcion = null;
-        if (@stream_select($lectura, $escritura, $excepcion, 0, (int) $restante) < 1) {
-            continue;
-        }
-
-        foreach ($lectura as $socket) {
-            $paquete = @fread($socket, 1500);
-            if (!is_string($paquete) || strlen($paquete) < 12) {
-                continue;
-            }
-            $id = unpack('n', $paquete)[1];
-            $clave = get_resource_id($socket) . ":$id";
-            if (!isset($consultas[$id]) || isset($contestadas[$clave])) {
-                continue;
-            }
-            $contestadas[$clave] = true;
-            $sinContestar[$id]--;
-
-            $ip = $consultas[$id];
-            $nombre = leerRespuestaPtr($paquete, $id);
-            if ($nombre !== null && !isset($nombres[$ip])) {
-                $nombres[$ip] = $nombre;
-                $sinContestar[$id] = 0;
-            }
-        }
-    }
-
-    return $nombres;
-}
 
 /**
  * Un socket UDP "conectado" a cada servidor (conectar UDP no envía nada) y sin bloqueo.
@@ -143,11 +62,11 @@ function servidoresDns(?string $puertaEnlace): array
 
 /**
  * Consulta PTR de una IPv4: 192.168.1.20 → 20.1.168.192.in-addr.arpa, tipo PTR,
- * clase IN, con recursión deseada.
+ * clase IN (por defecto con recursión deseada).
  */
-function construirConsultaPtr(int $id, string $ip): string
+function construirConsultaPtr(int $id, string $ip, int $banderas = BANDERAS_CONSULTA_DNS): string
 {
-    $encabezado = pack('nnnnnn', $id, 0x0100, 1, 0, 0, 0);
+    $encabezado = pack('nnnnnn', $id, $banderas, 1, 0, 0, 0);
     $etiquetas = [...array_reverse(explode('.', $ip)), 'in-addr', 'arpa'];
     $nombre = '';
     foreach ($etiquetas as $etiqueta) {
@@ -245,9 +164,12 @@ function leerNombreDns(string $paquete, int &$posicion): ?string
 /**
  * Un nombre de equipo razonable: letras, números, guiones, guiones bajos y puntos.
  * Se descarta cualquier otra cosa (la interfaz lo muestra como texto de todos modos).
+ * Tampoco vale si empieza con "_": así son los nombres que inventa el resolvedor
+ * de Linux (systemd-resolved responde "_gateway" por la puerta de enlace), no
+ * los que anuncia el equipo.
  */
 function esNombreDeEquipo(string $nombre): bool
 {
     return $nombre !== '' && strlen($nombre) <= LONGITUD_MAXIMA_NOMBRE
-        && preg_match('/^[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*$/', $nombre) === 1;
+        && preg_match('/^[A-Za-z0-9-][A-Za-z0-9_-]*(?:\.[A-Za-z0-9_-]+)*$/', $nombre) === 1;
 }
