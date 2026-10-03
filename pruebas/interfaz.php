@@ -1821,6 +1821,85 @@ quitarRedSimulada();
 recargarBaseDeDatos();
 
 // =====================================================================
+seccion('10 · Base vacía (la de uso diario recién creada): las 4 pantallas');
+
+recrearBase(DB_NOMBRE_PRUEBAS, [ARCHIVO_SCHEMA, ARCHIVO_INICIAL]); // solo el usuario admin
+$navegador->tamano(1440, 900);
+$navegador->erroresJs = [];
+
+abrirPagina($navegador, 'index.html');
+esperarDashboard($navegador);
+$navegador->esperarHasta("document.querySelector('#panel-grafica .estado-vacio')", 8);
+$r = $navegador->evaluar(<<<'JS'
+    (() => {
+        const t = (s) => document.querySelector(s)?.textContent.trim() ?? null;
+        return {
+            indicadores: ['total', 'activos', 'inactivos', 'alertas'].map((id) => t(`#indicador-${id}`)),
+            total: t('#indicador-total-detalle'),
+            ultima: t('#ultima-comprobacion'),
+            monitorearTodos: document.getElementById('monitorear-todos').disabled,
+            estado: [t('#panel-estado .estado-vacio__titulo'), document.querySelector('#panel-estado .estado-vacio a')?.getAttribute('href')],
+            tiempos: [t('#panel-grafica .estado-vacio__titulo'), t('#panel-grafica .estado-vacio__texto')],
+            canvas: !!document.querySelector('#panel-grafica canvas'),
+            alertas: t('#panel-alertas .estado-vacio__titulo'),
+        };
+    })()
+JS);
+comprobarIgual([
+    'indicadores' => ['0', '0', '0', '0'],
+    'total' => 'Sin dispositivos',
+    'ultima' => 'Nunca',
+    'monitorearTodos' => true,
+    'estado' => ['Aún no hay dispositivos', 'dispositivos.html'],
+    'tiempos' => ['Aún no hay tiempos para graficar', 'Aparecen cuando agregues dispositivos y alguno responda al monitoreo.'],
+    'canvas' => false,
+    'alertas' => 'Sin alertas',
+], $r, 'Dashboard: indicadores en 0, «Monitorear todos» deshabilitado, «Aún no hay dispositivos» con enlace a Dispositivos y la gráfica sin datos');
+capturar($navegador, 'vacia-dashboard');
+
+abrirPagina($navegador, 'dispositivos.html');
+$navegador->esperarHasta("document.querySelector('#contenido-dispositivos .estado-vacio')", 8);
+$r = $navegador->evaluar("({ titulo: document.querySelector('#contenido-dispositivos .estado-vacio__titulo').textContent, botones: [...document.querySelectorAll('#contenido-dispositivos .estado-vacio__acciones .btn')].map((b) => b.textContent.trim()), pie: document.getElementById('pie-dispositivos').hidden, subtitulo: document.getElementById('subtitulo-dispositivos').textContent })");
+comprobarIgual(['titulo' => 'Aún no hay dispositivos', 'botones' => ['Buscar dispositivos en la red', 'Agregar a mano'], 'pie' => true, 'subtitulo' => '0 dispositivos registrados'], $r, 'Dispositivos: «Aún no hay dispositivos» con «Buscar dispositivos en la red» y «Agregar a mano»');
+clic($navegador, '#contenido-dispositivos .estado-vacio__acciones .btn-secondary');
+comprobar(esperarModal($navegador, 'modal-dispositivo', true), '  «Agregar a mano» abre el formulario');
+$navegador->tecla('Escape');
+esperarModal($navegador, 'modal-dispositivo', false);
+$navegador->interceptar('descubrimiento/red/lotes/', ['codigo' => 200, 'cuerpo' => '{"ok":true,"data":{"lote":1,"desde":"192.0.2.1","hasta":"192.0.2.64","encontrados":[]}}']);
+$navegador->interceptar('descubrimiento/red', ['codigo' => 200, 'cuerpo' => '{"ok":true,"data":{"red":"192.0.2.0/24","ip_propia":"192.0.2.1","puerta_enlace":null,"lotes":4,"total_direcciones":254}}']);
+clic($navegador, '#contenido-dispositivos .estado-vacio__acciones .btn-primary');
+comprobar(esperarFinBusqueda($navegador, 10), '  «Buscar dispositivos en la red» abre la búsqueda (respuestas interceptadas: no se escanea ninguna red)');
+$navegador->quitarIntercepciones();
+clic($navegador, '#busqueda-red .panel-busqueda__cerrar');
+capturar($navegador, 'vacia-dispositivos');
+
+abrirPagina($navegador, 'monitoreos.html');
+esperarMonitoreos($navegador);
+$navegador->esperarHasta("document.querySelector('#panel-grafica .estado-vacio')", 8);
+$r = $navegador->evaluar("({ grafica: [document.querySelector('#panel-grafica .estado-vacio__titulo')?.textContent, document.querySelector('#panel-grafica .estado-vacio a')?.getAttribute('href')], historial: [document.querySelector('#contenido-historial .estado-vacio__titulo')?.textContent, document.querySelector('#contenido-historial .estado-vacio a')?.getAttribute('href')], opciones: document.querySelectorAll('#filtro-dispositivo option').length })");
+comprobarIgual(['grafica' => ['Aún no hay dispositivos', 'dispositivos.html'], 'historial' => ['Aún no hay comprobaciones', 'dispositivos.html'], 'opciones' => 1], $r, 'Monitoreos: gráfica e historial vacíos, con «Ir a Dispositivos» (en lugar de pedir elegir un dispositivo)');
+capturar($navegador, 'vacia-monitoreos');
+
+abrirPagina($navegador, 'alertas.html');
+esperarAlertas($navegador);
+$r = $navegador->evaluar("({ titulo: document.querySelector('#lista-alertas .estado-vacio__titulo')?.textContent, enlace: document.querySelector('#lista-alertas .estado-vacio a')?.getAttribute('href'), contadores: [...document.querySelectorAll('.nav-underline .contador')].map((c) => c.textContent) })");
+comprobarIgual(['titulo' => 'Aún no hay alertas', 'enlace' => 'dispositivos.html', 'contadores' => ['0', '0']], $r, 'Alertas: «Aún no hay alertas» (no «Toda la red responde», que sería engañoso sin dispositivos)');
+
+$navegador->tamano(390, 844, true);
+foreach (['index.html' => '#panel-estado .estado-vacio', 'dispositivos.html' => '#contenido-dispositivos .estado-vacio', 'monitoreos.html' => '#contenido-historial .estado-vacio', 'alertas.html' => '#lista-alertas .estado-vacio'] as $pagina => $selector) {
+    abrirPagina($navegador, $pagina);
+    $listo = $navegador->esperarHasta("document.querySelector('$selector')", 8);
+    comprobar($listo && $navegador->evaluar('document.documentElement.scrollWidth <= innerWidth') === true, "390 px, $pagina: estado vacío visible y sin desplazamiento horizontal");
+}
+capturar($navegador, 'vacia-dispositivos-390');
+$navegador->tamano(1440, 900);
+comprobarIgual([], array_values(array_filter($navegador->erroresJs, fn($e) => !str_contains($e, 'status of 401'))), 'las 4 pantallas vacías, sin errores de JavaScript');
+
+abrirPagina($navegador, 'componentes.html');
+comprobarIgual(['Buscar dispositivos en la red', 'Agregar a mano'], $navegador->evaluar("[...document.querySelectorAll('#s13 ~ * .estado-vacio__acciones .btn, .estado-vacio__acciones .btn')].map((b) => b.textContent.trim())"), 'componentes.html, sección 13: el estado vacío con dos acciones');
+recargarBaseDeDatos();
+
+// =====================================================================
 seccion('8.1 · Títulos de pestaña, favicon y resoluciones de proyector');
 
 $titulos = ['login.html' => 'Iniciar sesión', 'index.html' => 'Dashboard', 'dispositivos.html' => 'Dispositivos', 'monitoreos.html' => 'Monitoreos', 'alertas.html' => 'Alertas', 'componentes.html' => 'Componentes'];
@@ -1850,7 +1929,7 @@ foreach ([[1024, 768], [1280, 720]] as [$ancho, $alto]) {
 $navegador->tamano(1440, 900);
 
 // =====================================================================
-seccion('8.4 · Ensayo del guion de la demo (docs/DEMO.md), a 1280×720');
+seccion('8.4 · Ensayo del guion de la demo (docs/DEMO.md) con nuestros equipos, a 1280×720');
 
 /**
  * Contador de alertas pendientes del menú lateral (0 si está oculto).
@@ -1861,104 +1940,111 @@ function contadorDelMenu(Navegador $navegador): int
 }
 
 /**
- * Corre un script de PHP de la carpeta del proyecto y devuelve [código de salida, salida].
+ * El hotspot del ensayo: la red simulada 192.0.2.0/24 (nada responde al ping). En la
+ * tabla ARP están el teléfono del hotspot (bloquea el ping) y el equipo nuevo.
  */
-function correrScript(string $ruta, string $opciones = ''): array
+function simularHotspotDelEnsayo(): void
 {
-    exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . "/../$ruta") . " $opciones 2>&1", $salida, $codigo);
-    return [$codigo, implode("\n", $salida)];
+    simularRed(['ip_propia' => '192.0.2.1', 'puerta_enlace' => '192.0.2.254', 'arp' => tablaArpDeEjemplo([
+        ['192.0.2.254', 'aa:bb:cc:00:00:fe', 'REACHABLE'],
+        ['192.0.2.77', 'aa:bb:cc:00:00:77', 'REACHABLE'],
+    ])]);
 }
 
-// 127.0.0.3 hace de router que responde (como en la red de la demo); 127.0.0.2, de PC Recepción.
-[$codigoDemo, $salidaDemo] = correrScript('herramientas/preparar-demo.php', '--router=127.0.0.3 --pc=127.0.0.2');
-comprobarIgual(0, $codigoDemo, 'antes de empezar: preparar-demo.php deja todo listo (comprobación previa en ✓)', $salidaDemo);
+// --- Una sola vez: la base vacía y nuestros equipos registrados.
+ejecutarSentencias(null, 'DROP DATABASE IF EXISTS ' . identificador(DB_NOMBRE_PRUEBAS) . ';');
+[$codigo, $salida] = correrHerramienta('herramientas/crear-base.php');
+comprobar($codigo === 0 && str_contains($salida, 'creada: sin dispositivos'), 'una sola vez: crear-base.php crea la base vacía', $salida);
+iniciarSesionDePrueba();
+$equipos = [];
+foreach ([['Router (hotspot)', '192.0.2.254', 'router'], ['Laptop de la demo', '127.0.0.1', 'computadora'], ['Teléfono de Ana', '127.0.0.5', 'computadora']] as [$nombre, $ip, $tipo]) {
+    $equipos[$nombre] = peticion('POST', '/dispositivos', ['nombre' => $nombre, 'ip' => $ip, 'tipo' => $tipo, 'ubicacion' => 'Salón'])['json']['data']['id'] ?? 0;
+}
+comprobarIgual(3, (int) valorBd('SELECT COUNT(*) FROM dispositivos'), '  y se registran nuestros 3 equipos (hotspot, laptop y el teléfono que irá en modo avión)');
+
+// --- Antes de empezar: historial con las rondas, comprobación previa y contador en 0.
+[$codigo, $salida] = correrHerramienta('herramientas/monitorear-rondas.php', '--rondas=2 --cada=5');
+comprobar($codigo === 0 && str_contains($salida, 'Monitoreos guardados ..... 6') && preg_match('/Laptop de la demo\s+✓\s+✓\s+2 de 2/u', $salida) === 1,
+    'antes de empezar: monitorear-rondas.php deja historial (2 rondas × 3 equipos) y dice quién respondió', $salida);
+simularHotspotDelEnsayo();
+[$codigo, $salida] = correrHerramienta('herramientas/preparar-demo.php', '--router=192.0.2.254 --pc=127.0.0.1');
+comprobar($codigo === 0 && str_contains($salida, '✓ Tu base tiene 3 dispositivos') && str_contains($salida, '✓ Hay historial reciente')
+    && str_contains($salida, '⚠ El router bloquea el ping, pero está conectado (aparece en ARP)') && str_contains($salida, '✓ Esta computadora (127.0.0.1) está en tu base como «Laptop de la demo»'),
+    '  preparar-demo.php: todo en ✓ o ⚠ sin cambiar la base (el hotspot bloquea el ping)', $salida);
+foreach (filasBd('SELECT id FROM alertas WHERE atendida = 0') as $fila) {
+    peticion('PATCH', "/alertas/{$fila['id']}/atender"); // las alertas que dejaron las rondas (la del hotspot)
+}
+// Modo avión: en la red simulada se imita cambiando el teléfono a una IP que no responde.
+peticion('PUT', "/dispositivos/{$equipos['Teléfono de Ana']}", ['nombre' => 'Teléfono de Ana', 'ip' => '192.0.2.66', 'tipo' => 'computadora', 'ubicacion' => 'Salón']);
 $navegador->tamano(1280, 720);
 $navegador->erroresJs = [];
 
-// Integrante 1: Dashboard y «Monitorear todos».
+// --- Integrante 1: Dashboard y «Monitorear todos».
 abrirPagina($navegador, 'index.html');
 esperarDashboard($navegador);
-comprobar(str_starts_with((string) $navegador->evaluar("document.getElementById('ultima-comprobacion').textContent"), date('d/m/Y')), 'Integrante 1: el Dashboard muestra la última comprobación de hoy (fechas movidas por el script)');
-comprobarIgual(1, contadorDelMenu($navegador), '  al empezar hay 1 alerta pendiente (la del Servidor principal)');
-clic($navegador, '#monitorear-todos');
-comprobar($navegador->esperarHasta("!document.getElementById('monitorear-todos').disabled && document.getElementById('progreso-monitoreo').hidden", 40), '  «Monitorear todos» recorre los 6 dispositivos y termina');
-$navegador->esperarHasta('Number(document.querySelector("#barra-lateral .js-contador-alertas").textContent) === 3', 5);
-$titulosDemo = notificaciones($navegador);
-sort($titulosDemo);
-comprobarIgual([['2 dispositivos no respondieron', 'Monitoreo completado'], true, 3], [
-    $titulosDemo,
-    $navegador->evaluar("document.querySelector('#panel-estado .tarjeta-estado[data-id=\"5\"]')?.classList.contains('tarjeta-estado--inactivo')"),
+$navegador->esperarHasta("document.querySelector('#panel-grafica canvas')", 8);
+comprobarIgual([3, true, 0], [
+    (int) $navegador->evaluar("document.getElementById('indicador-total').textContent"),
+    $navegador->evaluar("!!document.querySelector('#panel-grafica canvas')"),
     contadorDelMenu($navegador),
-], '  la Impresora pasa a inactiva (primera alerta en vivo), con el Servidor de respaldo: el contador va de 1 a 3');
+], 'Integrante 1: el Dashboard muestra nuestros 3 equipos, la gráfica de las rondas y el contador en 0');
+clic($navegador, '#monitorear-todos');
+comprobar($navegador->esperarHasta("!document.getElementById('monitorear-todos').disabled && document.getElementById('progreso-monitoreo').hidden", 30), '  «Monitorear todos» recorre los 3 equipos y termina');
+$navegador->esperarHasta('Number(document.querySelector("#barra-lateral .js-contador-alertas").textContent) === 2', 5);
+comprobarIgual([true, 2], [
+    $navegador->evaluar("document.querySelector('#panel-estado .tarjeta-estado[data-id=\"{$equipos['Teléfono de Ana']}\"]')?.classList.contains('tarjeta-estado--inactivo')"),
+    contadorDelMenu($navegador),
+], '  el teléfono en modo avión pasa a Inactivo (alerta en vivo) y, como el hotspot bloquea el ping, el contador va de 0 a 2');
 cerrarNotificaciones($navegador);
 
-// Integrante 2: «Buscar dispositivos en la red» (en la demo, el hotspot del equipo; aquí,
-// la red simulada 192.0.2.0/24, donde 192.0.2.77 hace del segundo teléfono).
-simularRed(['ip_propia' => '192.0.2.1', 'puerta_enlace' => '192.0.2.254', 'arp' => tablaArpDeEjemplo([
-    ['192.0.2.20', '00:11:22:33:44:55', 'REACHABLE'],
-    ['192.0.2.77', 'aa:bb:cc:dd:ee:01', 'REACHABLE'],
-])]);
+// --- Integrante 2: buscar en la red y agregar el equipo nuevo.
 abrirPagina($navegador, 'dispositivos.html');
-$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8);
-$inicioBusqueda = microtime(true);
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 3", 8);
+simularHotspotDelEnsayo();
 clic($navegador, '#buscar-red');
-comprobar(esperarFinBusqueda($navegador), sprintf('Integrante 2: «Buscar dispositivos en la red» recorre los 4 lotes (%.1f s)', microtime(true) - $inicioBusqueda));
-comprobarIgual(['192.0.2.0/24 · 2 equipos encontrados · 1 sin registrar', ['192.0.2.20', '192.0.2.77']], [$navegador->evaluar("document.querySelector('.panel-busqueda__subtitulo').textContent"), estadoBusqueda($navegador)['ips']], '  la lista muestra el equipo registrado y el nuevo, con su «Agregar»');
+comprobar(esperarFinBusqueda($navegador), 'Integrante 2: «Buscar dispositivos en la red» recorre los 4 lotes');
+$r = estadoBusqueda($navegador);
+comprobarIgual([['192.0.2.77', '192.0.2.254'], 'Registrado · Router (hotspot)', 1], [
+    $r['ips'],
+    $navegador->evaluar("document.querySelector('#busqueda-red tr[data-ip=\"192.0.2.254\"] td:last-child').textContent.trim()"),
+    $r['agregar'],
+], '  aparecen el hotspot (registrado) y el equipo nuevo con «Agregar»; el teléfono en modo avión no');
 clic($navegador, '#busqueda-red tr[data-ip="192.0.2.77"] [data-accion="agregar-equipo"]');
 esperarModal($navegador, 'modal-dispositivo', true);
-comprobarIgual('192.0.2.77', $navegador->evaluar("document.getElementById('campo-ip').value"), '  «Agregar» abre el formulario con la IP escrita');
-clic($navegador, '#modal-dispositivo [data-bs-dismiss="modal"].btn');
+comprobarIgual('192.0.2.77', $navegador->evaluar("document.getElementById('campo-ip').value"), '  «Agregar» trae la IP escrita');
+escribir($navegador, '#campo-nombre', 'Teléfono de Luis'); // en la demo real viene del nombre DNS
+clic($navegador, '#modal-dispositivo [type="submit"]');
+$navegador->esperarHasta("!document.getElementById('error-ubicacion').hidden", 5);
+comprobarIgual(['La ubicación es obligatoria', true], [$navegador->evaluar("document.getElementById('error-ubicacion').textContent"), $navegador->evaluar("document.getElementById('modal-dispositivo').classList.contains('show')")],
+    '  sin ubicación: el mensaje de la API bajo el campo y el modal sigue abierto');
+escribir($navegador, '#campo-ubicacion', 'Salón');
+clic($navegador, '#modal-dispositivo [type="submit"]');
 esperarModal($navegador, 'modal-dispositivo', false);
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 4", 8);
+$idNuevo = (int) valorBd("SELECT id FROM dispositivos WHERE ip = '192.0.2.77'");
+comprobar($idNuevo > 0 && str_contains((string) $navegador->evaluar("document.querySelector('#busqueda-red tr[data-ip=\"192.0.2.77\"] td:last-child').textContent"), 'Registrado'), '  con la ubicación se guarda: 4 dispositivos y en el panel queda «Registrado»');
 clic($navegador, '#busqueda-red .panel-busqueda__cerrar');
-comprobarIgual([true, 6], [$navegador->evaluar("document.getElementById('busqueda-red').hidden"), (int) valorBd('SELECT COUNT(*) FROM dispositivos')], '  «Cancelar» no guarda nada y ✕ cierra el panel');
-quitarRedSimulada();
-
-// Integrante 2: agregar (primero con una IP mala) y monitorear.
-abrirPagina($navegador, 'dispositivos.html');
-$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8);
-clic($navegador, '#agregar-dispositivo');
-esperarModal($navegador, 'modal-dispositivo', true);
-escribir($navegador, '#campo-nombre', 'Servidor de pruebas');
-escribir($navegador, '#campo-ip', '192.168.1.300');
-clic($navegador, 'label[for="tipo-servidor"]');
-escribir($navegador, '#campo-ubicacion', 'Laboratorio');
-clic($navegador, '#modal-dispositivo [type="submit"]');
-$navegador->esperarHasta("!document.getElementById('error-ip').hidden", 5);
-comprobarIgual(['Dirección IP no válida', true], [$navegador->evaluar("document.getElementById('error-ip').textContent"), $navegador->evaluar("document.getElementById('modal-dispositivo').classList.contains('show')")], 'Integrante 2: con 192.168.1.300, el mensaje de la API bajo el campo IP y el modal sigue abierto');
-escribir($navegador, '#campo-ip', '192.0.2.50');
-clic($navegador, '#modal-dispositivo [type="submit"]');
-esperarModal($navegador, 'modal-dispositivo', false);
-$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 7", 8);
-$idPruebas = (int) valorBd("SELECT id FROM dispositivos WHERE ip = '192.0.2.50'");
-comprobar($idPruebas > 0, '  con 192.0.2.50 se agrega «Servidor de pruebas» (7 dispositivos)');
-cerrarNotificaciones($navegador); // «Dispositivo agregado»
-$registroLlamadas = archivoRegistroLlamadas();
-clic($navegador, ".tabla-dispositivos tr[data-id=\"$idPruebas\"] [data-accion=\"monitorear\"]");
-$navegador->esperarHasta("[...document.querySelectorAll('.toast .notificacion__titulo')].some((t) => t.textContent === 'Servidor de pruebas no respondió')", 10);
-$navegador->esperarHasta('Number(document.querySelector("#barra-lateral .js-contador-alertas").textContent) === 4', 5);
-comprobarIgual(['Servidor de pruebas no respondió', 'Inactivo', 4], [
-    notificaciones($navegador)[0] ?? null,
-    $navegador->evaluar("document.querySelector('.tabla-dispositivos tr[data-id=\"$idPruebas\"] .insignia-estado')?.textContent"),
-    contadorDelMenu($navegador),
-], '  al monitorearlo: notificación de la alerta, fila Inactivo y el contador del menú va de 3 a 4');
 cerrarNotificaciones($navegador);
+clic($navegador, ".tabla-dispositivos tr[data-id=\"$idNuevo\"] [data-accion=\"monitorear\"]");
+// En la red simulada nada responde; en la demo real el equipo nuevo queda Activo.
+comprobar($navegador->esperarHasta("[...document.querySelectorAll('.toast .notificacion__titulo')].some((t) => t.textContent.startsWith('Teléfono de Luis'))", 10), '  «Monitorear» en el equipo nuevo da su resultado en una notificación');
+cerrarNotificaciones($navegador);
+$contadorAntes = contadorDelMenu($navegador);
 
-// Integrante 3: con el registro recién limpiado, monitorear otra vez; después, atender la alerta.
+// --- Integrante 3: el registro de llamadas al monitorear otra vez el teléfono en modo avión; atender.
+$registroLlamadas = archivoRegistroLlamadas();
 clearstatcache(true, $registroLlamadas);
 $tamanoRegistro = is_file($registroLlamadas) ? (int) filesize($registroLlamadas) : 0;
-clic($navegador, ".tabla-dispositivos tr[data-id=\"$idPruebas\"] [data-accion=\"monitorear\"]");
+$idTelefono = $equipos['Teléfono de Ana'];
+clic($navegador, ".tabla-dispositivos tr[data-id=\"$idTelefono\"] [data-accion=\"monitorear\"]");
 $navegador->esperarHasta("[...document.querySelectorAll('.toast .notificacion__texto')].some((t) => t.textContent.startsWith('Ya tenía una alerta pendiente.'))", 10);
-comprobarIgual(['Servidor de pruebas no respondió', 'Ya tenía una alerta pendiente. Ver alertas', 4], [
-    notificaciones($navegador)[0] ?? null,
-    $navegador->evaluar("document.querySelector('.toast .notificacion__texto')?.textContent"),
-    contadorDelMenu($navegador),
-], 'Integrante 3: al monitorear otra vez, «Ya tenía una alerta pendiente.» y el contador sigue en 4');
+comprobarIgual(['Teléfono de Ana no respondió', $contadorAntes], [notificaciones($navegador)[0] ?? null, contadorDelMenu($navegador)], 'Integrante 3: al monitorear otra vez el teléfono, «Ya tenía una alerta pendiente.» y el contador no cambia');
 cerrarNotificaciones($navegador);
 clearstatcache(true, $registroLlamadas);
 if (is_readable($registroLlamadas)) {
     $llamadas = trim((string) file_get_contents($registroLlamadas, false, null, $tamanoRegistro));
     $lineas = $llamadas === '' ? [] : explode("\n", (string) preg_replace('/^\[\d\d:\d\d:\d\d\] /m', '', $llamadas));
-    $esperadas = ["Navegador → Monitoreo: POST /monitoreo/$idPruebas", "  Monitoreo → Dispositivos: GET /dispositivos/$idPruebas (200, ", "  Monitoreo → Dispositivos: PATCH /dispositivos/$idPruebas/estado (200, ", '  Monitoreo → Alertas: POST /alertas (200, '];
+    $esperadas = ["Navegador → Monitoreo: POST /monitoreo/$idTelefono", "  Monitoreo → Dispositivos: GET /dispositivos/$idTelefono (200, ", "  Monitoreo → Dispositivos: PATCH /dispositivos/$idTelefono/estado (200, ", '  Monitoreo → Alertas: POST /alertas (200, '];
     $coinciden = count($lineas) === 4;
     foreach ($esperadas as $i => $inicio) {
         $coinciden = $coinciden && str_starts_with($lineas[$i] ?? '', $inicio);
@@ -1969,52 +2055,42 @@ if (is_readable($registroLlamadas)) {
 }
 abrirPagina($navegador, 'alertas.html');
 esperarAlertas($navegador);
-$idAlerta = (int) valorBd("SELECT id FROM alertas WHERE dispositivo_id = $idPruebas AND atendida = 0");
+$idAlerta = (int) valorBd("SELECT id FROM alertas WHERE dispositivo_id = $idTelefono AND atendida = 0");
 clic($navegador, "#lista-alertas .alerta[data-id=\"$idAlerta\"] .alerta__boton");
 $navegador->esperarHasta("!document.querySelector('#lista-alertas .alerta[data-id=\"$idAlerta\"]')", 8);
 $navegador->procesarEventos(0.4);
-comprobarIgual([3, 1], [contadorDelMenu($navegador), (int) valorBd("SELECT atendida FROM alertas WHERE id = $idAlerta")], '  «Marcar como atendida»: la alerta sale de Pendientes y el contador del menú va de 4 a 3');
+comprobarIgual([$contadorAntes - 1, 1], [contadorDelMenu($navegador), (int) valorBd("SELECT atendida FROM alertas WHERE id = $idAlerta")], '  «Marcar como atendida»: la alerta del teléfono sale de Pendientes y el contador baja uno');
 cerrarNotificaciones($navegador);
 
-// Integrante 4: historial y eliminar.
+// --- Integrante 4: historial de las rondas y eliminar el equipo nuevo.
 abrirPagina($navegador, 'monitoreos.html');
 esperarMonitoreos($navegador);
-escribir($navegador, '#filtro-dispositivo', '4');
+escribir($navegador, '#filtro-dispositivo', (string) $equipos['Laptop de la demo']);
 esperarMonitoreos($navegador);
-comprobarIgual([true, true], [$navegador->evaluar("!!document.querySelector('#panel-grafica canvas')"), $navegador->evaluar("document.getElementById('resumen-disponibilidad').textContent.endsWith('%')")], 'Integrante 4: el historial del Servidor principal con su gráfica y la disponibilidad');
+comprobarIgual([true, '100 %'], [$navegador->evaluar("!!document.querySelector('#panel-grafica canvas')"), $navegador->evaluar("document.getElementById('resumen-disponibilidad').textContent")], 'Integrante 4: el historial de la laptop (las rondas de antes de la demo) con su gráfica y 100 % de disponibilidad');
 abrirPagina($navegador, 'dispositivos.html');
-$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 7", 8);
-clic($navegador, ".tabla-dispositivos tr[data-id=\"$idPruebas\"] [data-accion=\"eliminar\"]");
+$navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 4", 8);
+clic($navegador, ".tabla-dispositivos tr[data-id=\"$idNuevo\"] [data-accion=\"eliminar\"]");
 esperarModal($navegador, 'modal-eliminar', true);
-comprobarIgual('Servidor de pruebas', $navegador->evaluar("document.getElementById('eliminar-nombre').textContent"), '  «Eliminar» pide confirmación en un modal');
+comprobarIgual('Teléfono de Luis', $navegador->evaluar("document.getElementById('eliminar-nombre').textContent"), '  «Eliminar» en el equipo nuevo pide confirmación en un modal');
 clic($navegador, '#confirmar-eliminar');
-comprobar($navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8), '  al confirmar, la tabla vuelve a 6 dispositivos');
-comprobarIgual([0, 0], [(int) valorBd("SELECT COUNT(*) FROM monitoreos WHERE dispositivo_id = $idPruebas"), (int) valorBd("SELECT COUNT(*) FROM alertas WHERE dispositivo_id = $idPruebas")], '  y la base borró en cascada su historial y sus alertas');
-comprobarIgual(3, contadorDelMenu($navegador), '  el contador sigue en 3 (su alerta ya estaba atendida)');
+comprobar($navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 3", 8), '  al confirmar, la tabla vuelve a nuestros 3 equipos');
+comprobarIgual([0, 0], [(int) valorBd("SELECT COUNT(*) FROM monitoreos WHERE dispositivo_id = $idNuevo"), (int) valorBd("SELECT COUNT(*) FROM alertas WHERE dispositivo_id = $idNuevo")], '  y la base borró en cascada su historial y su alerta');
 capturar($navegador, 'ensayo-1280');
 
-// El celular: al recargar su Dashboard, el dispositivo eliminado ya no aparece.
+// El celular (el equipo nuevo): al recargar su Dashboard, ya no aparece.
 $navegador->tamano(390, 844, true);
 abrirPagina($navegador, 'index.html');
 esperarDashboard($navegador);
 $nombresCelular = $navegador->evaluar("[...document.querySelectorAll('#panel-estado .fila-estado__nombre, #panel-estado .tarjeta-estado__nombre')].filter((n) => n.offsetParent).map((n) => n.textContent)") ?? [];
-comprobar(count($nombresCelular) === 6 && !in_array('Servidor de pruebas', $nombresCelular, true), '  en el celular, el Dashboard recargado muestra los 6 dispositivos, sin «Servidor de pruebas»', json_encode($nombresCelular, JSON_UNESCAPED_UNICODE));
+comprobar(count($nombresCelular) === 3 && !in_array('Teléfono de Luis', $nombresCelular, true), '  en el celular, el Dashboard recargado muestra nuestros 3 equipos, sin el equipo nuevo', json_encode($nombresCelular, JSON_UNESCAPED_UNICODE));
 $navegador->tamano(1280, 720);
 
-// Cierre (Integrante 1): una suite en vivo deja las fechas del seed; preparar-demo.php las vuelve a mover y la sesión sigue abierta.
-[$codigoSuite, $salidaSuite] = correrScript('pruebas/dispositivos.php');
-comprobar($codigoSuite === 0 && preg_match('/Resultado: (\d+) de \1 comprobaciones correctas/', $salidaSuite) === 1, 'Cierre: pruebas/dispositivos.php pasa completa', substr($salidaSuite, -400));
-abrirPagina($navegador, 'index.html');
-esperarDashboard($navegador);
-comprobar(!str_starts_with((string) $navegador->evaluar("document.getElementById('ultima-comprobacion').textContent"), date('d/m/Y')), '  después de la suite, el Dashboard muestra las fechas viejas del seed');
-[$codigoDemo, $salidaDemo] = correrScript('herramientas/preparar-demo.php', '--router=127.0.0.3 --pc=127.0.0.2');
-abrirPagina($navegador, 'index.html');
-esperarDashboard($navegador);
-comprobarIgual([0, true, true], [
-    $codigoDemo,
-    (bool) $navegador->evaluar("location.pathname.endsWith('/index.html')"),
-    str_starts_with((string) $navegador->evaluar("document.getElementById('ultima-comprobacion').textContent"), date('d/m/Y')),
-], '  preparar-demo.php de nuevo: fechas de hoy y la sesión sigue abierta (sin volver al login)', $salidaDemo);
+// --- Cierre (Integrante 1): una suite en vivo, que no toca la base.
+[$codigoSuite, $salidaSuite] = correrHerramienta('pruebas/dispositivos.php');
+comprobar($codigoSuite === 0 && preg_match('/Resultado: (\d+) de \1 comprobaciones correctas/', $salidaSuite) === 1 && str_contains($salidaSuite, 'Tu base (' . DB_NOMBRE . ') quedó idéntica'),
+    'Cierre: pruebas/dispositivos.php pasa completa y comprueba que la base del usuario quedó idéntica', substr($salidaSuite, -400));
+quitarRedSimulada();
 comprobarIgual([], array_values(array_filter($navegador->erroresJs, fn($e) => !str_contains($e, 'status of 401'))), 'el ensayo completo, sin errores de JavaScript');
 $navegador->tamano(1440, 900);
 recargarBaseDeDatos();

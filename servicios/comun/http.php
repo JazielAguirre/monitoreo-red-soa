@@ -76,7 +76,8 @@ function enviarPeticion(string $servicio, string $metodo, string $url, ?array $c
         'method' => $metodo,
         'header' => "Content-Type: application/json\r\n"
             . "Accept: application/json\r\n"
-            . 'X-Servicio-Clave: ' . CLAVE_SERVICIO . "\r\n",
+            . 'X-Servicio-Clave: ' . CLAVE_SERVICIO . "\r\n"
+            . cabeceraDePruebas(),
         'content' => $cuerpo === null ? '' : json_encode($cuerpo, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
         'timeout' => TIEMPO_ESPERA_SERVICIOS,
         'ignore_errors' => true,
@@ -98,6 +99,16 @@ function enviarPeticion(string $servicio, string $metodo, string $url, ?array $c
     }
 
     return ['codigo' => $codigo, 'ok' => $json['ok'], 'data' => $json['data'] ?? null, 'error' => $json['error'] ?? null];
+}
+
+/**
+ * "X-Pruebas-Automaticas: 1" si la petición que se atiende (o el proceso) es de las
+ * pruebas, para que el otro servicio tampoco caiga nunca en la base del usuario
+ * (ver comun/db.php). Vacío en el uso normal.
+ */
+function cabeceraDePruebas(): string
+{
+    return isset($_SERVER['HTTP_X_PRUEBAS_AUTOMATICAS']) || getenv('MONITOREO_PRUEBAS') === '1' ? "X-Pruebas-Automaticas: 1\r\n" : '';
 }
 
 /**

@@ -32,6 +32,7 @@ Después de la Fase 1, el backend y el frontend pueden avanzar en paralelo. La F
 | 7 | Inicio de sesión | Todo el equipo | ✅ Completa |
 | 8 | Integración, pruebas y demo | Todo el equipo | ✅ Completa (quedan el ensayo en vivo y la prueba en Windows) |
 | 9 | Descubrimiento de red | Todo el equipo | ✅ Completa, fusionada a `main` (etiqueta `v1.1`; quedan la prueba en Windows y el ensayo en vivo) |
+| 10 | Datos reales | Todo el equipo | ✅ Completa, fusionada a `main` (etiqueta `v1.2`; queda el ensayo en vivo con los equipos reales) |
 
 ## Pruebas automáticas
 
@@ -39,7 +40,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 - `pruebas/ayudas.php`: funciones comunes para hacer peticiones a través de Apache, comprobar resultados y recargar la base de datos (`schema.sql` + `seed.sql`).
 - Un archivo por servicio: `pruebas/dispositivos.php`, `pruebas/alertas.php`, `pruebas/monitoreo.php`, `pruebas/auth.php` y, desde la Fase 9, `pruebas/descubrimiento.php`.
-- Cada script recarga la base de datos al empezar, para que los resultados no dependan de pruebas anteriores. **Borra los datos que hayas agregado a mano.**
+- Cada script recarga la base de datos **de pruebas** al empezar, para que los resultados no dependan de pruebas anteriores. Desde la Fase 10 las suites nunca tocan la base del usuario (ver "Base de pruebas" abajo).
 - Se ejecutan con `/opt/lampp/bin/php pruebas/<servicio>.php` (en Windows, `C:/xampp/php/php.exe`) y terminan con código de salida distinto de 0 si algo falla.
 - `pruebas/` no debe ser accesible por HTTP.
 - `pruebas/interfaz.php` prueba las pantallas con un Chrome headless propio (`pruebas/navegador.php`, cliente del protocolo de depuración escrito en PHP): perfil temporal, puerto elegido por Chrome, nunca se conecta al Chrome del usuario, y se cierra y borra el perfil al terminar, también ante un error o Ctrl+C. Emula 390 px y `prefers-reduced-motion`, y simula servicios caídos interceptando las peticiones de la página. Si no hay Chrome, Chromium o Edge, se omite con un aviso.
@@ -50,6 +51,16 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - **Solo lo usan las pruebas:** lo crean y lo borran `pruebas/monitoreo.php` y `pruebas/auth.php` (al empezar, al terminar y ante un error fatal), con las funciones de `pruebas/ayudas.php`. Está en `.gitignore`.
 - **Caduca solo:** lleva un campo `expira`; `http.php` lo ignora si ya pasó o si está a más de 60 segundos en el futuro. Si la prueba se interrumpe (Ctrl+C, `kill -9`), el sistema vuelve a funcionar en cuanto caduca (las pruebas usan 30 s), y la siguiente corrida lo borra.
 - **No puede activarse por HTTP:** ningún endpoint escribe archivos y `pruebas/` responde 404.
+
+**Base de pruebas (`pruebas/.base-de-pruebas.json`, Fase 10).** Las suites trabajan en `monitoreo_red_soa_pruebas`, nunca en la base del usuario (`monitoreo_red_soa`):
+
+- **Qué es:** mientras el archivo existe y está vigente, `comun/db.php` usa la base de pruebas, tanto en los servicios (a través de Apache) como en las herramientas de terminal que corren las suites (`preparar-demo.php`, `crear-base.php`). No elige la base: el único destino posible es `DB_NOMBRE_PRUEBAS` de `config.php`.
+- **Solo lo usan las suites:** lo crea `pruebas/ayudas.php` al cargarse, lo renueva cada 15 s mientras corre (peticiones, comprobaciones y esperas de Chrome) y lo borra al terminar, después de todas las demás funciones de cierre. Una suite anidada (la del ensayo del guion) lo usa sin borrarlo. Está en `.gitignore`.
+- **Caduca solo** (60 s como máximo). Si una suite muere con `kill -9`, en menos de un minuto todo vuelve a la base del usuario. Si una suite lo encuentra caducado, se detiene en lugar de seguir contra la base del usuario.
+- **Candado:** `cargarSchemaYSeed()` se niega a recrear una base que no sea la de pruebas.
+- **Tráfico marcado:** las peticiones de las suites y de su Chrome llevan la cabecera `X-Pruebas-Automaticas` (los servicios la reenvían entre sí), y los procesos que lanzan heredan `MONITOREO_PRUEBAS=1`. Si algo marcado llega cuando la base de pruebas ya no está activa (por ejemplo, un proceso de las pruebas que siguió vivo), `comun/db.php` no se conecta en lugar de usar la base del usuario. La marca no activa nada ni elige la base: enviada desde fuera por HTTP, con cualquier valor, solo provoca un error (500 con sesión, 401 sin sesión) y no crea ni renueva el interruptor; con la base de pruebas activa no cambia nada (lo prueba `pruebas/dispositivos.php`, sección 11). Se agregó después de que, durante el desarrollo de esta fase, un proceso de prueba que no recibió Ctrl+C siguió corriendo y escribió en la base del usuario (se restauró del respaldo sin pérdida).
+- **No puede activarse por HTTP:** ningún endpoint escribe archivos y `pruebas/` responde 404.
+- **Comprobación:** cada suite toma al empezar una huella de la base del usuario (filas, `CHECKSUM TABLE` y siguiente `AUTO_INCREMENT` de cada tabla) y al terminar comprueba que quedó idéntica; si la suite termina antes (error, Ctrl+C), lo muestra su función de cierre.
 
 **Archivo de red simulada (`pruebas/.red-simulada.json`, Fase 9).** Sirve para probar el Servicio de Descubrimiento a través de Apache sin depender de la red de quien corre las pruebas y sin enviar nada a la red local. Sigue el mismo modelo que el fallo simulado:
 
@@ -267,6 +278,32 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] Probado a través de Apache en una red propia (hotspot del equipo, 192.168.137.0/24): 4 lotes en ~4.4 s, 7 equipos con MAC y nombre; el hotspot y una computadora con Windows bloquean el ping y aparecen «Solo en ARP». Revisado en Chrome a 1440, 1024 y 390 px.
   - [ ] Pendiente del equipo: probarlo en Windows (`docs/WINDOWS.md`, paso 7) y ensayar el tramo del escáner en vivo con el segundo teléfono.
 - [x] README y `docs/DEMO.md` explican el uso responsable, y el guion incluye el tramo del escáner.
+
+## Fase 10 · Datos reales ✅
+
+**Objetivo:** que la aplicación muestre solo los dispositivos que agrega el usuario, nunca los de ejemplo, y que nada (pruebas ni herramientas) pueda borrarlos.
+
+**Tareas:**
+
+- `database/inicial.sql` (usuario `admin`), `schema.sql` sin `DROP DATABASE`, `seed.sql` solo con datos de ejemplo; `herramientas/crear-base.php` y `restaurar-respaldo.php`.
+- Las suites usan su propia base (`monitoreo_red_soa_pruebas`), elegida con un archivo que caduca solo, como el fallo simulado; cada suite comprueba al final que la base del usuario quedó idéntica.
+- `preparar-demo.php` sin recargar nada; `--datos-de-ejemplo` respalda y pide confirmación.
+- Estados vacíos de las 4 pantallas con la base vacía.
+- `herramientas/monitorear-rondas.php` para generar historial antes de la demo.
+- `docs/DEMO.md` con los equipos reales del equipo.
+
+**Listo cuando:**
+
+- [x] La base de uso diario se crea vacía (solo `admin`) con `crear-base.php`; si ya existe, no se toca; `--reemplazar` respalda y pide `SI`.
+- [x] Ninguna suite ni herramienta borra la base del usuario: las suites trabajan en `monitoreo_red_soa_pruebas`, también ante un fallo, Ctrl+C o `kill -9`, y la recarga se niega a operar sobre otra base.
+- [x] El cambio de base no puede activarse por HTTP y se desactiva solo.
+- [x] Cada suite termina comprobando que la base del usuario quedó idéntica (filas y `CHECKSUM TABLE` de cada tabla).
+- [x] `preparar-demo.php` sin opciones no cambia la base; `--datos-de-ejemplo` respalda y pide confirmación.
+- [x] Las 4 pantallas se ven bien con la base vacía (estados vacíos, Dashboard sin datos para la gráfica).
+- [x] `monitorear-rondas.php` guarda el historial y muestra el resumen; si la sesión o la red fallan, lo dice y termina.
+- [x] `docs/DEMO.md` usa solo los equipos del equipo (tabla de equipos y papeles) y su ensayo automático pasa.
+- [x] Las 6 suites pasan: dispositivos 260, alertas 155, monitoreo 282, auth 127, descubrimiento 113, interfaz 363 (1300), y cada una comprueba que la base del usuario quedó idéntica. Roturas a propósito detectadas en cada subpaso (solo las que no podían tocar la base del usuario).
+  - [ ] Pendiente del equipo: ensayar en vivo el guion nuevo con los equipos reales en el hotspot.
 
 ## Extras (solo si sobra tiempo)
 

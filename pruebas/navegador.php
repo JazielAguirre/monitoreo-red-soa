@@ -349,6 +349,10 @@ final class Navegador
 
     private function procesarUno(float $espera): void
     {
+        // Mientras Chrome espera, la base de pruebas sigue activa (pruebas/ayudas.php).
+        if (function_exists('renovarBaseDePruebas')) {
+            renovarBaseDePruebas();
+        }
         $texto = $this->conexion->recibirTexto(min($espera, 0.5));
 
         if ($texto === null) {
@@ -643,6 +647,9 @@ final class Navegador
         $this->enviar('Page.enable');
         $this->enviar('Runtime.enable');
         $this->enviar('Log.enable');
+        // Marca las peticiones de la página como de las pruebas (comun/db.php).
+        $this->enviar('Network.enable');
+        $this->enviar('Network.setExtraHTTPHeaders', ['headers' => ['X-Pruebas-Automaticas' => '1']]);
     }
 
     private function atenderPeticionInterceptada(array $p): void

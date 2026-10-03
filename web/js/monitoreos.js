@@ -21,6 +21,7 @@ const PATRON_DIA = /^\d{4}-\d{2}-\d{2}$/;
 const $ = (id) => document.getElementById(id);
 const estado = {
     dispositivos: [],
+    sinDispositivos: false, // la lista cargó bien y está vacía (la base recién creada)
     filtros: filtrosPorDefecto(),
     peticion: 0, // para descartar respuestas que llegan tarde
 };
@@ -133,8 +134,10 @@ async function iniciar() {
 
     try {
         estado.dispositivos = await api.dispositivos.listar();
+        estado.sinDispositivos = estado.dispositivos.length === 0;
     } catch {
         estado.dispositivos = []; // el historial se puede ver igual, sin nombres
+        estado.sinDispositivos = false;
     }
 
     const selector = $('filtro-dispositivo');
@@ -226,9 +229,12 @@ function mostrarTabla({ items, total, pagina, por_pagina: porPagina, total_pagin
         $('paginacion').hidden = true;
         const sinFiltros = !estado.filtros.dispositivo && !estado.filtros.estado
             && estado.filtros.desde === filtrosPorDefecto().desde && estado.filtros.hasta === filtrosPorDefecto().hasta;
-        mostrarBloque(contenedor, sinFiltros
+        const sinNada = estado.sinDispositivos
+            ? crearVacio({ icono: 'bi-activity', titulo: 'Aún no hay comprobaciones', texto: 'Agrega tus dispositivos y monitoréalos para ver aquí su historial.', accion: { texto: 'Ir a Dispositivos', href: 'dispositivos.html' }, compacto: true })
+            : null;
+        mostrarBloque(contenedor, sinNada ?? (sinFiltros
             ? crearVacio({ icono: 'bi-activity', titulo: 'Aún no hay comprobaciones en los últimos 7 días', texto: 'Monitorea los dispositivos desde el Dashboard o Dispositivos.', accion: { texto: 'Ir al Dashboard', href: 'index.html' }, compacto: true })
-            : crearVacio({ icono: 'bi-search', titulo: 'Ninguna comprobación coincide', texto: 'Prueba con otro dispositivo, estado o rango de fechas.', accion: { texto: 'Restablecer filtros', alHacerClic: () => $('restablecer-filtros').click() }, compacto: true }));
+            : crearVacio({ icono: 'bi-search', titulo: 'Ninguna comprobación coincide', texto: 'Prueba con otro dispositivo, estado o rango de fechas.', accion: { texto: 'Restablecer filtros', alHacerClic: () => $('restablecer-filtros').click() }, compacto: true })));
         return;
     }
 
@@ -335,12 +341,20 @@ async function mostrarGrafica(promesa, numero) {
         $('titulo-grafica').textContent = 'Tiempos de respuesta';
         $('subtitulo-grafica').textContent = 'Resumen del rango · todos los dispositivos';
         leyenda.hidden = true;
-        mostrarBloque(panel, crearVacio({
-            icono: 'bi-graph-up',
-            titulo: 'Elige un dispositivo para ver su gráfica',
-            texto: 'La gráfica muestra los tiempos de respuesta de un dispositivo a la vez.',
-            compacto: true,
-        }));
+        mostrarBloque(panel, estado.sinDispositivos
+            ? crearVacio({
+                icono: 'bi-hdd-network',
+                titulo: 'Aún no hay dispositivos',
+                texto: 'Agrega tus dispositivos y monitoréalos para ver aquí sus tiempos de respuesta.',
+                accion: { texto: 'Ir a Dispositivos', href: 'dispositivos.html' },
+                compacto: true,
+            })
+            : crearVacio({
+                icono: 'bi-graph-up',
+                titulo: 'Elige un dispositivo para ver su gráfica',
+                texto: 'La gráfica muestra los tiempos de respuesta de un dispositivo a la vez.',
+                compacto: true,
+            }));
         return;
     }
 

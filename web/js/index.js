@@ -70,7 +70,7 @@ function renderDispositivos() {
     const ubicaciones = new Set(lista.map((d) => d.ubicacion.trim().toLowerCase())).size;
 
     $('indicador-total').textContent = String(total);
-    $('indicador-total-detalle').textContent = `${pluralizar(tipos, 'tipo', 'tipos')} · ${pluralizar(ubicaciones, 'ubicación', 'ubicaciones')}`;
+    $('indicador-total-detalle').textContent = total > 0 ? `${pluralizar(tipos, 'tipo', 'tipos')} · ${pluralizar(ubicaciones, 'ubicación', 'ubicaciones')}` : 'Sin dispositivos';
     $('indicador-activos').textContent = String(activos);
     $('indicador-activos-detalle').textContent = total > 0 ? `${Math.round((activos / total) * 100)} % de la red responde` : 'Sin dispositivos';
     $('indicador-inactivos').textContent = String(inactivos.length);
@@ -92,8 +92,8 @@ function renderDispositivos() {
         mostrarBloque(panel, crearVacio({
             icono: 'bi-hdd-network',
             titulo: 'Aún no hay dispositivos',
-            texto: 'Registra el primer equipo de la red para empezar a monitorearlo.',
-            accion: { texto: 'Agregar dispositivo', icono: 'bi-plus-lg', clase: 'btn btn-primary btn-sm', href: 'dispositivos.html' },
+            texto: 'En Dispositivos puedes buscar los equipos de tu red y agregarlos con un clic.',
+            accion: { texto: 'Agregar dispositivos', icono: 'bi-plus-lg', clase: 'btn btn-primary btn-sm', href: 'dispositivos.html' },
             compacto: true,
         }));
         return;
@@ -273,7 +273,9 @@ async function cargarGrafica() {
             mostrarBloque(panel, crearVacio({
                 icono: 'bi-activity',
                 titulo: 'Aún no hay tiempos para graficar',
-                texto: 'Aparecen cuando algún dispositivo responde. Prueba con «Monitorear todos».',
+                texto: estado.dispositivos?.length === 0
+                    ? 'Aparecen cuando agregues dispositivos y alguno responda al monitoreo.'
+                    : 'Aparecen cuando algún dispositivo responde. Prueba con «Monitorear todos».',
                 compacto: true,
             }));
             return;

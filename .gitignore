@@ -15,6 +15,10 @@ desktop.ini
 *.log
 logs/
 
-# Archivos temporales de las pruebas (fallo simulado entre servicios y red simulada del escáner)
+# Archivos temporales de las pruebas (fallo simulado, red simulada del escáner y base de pruebas activa)
 pruebas/.fallo-simulado.json
 pruebas/.red-simulada.json
+pruebas/.base-de-pruebas.json
+
+# Respaldos de la base (herramientas/crear-base.php, preparar-demo.php, restaurar-respaldo.php)
+respaldos/

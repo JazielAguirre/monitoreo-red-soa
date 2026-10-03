@@ -26,6 +26,9 @@ const URL_DESCUBRIMIENTO = URL_SERVICIOS . '/descubrimiento';
 const DB_HOST = '127.0.0.1';
 const DB_PUERTO = 3306;
 const DB_NOMBRE = 'monitoreo_red_soa';
+// Base de las pruebas automáticas: solo se usa mientras las suites la activan
+// (pruebas/.base-de-pruebas.json, ver comun/db.php). Nunca guarda datos del usuario.
+const DB_NOMBRE_PRUEBAS = 'monitoreo_red_soa_pruebas';
 const DB_USUARIO = 'root';
 const DB_CLAVE = '';
 const DB_CHARSET = 'utf8mb4';

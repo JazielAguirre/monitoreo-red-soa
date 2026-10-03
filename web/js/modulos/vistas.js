@@ -37,9 +37,9 @@ export function mostrarEsqueleto(contenedor, idPlantilla) {
 /**
  * Crea un bloque de estado vacío.
  * variante: "exito" (verde, por ejemplo "Toda la red responde") o "neutro".
- * accion (opcional): { texto, icono, clase, alHacerClic }.
+ * accion y accionSecundaria (opcionales): { texto, icono, clase, alHacerClic | href }.
  */
-export function crearVacio({ icono, variante = 'neutro', titulo, texto, accion = null, compacto = false }) {
+export function crearVacio({ icono, variante = 'neutro', titulo, texto, accion = null, accionSecundaria = null, compacto = false }) {
     const bloque = crearElemento('div', [
         'estado-vacio',
         variante === 'neutro' ? 'estado-vacio--neutro' : '',
@@ -50,7 +50,11 @@ export function crearVacio({ icono, variante = 'neutro', titulo, texto, accion =
     circulo.append(crearIcono(icono));
     bloque.append(circulo, crearElemento('h3', 'estado-vacio__titulo', titulo), crearElemento('p', 'estado-vacio__texto', texto));
 
-    if (accion !== null) {
+    if (accion !== null && accionSecundaria !== null) {
+        const acciones = crearElemento('div', 'estado-vacio__acciones');
+        acciones.append(crearBoton(accion), crearBoton(accionSecundaria));
+        bloque.append(acciones);
+    } else if (accion !== null) {
         bloque.append(crearBoton(accion));
     }
 

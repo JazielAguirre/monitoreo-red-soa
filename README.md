@@ -31,7 +31,7 @@ red](#8-buscar-dispositivos-en-la-red).
 1. [Requisitos](#1-requisitos)
 2. [Instalación en Linux](#2-instalación-en-linux)
 3. [Instalación en Windows](#3-instalación-en-windows)
-4. [Cargar la base de datos](#4-cargar-la-base-de-datos)
+4. [Crear la base de datos](#4-crear-la-base-de-datos)
 5. [Comprobar que funciona](#5-comprobar-que-funciona)
 6. [Pruebas automáticas](#6-pruebas-automáticas)
 7. [Preparar la demo](#7-preparar-la-demo)
@@ -123,7 +123,7 @@ sudo ufw status
 sudo ufw allow from 192.168.0.0/24 to any port 80 proto tcp
 ```
 
-Sigue en [Cargar la base de datos](#4-cargar-la-base-de-datos).
+Sigue en [Crear la base de datos](#4-crear-la-base-de-datos).
 
 ---
 
@@ -156,25 +156,36 @@ también la lista de [`docs/WINDOWS.md`](docs/WINDOWS.md).
 
 ---
 
-## 4. Cargar la base de datos
+## 4. Crear la base de datos
 
-Desde la carpeta del proyecto. `schema.sql` **borra y recrea** la base
-`monitoreo_red_soa`; `seed.sql` carga los datos de prueba (6 dispositivos,
-56 monitoreos, 4 alertas y el usuario `admin`).
+La base de uso diario, `monitoreo_red_soa`, **empieza vacía**: solo el usuario
+`admin`, sin dispositivos, monitoreos ni alertas. Ahí solo aparece lo que tú agregues
+(a mano o con [Buscar dispositivos en la red](#8-buscar-dispositivos-en-la-red)).
 
 ```bash
-# Linux
-cd ~/Proyectos/monitoreo-red-soa
-/opt/lampp/bin/mysql -u root < database/schema.sql
-/opt/lampp/bin/mysql -u root monitoreo_red_soa < database/seed.sql
+# Linux, desde la carpeta del proyecto
+/opt/lampp/bin/php herramientas/crear-base.php
 ```
 
 ```powershell
-# Windows (PowerShell): el operador < no existe, se usa cmd /c
-cd C:\xampp\htdocs\monitoreo-red-soa
-cmd /c "C:\xampp\mysql\bin\mysql.exe -u root < database\schema.sql"
-cmd /c "C:\xampp\mysql\bin\mysql.exe -u root monitoreo_red_soa < database\seed.sql"
+# Windows (PowerShell)
+C:/xampp/php/php.exe herramientas/crear-base.php
 ```
+
+- Si la base ya existe, **no la toca**: dice cuántos dispositivos tiene y termina.
+  Puedes correrlo cuantas veces quieras.
+- `--reemplazar` la vacía para empezar de cero: primero guarda un **respaldo** en
+  `respaldos/` y pide escribir `SI`. Para volver atrás:
+  `/opt/lampp/bin/php herramientas/restaurar-respaldo.php` (sin argumentos, lista los respaldos;
+  con el nombre de uno, lo restaura, también respaldando antes y pidiendo `SI`).
+
+Archivos de `database/`:
+
+| Archivo | Qué tiene | Dónde se usa |
+|---|---|---|
+| `schema.sql` | Las 4 tablas. No crea ni borra la base: correrlo por error no borra nada | Todas las bases |
+| `inicial.sql` | El usuario `admin` | Base de uso diario y base de pruebas |
+| `seed.sql` | Datos de **ejemplo** (6 dispositivos, 56 monitoreos, 4 alertas) | Solo la base de pruebas, o a pedido con `preparar-demo.php --datos-de-ejemplo` |
 
 La base usa el usuario `root` sin contraseña (solo desarrollo local), como viene
 XAMPP.
@@ -200,9 +211,21 @@ Para entrar desde el celular (misma red WiFi): `http://<IP de la computadora>/mo
 
 ## 6. Pruebas automáticas
 
-Cada suite **recarga la base al empezar y la deja con el seed limpio al terminar**
-(también si falla o si la interrumpes con Ctrl+C): **borra lo que hayas agregado a
-mano**. Necesitan Apache y MySQL encendidos.
+Las suites **nunca tocan tu base**: trabajan en su propia base,
+`monitoreo_red_soa_pruebas`, que recrean con los datos de ejemplo al empezar. Mientras
+corren, un archivo que caduca solo (`pruebas/.base-de-pruebas.json`) hace que los
+servicios usen esa base; al terminar se borra, y si la suite muere de golpe, en menos
+de un minuto todo vuelve a tu base. Cada suite termina comprobando que tu base quedó
+**idéntica** («Tu base (monitoreo_red_soa) quedó idéntica»), también si falla o la
+interrumpes con Ctrl+C. Necesitan Apache y MySQL encendidos.
+
+> Mientras corre una suite, la aplicación en el navegador muestra la base de pruebas
+> (los dispositivos de ejemplo). Al terminar vuelve sola a la tuya.
+>
+> Además, todo lo que hacen las pruebas va marcado (cabecera `X-Pruebas-Automaticas`
+> y variable `MONITOREO_PRUEBAS=1` en los procesos que lanzan): si algo de las pruebas
+> sigue corriendo cuando la base de pruebas ya se desactivó, los servicios lo rechazan
+> en lugar de usar tu base.
 
 ```bash
 cd ~/Proyectos/monitoreo-red-soa
@@ -216,12 +239,12 @@ cd ~/Proyectos/monitoreo-red-soa
 
 | Suite | Qué prueba | Tiempo aprox. |
 |---|---|---|
-| `dispositivos.php` | Los 6 endpoints de Dispositivos, validaciones, 404/405, acceso con sesión y con clave | 2 s |
+| `dispositivos.php` | Los 6 endpoints de Dispositivos, validaciones, 404/405, acceso con sesión y con clave; la base de pruebas (que nunca toca la tuya), `crear-base.php` y `restaurar-respaldo.php` | 5 s |
 | `alertas.php` | Endpoints de Alertas, una sola alerta pendiente por dispositivo (también con peticiones simultáneas) | 3 s |
-| `monitoreo.php` | Flujo de monitoreo por HTTP entre servicios, 502 cuando otro servicio no responde, regla SOA, registro de llamadas y preparación de la demo | 15 s |
+| `monitoreo.php` | Flujo de monitoreo por HTTP entre servicios, 502 cuando otro servicio no responde, regla SOA, registro de llamadas, `preparar-demo.php` y `monitorear-rondas.php` | 40 s |
 | `auth.php` | Login, cookie, 401/403, mismo tiempo exista o no el usuario, sesión sin bloqueo, redirecciones y «Salir» en el navegador | 1 min |
 | `descubrimiento.php` | Escáner de red: red y lotes, tabla ARP de Linux, Windows (inglés y español) y macOS, DNS inverso, pings en paralelo, 503/502, regla SOA. Usa una red simulada: **nunca envía nada a tu red** | 12 s |
-| `interfaz.php` | Las pantallas en un Chrome sin ventana: estados de carga/vacío/error, celular (390 px), proyector (1024 y 1280 px), teclado, caché y «Buscar dispositivos en la red» | 4 min |
+| `interfaz.php` | Las pantallas en un Chrome sin ventana: estados de carga/vacío/error (también con la base vacía), celular (390 px), proyector (1024 y 1280 px), teclado, caché, «Buscar dispositivos en la red» y el ensayo del guion de la demo con nuestros equipos | 4 min |
 
 Cada suite termina con `Resultado: N de N comprobaciones correctas.` y con código
 de salida distinto de 0 si algo falla. Las pruebas de navegador abren su propio
@@ -232,26 +255,44 @@ no está en la ruta de siempre, indícalo con la variable `CHROME_BIN`.
 
 ## 7. Preparar la demo
 
-Un solo comando deja todo listo: recarga la base, mueve las fechas del seed para
-que la última ronda de monitoreo sea de **hace 10 minutos** (las alertas atendidas
-siguen siendo de días anteriores), pone las IPs del **router** y de **PC Recepción**
-de la red donde se presenta y comprueba que todo responde.
-
 ```bash
 /opt/lampp/bin/php herramientas/preparar-demo.php
 ```
 
-- Sin opciones, **detecta** la puerta de enlace (el router) y la IP de esta
-  computadora (hace de PC Recepción y es la dirección para el celular).
-- `--router=10.0.0.1 --pc=10.0.0.57` usa esas IPs en lugar de detectarlas.
-- `--sin-red` es el plan B sin WiFi: el router pasa a `192.0.2.30` (no responde:
-  sirve para mostrar una alerta) y PC Recepción a `127.0.0.2` (siempre responde).
+**No cambia tu base.** Comprueba que todo esté listo para presentar y dice qué falta:
 
-Al final muestra un resumen (fechas nuevas, IPs, URL para el celular) y una
-**comprobación previa** con ✓ o ✗ en cada línea: Apache, servicios, base de datos y
-ping al router. Si algo falla, dice qué hacer. Si el router bloquea el ping pero
-aparece en la tabla ARP (pasa con muchos hotspots), sale ⚠ «El router bloquea el
-ping, pero está conectado (aparece en ARP)»: es un aviso, no un fallo.
+- Apache, los servicios y tu base (cuántos dispositivos, monitoreos y alertas pendientes).
+- **Historial reciente:** si el último monitoreo es de hace más de una hora, avisa ⚠ y
+  te dice cómo generarlo con `herramientas/monitorear-rondas.php`.
+- **El router** (la puerta de enlace detectada) y **esta computadora**: si responden
+  al ping (⚠ si el router lo bloquea pero aparece en la tabla ARP) y si ya están en tu
+  base (⚠ si no: agrégalos con «Buscar dispositivos en la red»).
+- La **URL para el celular**.
+
+`--router=IP --pc=IP` usa esas IPs en lugar de detectarlas.
+
+**Historial antes de la demo.** La base de uso diario solo tiene lo que tú monitoreas.
+Para que el historial y las gráficas tengan datos, haz varias rondas de «Monitorear
+todos» antes de presentar, con los teléfonos registrados con la pantalla encendida:
+
+```bash
+/opt/lampp/bin/php herramientas/monitorear-rondas.php --rondas=12 --cada=60    # 12 minutos
+/opt/lampp/bin/php herramientas/monitorear-rondas.php --rondas=12 --cada=300   # una hora
+```
+
+En cada ronda monitorea todos tus dispositivos por HTTP, como el botón (los que no
+responden generan alertas). Al terminar, o con Ctrl+C, muestra cuántos monitoreos
+guardó y qué dispositivos respondieron en cada ronda. Si Apache o un servicio deja de
+responder, o la computadora se queda sin red, lo dice y termina; nunca se queda
+esperando.
+
+**Datos de ejemplo (opcional):** `--datos-de-ejemplo` carga en tu base los datos de
+ejemplo de la versión 1.0 (6 dispositivos, historial y alertas, con las fechas movidas a
+hace 10 minutos y las IPs del router y de «PC Recepción» de la red donde estás;
+`--sin-red` es el plan B sin WiFi). **Reemplaza tus datos**, así que antes guarda un
+respaldo en `respaldos/` y pide escribir `SI`. Para volver a tus datos:
+`/opt/lampp/bin/php herramientas/restaurar-respaldo.php` (lista los respaldos) y
+`/opt/lampp/bin/php herramientas/restaurar-respaldo.php ARCHIVO`.
 
 Durante la parte de SOA de la demo, en otra terminal:
 
@@ -347,10 +388,11 @@ curl -s -b cookies.txt -X POST http://localhost/monitoreo-red-soa/servicios/desc
 ## 10. Estructura del proyecto
 
 ```
-database/       schema.sql (recrea la base), seed.sql (datos de prueba)
+database/       schema.sql (las tablas), inicial.sql (usuario admin), seed.sql (datos de ejemplo)
 docs/           API.md (contrato de los endpoints), PLAN.md (fases), DEMO.md (guion),
                 WINDOWS.md (verificación en Windows), diseno/ (referencia visual)
-herramientas/   preparar-demo.php, ver-llamadas.php y sus funciones (solo línea de comandos)
+herramientas/   crear-base.php, restaurar-respaldo.php, preparar-demo.php, monitorear-rondas.php,
+                ver-llamadas.php y sus funciones (solo línea de comandos)
 pruebas/        las 6 suites y sus ayudas (solo línea de comandos)
 servicios/      comun/ (infraestructura) y un servicio por carpeta: auth, dispositivos, monitoreo,
                 alertas y descubrimiento

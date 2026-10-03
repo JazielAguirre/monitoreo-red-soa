@@ -427,4 +427,183 @@ comprobarRespuesta(peticion('GET', '/dispositivos/abc', null, ['sesion' => false
 comprobarRespuesta(peticion('PATCH', '/dispositivos', null, ['sesion' => false]), 405, '  y un método no permitido, 405', 'Método no permitido');
 recargarBaseDeDatos();
 
+// =====================================================================
+seccion('11. Base de pruebas: las suites nunca usan tu base (pruebas/.base-de-pruebas.json)');
+
+/**
+ * Escribe un contenido en el archivo de la base de pruebas, ejecuta $accion y deja
+ * el archivo vigente otra vez (también si $accion falla). Mientras dura, la base de
+ * pruebas puede quedar inactiva: $accion solo lee la base del usuario.
+ */
+function conArchivoDeBase(?string $contenido, callable $accion): mixed
+{
+    $GLOBALS['renovacion_en_pausa'] = true; // si no, una petición podría renovarlo… o detener la suite
+    $contenido === null ? @unlink(ARCHIVO_BASE_DE_PRUEBAS) : file_put_contents(ARCHIVO_BASE_DE_PRUEBAS, $contenido);
+    try {
+        return $accion();
+    } finally {
+        escribirArchivoBaseDePruebas();
+        $GLOBALS['renovacion_en_pausa'] = false;
+    }
+}
+
+/**
+ * Ejecuta $accion como lo haría el usuario: sin la marca de las pruebas
+ * (MONITOREO_PRUEBAS) en este proceso.
+ */
+function comoElUsuario(callable $accion): mixed
+{
+    $anterior = getenv('MONITOREO_PRUEBAS');
+    putenv('MONITOREO_PRUEBAS');
+    try {
+        return $accion();
+    } finally {
+        putenv($anterior === false ? 'MONITOREO_PRUEBAS' : "MONITOREO_PRUEBAS=$anterior"); // como estaba
+    }
+}
+
+/**
+ * Corre código PHP en otro proceso (como una herramienta o una suite anidada): [código de salida, salida].
+ */
+function correrPhp(string $codigo): array
+{
+    exec(escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg('chdir(' . var_export(dirname(__DIR__), true) . '); ' . $codigo) . ' 2>&1', $salida, $codigoSalida);
+
+    return [$codigoSalida, implode("\n", $salida)];
+}
+
+comprobarIgual([true, DB_NOMBRE_PRUEBAS], [baseDePruebasActiva(), nombreDeLaBase()], 'mientras corre la suite, la base activa es ' . DB_NOMBRE_PRUEBAS);
+comprobarIgual('1', getenv('MONITOREO_PRUEBAS'), '  y el proceso está marcado como de las pruebas (MONITOREO_PRUEBAS=1, lo heredan las herramientas que lanza)');
+comprobarIgual(DB_NOMBRE_PRUEBAS, valorBd('SELECT DATABASE()'), '  y las comprobaciones directas en SQL también la usan');
+
+foreach ([
+    'ya caducó' => json_encode(['expira' => time() - 1]),
+    'caduca en más de 60 s' => json_encode(['expira' => time() + 120]),
+    'no tiene el campo expira' => json_encode(['base' => DB_NOMBRE_PRUEBAS]),
+    'no es JSON' => 'base de pruebas',
+] as $caso => $contenido) {
+    comprobarIgual([false, DB_NOMBRE], conArchivoDeBase($contenido, fn() => comoElUsuario(fn() => [baseDePruebasActiva(), nombreDeLaBase()])), "un archivo que $caso se ignora: el uso normal vuelve a " . DB_NOMBRE);
+}
+comprobarIgual([false, DB_NOMBRE], conArchivoDeBase(null, fn() => comoElUsuario(fn() => [baseDePruebasActiva(), nombreDeLaBase()])), 'sin el archivo se usa ' . DB_NOMBRE);
+$rechazo = conArchivoDeBase(json_encode(['expira' => time() - 1]), function (): string {
+    try {
+        return 'usó ' . nombreDeLaBase();
+    } catch (RuntimeException $error) {
+        return $error->getMessage();
+    }
+});
+comprobarIgual('Tráfico de las pruebas sin la base de pruebas activa: no se usa la base del usuario.', $rechazo, 'pero un proceso de las pruebas (MONITOREO_PRUEBAS=1) con el archivo caducado se niega: nunca cae en ' . DB_NOMBRE);
+
+// A través de Apache: el servicio sigue al interruptor. Solo lectura de tu base.
+peticion('POST', '/dispositivos', ['nombre' => 'Solo en la base de pruebas', 'ip' => '192.0.2.77', 'tipo' => 'servidor', 'ubicacion' => 'Pruebas']);
+$enPruebas = count(peticion('GET', '/dispositivos')['json']['data'] ?? []);
+comprobarIgual((int) valorBd('SELECT COUNT(*) FROM dispositivos'), $enPruebas, 'GET /dispositivos (Apache) lee la base de pruebas');
+$enTuBase = (int) (filasBdUsuario('SELECT COUNT(*) AS n FROM dispositivos')[0]['n'] ?? -1);
+$conCaducado = conArchivoDeBase(json_encode(['expira' => time() - 1]), fn() => count(peticion('GET', '/dispositivos', null, ['pruebas' => false])['json']['data'] ?? []));
+comprobar($conCaducado === $enTuBase, "con el archivo caducado, el navegador del usuario vuelve a su base ($conCaducado dispositivos, como " . DB_NOMBRE . '): se desactiva solo', "pruebas: $enPruebas, tu base: $enTuBase, obtenido: $conCaducado");
+$marcada = conArchivoDeBase(json_encode(['expira' => time() - 1]), fn() => peticion('POST', '/dispositivos', ['nombre' => 'No debe llegar', 'ip' => '192.0.2.79', 'tipo' => 'servidor', 'ubicacion' => 'Pruebas']));
+comprobarRespuesta($marcada, 500, 'pero una petición de las pruebas (X-Pruebas-Automaticas) con el archivo caducado se rechaza', 'Error interno del servidor');
+comprobarIgual(0, (int) (filasBdUsuario("SELECT COUNT(*) AS n FROM dispositivos WHERE ip = '192.0.2.79'")[0]['n'] ?? -1), '  y no llegó a tu base');
+
+// La marca X-Pruebas-Automaticas enviada desde fuera por HTTP: solo puede provocar un error.
+// Nunca elige la base de pruebas ni otra base, ni activa o renueva el interruptor.
+$conMarca = peticion('GET', '/dispositivos', null, ['pruebas' => '1'])['json']['data'] ?? null;
+$sinMarca = peticion('GET', '/dispositivos', null, ['pruebas' => false])['json']['data'] ?? null;
+comprobar(is_array($conMarca) && $conMarca === $sinMarca, 'con la base de pruebas activa, la marca no cambia nada: con y sin ella se lee la misma base (la marca no elige base)');
+
+$caducado = json_encode(['expira' => time() - 1]);
+foreach (['1', '0', 'no', DB_NOMBRE_PRUEBAS, DB_NOMBRE] as $valor) {
+    [$conSesion, $sinSesion, $login, $archivo, $activa] = conArchivoDeBase($caducado, fn() => [
+        peticion('GET', '/dispositivos', null, ['pruebas' => $valor]),
+        peticion('GET', '/dispositivos', null, ['pruebas' => $valor, 'sesion' => false]),
+        peticion('POST', '/auth/login', ['usuario' => 'admin', 'contrasena' => 'admin123'], ['pruebas' => $valor, 'sesion' => false]),
+        file_get_contents(ARCHIVO_BASE_DE_PRUEBAS),
+        baseDePruebasActiva(),
+    ]);
+    comprobar(
+        $conSesion['codigo'] === 500 && ($conSesion['json']['error'] ?? null) === 'Error interno del servidor' && !isset($conSesion['json']['data'])
+            && $sinSesion['codigo'] === 401 && $login['codigo'] === 500 && $login['cookie'] === null,
+        "marca «{$valor}» desde fuera, sin base de pruebas activa: solo errores (con sesión 500, sin sesión 401, el login 500 y sin cookie), ningún dato de ninguna base",
+        "con sesión {$conSesion['codigo']}, sin sesión {$sinSesion['codigo']}, login {$login['codigo']}"
+    );
+    comprobar($archivo === $caducado && $activa === false, '  y no activó ni renovó la base de pruebas: el archivo sigue igual y caducado');
+}
+$sinArchivo = conArchivoDeBase(null, fn() => [peticion('GET', '/dispositivos', null, ['pruebas' => '1'])['codigo'], is_file(ARCHIVO_BASE_DE_PRUEBAS)]);
+comprobarIgual([500, false], $sinArchivo, 'sin el archivo, la marca también da error (500) y no crea el archivo');
+[$codigo, $salida] = conArchivoDeBase(json_encode(['expira' => time() - 1]), fn() => correrPhp('require "servicios/comun/db.php"; try { obtenerConexion(); echo "conectó"; } catch (RuntimeException $e) { echo $e->getMessage(); }'));
+comprobar(str_contains($salida, 'no se usa la base del usuario') && !str_contains($salida, 'conectó'), 'una herramienta lanzada por las pruebas con el archivo caducado tampoco se conecta', $salida);
+
+$contexto = stream_context_create(['http' => ['ignore_errors' => true, 'timeout' => 10]]);
+@file_get_contents(dirname(URL_SERVICIOS) . '/pruebas/.base-de-pruebas.json', false, $contexto);
+comprobarIgual(404, leerCabeceras($http_response_header ?? [])['codigo'], 'pruebas/.base-de-pruebas.json no es accesible por HTTP (404)');
+
+[$codigo, $salida] = conArchivoDeBase(json_encode(['expira' => time() - 1]), fn() => correrPhp('require "herramientas/base-de-datos.php"; cargarSchemaYSeed();'));
+comprobar($codigo === 2 && str_contains($salida, 'Solo se recarga la base de pruebas'), 'sin la base de pruebas activa, la recarga se niega (código 2) y no toca ' . DB_NOMBRE, $salida);
+
+// La huella detecta cualquier cambio (se prueba con la base de pruebas, nunca con la tuya).
+$antes = huellaDeLaBase(DB_NOMBRE_PRUEBAS);
+$id = peticion('POST', '/dispositivos', ['nombre' => 'Huella', 'ip' => '192.0.2.78', 'tipo' => 'servidor', 'ubicacion' => 'Pruebas'])['json']['data']['id'] ?? 0;
+peticion('DELETE', "/dispositivos/$id");
+$despuesDeBorrar = huellaDeLaBase(DB_NOMBRE_PRUEBAS);
+comprobar(is_array($antes) && $antes !== $despuesDeBorrar && ($antes['dispositivos'] ?? '') !== ($despuesDeBorrar['dispositivos'] ?? ''), 'la huella cambia aunque se agregue y se borre una fila (siguiente id)', exportar([$antes['dispositivos'] ?? null, $despuesDeBorrar['dispositivos'] ?? null]));
+peticion('PUT', '/dispositivos/1', ['nombre' => 'Mi PC cambiada', 'ip' => '127.0.0.1', 'tipo' => 'computadora', 'ubicacion' => 'Laboratorio']);
+comprobar(huellaDeLaBase(DB_NOMBRE_PRUEBAS) !== $despuesDeBorrar, '  y si cambia un dato sin cambiar el número de filas (CHECKSUM TABLE)');
+
+[$codigo, $salida] = correrPhp('require "pruebas/ayudas.php"; echo "suite anidada\n";');
+comprobar(str_contains($salida, 'suite anidada') && str_contains($salida, 'Tu base (' . DB_NOMBRE . ') quedó idéntica.'), 'una suite anidada (como la del ensayo del guion) usa la base de pruebas y comprueba tu base al cerrar', $salida);
+comprobar(baseDePruebasActiva(), '  y al terminar no desactiva la base de pruebas de la suite que la llamó');
+
+
+// =====================================================================
+seccion('12. Crear la base vacía y restaurar respaldos (crear-base.php, restaurar-respaldo.php)');
+
+register_shutdown_function('borrarRespaldosDePrueba');
+borrarRespaldosDePrueba();
+recargarBaseDeDatos();
+$huella = huellaDeLaBase(DB_NOMBRE_PRUEBAS);
+[$codigo, $salida] = correrHerramienta('herramientas/crear-base.php');
+comprobar($codigo === 0 && str_contains($salida, 'La base ' . DB_NOMBRE_PRUEBAS . ' ya existe (6 dispositivos, 56 monitoreos, 4 alertas): no se tocó.'), 'crear-base.php con la base existente → «ya existe… no se tocó» (código 0)', $salida);
+comprobar(huellaDeLaBase(DB_NOMBRE_PRUEBAS) === $huella && respaldosDePrueba() === [], '  sin cambiarla ni hacer respaldos');
+[$codigo, $salida] = correrHerramienta('herramientas/crear-base.php', '--otra');
+comprobar($codigo === 2 && str_contains($salida, 'Uso:'), 'una opción desconocida → código 2 y «Uso:»', $salida);
+
+ejecutarSentencias(null, 'DROP DATABASE ' . identificador(DB_NOMBRE_PRUEBAS) . ';');
+[$codigo, $salida] = correrHerramienta('herramientas/crear-base.php');
+comprobar($codigo === 0 && str_contains($salida, '✓ Base ' . DB_NOMBRE_PRUEBAS . ' creada: sin dispositivos, monitoreos ni alertas.'), 'sin la base, la crea (código 0)', $salida);
+comprobarIgual(['dispositivos' => 0, 'monitoreos' => 0, 'alertas' => 0, 'usuarios' => 1], contarFilas(DB_NOMBRE_PRUEBAS), '  vacía: solo el usuario admin (inicial.sql), sin los datos de ejemplo');
+comprobarIgual(200, peticion('POST', '/auth/login', ['usuario' => 'admin', 'contrasena' => 'admin123'], ['sesion' => false])['codigo'], '  y se puede entrar con admin / admin123');
+iniciarSesionDePrueba(); // la sesión anterior era de la base que se borró: se renueva
+
+peticion('POST', '/dispositivos', ['nombre' => 'Mi equipo real', 'ip' => '127.0.0.9', 'tipo' => 'computadora', 'ubicacion' => 'Casa']);
+$huellaMia = huellaDeLaBase(DB_NOMBRE_PRUEBAS);
+[$codigo, $salida] = correrHerramienta('herramientas/crear-base.php', '--reemplazar', "no\n");
+comprobar($codigo === 1 && str_contains($salida, '(1 dispositivo, 0 monitoreos, 0 alertas) y quedará vacía') && str_contains($salida, 'Cancelado: la base ' . DB_NOMBRE_PRUEBAS . ' no cambió.'), '--reemplazar respondiendo «no» → cancela (código 1)', $salida);
+comprobar(huellaDeLaBase(DB_NOMBRE_PRUEBAS) === $huellaMia && count(respaldosDePrueba()) === 1, '  la base no cambió y el respaldo ya estaba guardado antes de preguntar');
+borrarRespaldosDePrueba();
+
+[$codigo, $salida] = correrHerramienta('herramientas/crear-base.php', '--reemplazar', "SI\n");
+comprobar($codigo === 0 && str_contains($salida, '✓ La base ' . DB_NOMBRE_PRUEBAS . ' quedó vacía'), '--reemplazar respondiendo SI → la vacía (código 0)', $salida);
+comprobarIgual(['dispositivos' => 0, 'monitoreos' => 0, 'alertas' => 0, 'usuarios' => 1], contarFilas(DB_NOMBRE_PRUEBAS), '  solo queda el usuario admin');
+$respaldo = respaldosDePrueba()[0] ?? '';
+comprobar($respaldo !== '' && str_contains($salida, 'Para volver atrás: ' . comandoPhp() . ' herramientas/restaurar-respaldo.php ' . basename($respaldo)), '  y dice cómo volver atrás, con el nombre del respaldo', $salida);
+
+[$codigo, $salida] = correrHerramienta('herramientas/restaurar-respaldo.php');
+comprobar($codigo === 0 && str_contains($salida, basename($respaldo)), 'restaurar-respaldo.php sin argumentos lista los respaldos', $salida);
+[$codigo, $salida] = correrHerramienta('herramientas/restaurar-respaldo.php', escapeshellarg(basename($respaldo)), "NO\n");
+comprobar($codigo === 1 && contarFilas(DB_NOMBRE_PRUEBAS)['dispositivos'] === 0, 'restaurar respondiendo NO → cancela (código 1) sin cambiar la base', $salida);
+[$codigo, $salida] = correrHerramienta('herramientas/restaurar-respaldo.php', escapeshellarg(basename($respaldo)), "SI\n");
+comprobar($codigo === 0 && str_contains($salida, 'restaurada: 1 dispositivo, 0 monitoreos, 0 alertas.'), 'restaurar respondiendo SI → código 0', $salida);
+comprobarIgual($huellaMia, huellaDeLaBase(DB_NOMBRE_PRUEBAS), '  la base vuelve exactamente a como estaba antes de vaciarla');
+comprobar(count(respaldosDePrueba()) === 3, '  y antes de restaurar respaldó lo que había (también restaurar es reversible)', implode(', ', array_map('basename', respaldosDePrueba())));
+
+$falso = CARPETA_RESPALDOS . '/' . DB_NOMBRE_PRUEBAS . '-falso.sql';
+file_put_contents($falso, "CREATE DATABASE otra;\nUSE otra;\n-- Dump completed\n");
+foreach (['../.htaccess' => 'un archivo fuera de respaldos/', basename($falso) => 'un respaldo que cambia de base (CREATE DATABASE / USE)', 'no-existe.sql' => 'un archivo que no existe'] as $archivo => $caso) {
+    [$codigo, $salida] = correrHerramienta('herramientas/restaurar-respaldo.php', escapeshellarg($archivo), "SI\n");
+    comprobar($codigo === 2 && str_contains($salida, 'no es un respaldo de respaldos/'), "restaurar $caso → código 2, sin tocar la base", $salida);
+}
+comprobarIgual($huellaMia, huellaDeLaBase(DB_NOMBRE_PRUEBAS), '  la base no cambió');
+borrarRespaldosDePrueba();
+recargarBaseDeDatos();
+
 terminarPruebas();
