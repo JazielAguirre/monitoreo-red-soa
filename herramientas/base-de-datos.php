@@ -41,7 +41,7 @@ const TABLAS_DE_LA_BASE = ['dispositivos', 'monitoreos', 'alertas', 'usuarios'];
  */
 function cargarSchemaYSeed(): void
 {
-    if (nombreDeLaBase() !== DB_NOMBRE_PRUEBAS) {
+    if (!baseDePruebasActiva()) {
         fwrite(STDERR, '✗ Solo se recarga la base de pruebas (' . DB_NOMBRE_PRUEBAS . '), y no está activa: no se tocó ' . DB_NOMBRE . ".
 ");
         exit(2);

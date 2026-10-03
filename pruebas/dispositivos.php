@@ -448,6 +448,21 @@ function conArchivoDeBase(?string $contenido, callable $accion): mixed
 }
 
 /**
+ * Ejecuta $accion como lo haría el usuario: sin la marca de las pruebas
+ * (MONITOREO_PRUEBAS) en este proceso.
+ */
+function comoElUsuario(callable $accion): mixed
+{
+    $anterior = getenv('MONITOREO_PRUEBAS');
+    putenv('MONITOREO_PRUEBAS');
+    try {
+        return $accion();
+    } finally {
+        putenv($anterior === false ? 'MONITOREO_PRUEBAS' : "MONITOREO_PRUEBAS=$anterior"); // como estaba
+    }
+}
+
+/**
  * Corre código PHP en otro proceso (como una herramienta o una suite anidada): [código de salida, salida].
  */
 function correrPhp(string $codigo): array
@@ -458,6 +473,7 @@ function correrPhp(string $codigo): array
 }
 
 comprobarIgual([true, DB_NOMBRE_PRUEBAS], [baseDePruebasActiva(), nombreDeLaBase()], 'mientras corre la suite, la base activa es ' . DB_NOMBRE_PRUEBAS);
+comprobarIgual('1', getenv('MONITOREO_PRUEBAS'), '  y el proceso está marcado como de las pruebas (MONITOREO_PRUEBAS=1, lo heredan las herramientas que lanza)');
 comprobarIgual(DB_NOMBRE_PRUEBAS, valorBd('SELECT DATABASE()'), '  y las comprobaciones directas en SQL también la usan');
 
 foreach ([
@@ -466,17 +482,30 @@ foreach ([
     'no tiene el campo expira' => json_encode(['base' => DB_NOMBRE_PRUEBAS]),
     'no es JSON' => 'base de pruebas',
 ] as $caso => $contenido) {
-    comprobarIgual([false, DB_NOMBRE], conArchivoDeBase($contenido, fn() => [baseDePruebasActiva(), nombreDeLaBase()]), "un archivo que $caso se ignora: vuelve a " . DB_NOMBRE);
+    comprobarIgual([false, DB_NOMBRE], conArchivoDeBase($contenido, fn() => comoElUsuario(fn() => [baseDePruebasActiva(), nombreDeLaBase()])), "un archivo que $caso se ignora: el uso normal vuelve a " . DB_NOMBRE);
 }
-comprobarIgual([false, DB_NOMBRE], conArchivoDeBase(null, fn() => [baseDePruebasActiva(), nombreDeLaBase()]), 'sin el archivo se usa ' . DB_NOMBRE);
+comprobarIgual([false, DB_NOMBRE], conArchivoDeBase(null, fn() => comoElUsuario(fn() => [baseDePruebasActiva(), nombreDeLaBase()])), 'sin el archivo se usa ' . DB_NOMBRE);
+$rechazo = conArchivoDeBase(json_encode(['expira' => time() - 1]), function (): string {
+    try {
+        return 'usó ' . nombreDeLaBase();
+    } catch (RuntimeException $error) {
+        return $error->getMessage();
+    }
+});
+comprobarIgual('Tráfico de las pruebas sin la base de pruebas activa: no se usa la base del usuario.', $rechazo, 'pero un proceso de las pruebas (MONITOREO_PRUEBAS=1) con el archivo caducado se niega: nunca cae en ' . DB_NOMBRE);
 
 // A través de Apache: el servicio sigue al interruptor. Solo lectura de tu base.
 peticion('POST', '/dispositivos', ['nombre' => 'Solo en la base de pruebas', 'ip' => '192.0.2.77', 'tipo' => 'servidor', 'ubicacion' => 'Pruebas']);
 $enPruebas = count(peticion('GET', '/dispositivos')['json']['data'] ?? []);
 comprobarIgual((int) valorBd('SELECT COUNT(*) FROM dispositivos'), $enPruebas, 'GET /dispositivos (Apache) lee la base de pruebas');
 $enTuBase = (int) (filasBdUsuario('SELECT COUNT(*) AS n FROM dispositivos')[0]['n'] ?? -1);
-$conCaducado = conArchivoDeBase(json_encode(['expira' => time() - 1]), fn() => count(peticion('GET', '/dispositivos')['json']['data'] ?? []));
-comprobar($conCaducado === $enTuBase, "con el archivo caducado, el servicio vuelve a tu base ($conCaducado dispositivos, como " . DB_NOMBRE . '): se desactiva solo', "pruebas: $enPruebas, tu base: $enTuBase, obtenido: $conCaducado");
+$conCaducado = conArchivoDeBase(json_encode(['expira' => time() - 1]), fn() => count(peticion('GET', '/dispositivos', null, ['pruebas' => false])['json']['data'] ?? []));
+comprobar($conCaducado === $enTuBase, "con el archivo caducado, el navegador del usuario vuelve a su base ($conCaducado dispositivos, como " . DB_NOMBRE . '): se desactiva solo', "pruebas: $enPruebas, tu base: $enTuBase, obtenido: $conCaducado");
+$marcada = conArchivoDeBase(json_encode(['expira' => time() - 1]), fn() => peticion('POST', '/dispositivos', ['nombre' => 'No debe llegar', 'ip' => '192.0.2.79', 'tipo' => 'servidor', 'ubicacion' => 'Pruebas']));
+comprobarRespuesta($marcada, 500, 'pero una petición de las pruebas (X-Pruebas-Automaticas) con el archivo caducado se rechaza', 'Error interno del servidor');
+comprobarIgual(0, (int) (filasBdUsuario("SELECT COUNT(*) AS n FROM dispositivos WHERE ip = '192.0.2.79'")[0]['n'] ?? -1), '  y no llegó a tu base');
+[$codigo, $salida] = conArchivoDeBase(json_encode(['expira' => time() - 1]), fn() => correrPhp('require "servicios/comun/db.php"; try { obtenerConexion(); echo "conectó"; } catch (RuntimeException $e) { echo $e->getMessage(); }'));
+comprobar(str_contains($salida, 'no se usa la base del usuario') && !str_contains($salida, 'conectó'), 'una herramienta lanzada por las pruebas con el archivo caducado tampoco se conecta', $salida);
 
 $contexto = stream_context_create(['http' => ['ignore_errors' => true, 'timeout' => 10]]);
 @file_get_contents(dirname(URL_SERVICIOS) . '/pruebas/.base-de-pruebas.json', false, $contexto);

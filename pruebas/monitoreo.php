@@ -616,4 +616,116 @@ comprobarIgual(0, $codigo, '--datos-de-ejemplo --sin-red respondiendo SI termina
 comprobarIgual(['192.0.2.30', '127.0.0.2'], [valorBd('SELECT ip FROM dispositivos WHERE id = 2'), valorBd('SELECT ip FROM dispositivos WHERE id = 3')], '  con las IPs del plan sin red');
 borrarRespaldosDePrueba();
 
+// =====================================================================
+seccion('14. Historial antes de la demo (herramientas/monitorear-rondas.php)');
+
+/**
+ * Inicia monitorear-rondas.php sin esperar a que termine: [proceso, salida (pipe)].
+ * Con el comando como arreglo no hay un sh de por medio: las señales (Ctrl+C)
+ * llegan al proceso de PHP.
+ */
+function iniciarRondas(array $argumentos): array
+{
+    renovarBaseDePruebas();
+    $proceso = proc_open([PHP_BINARY, dirname(__DIR__) . '/herramientas/monitorear-rondas.php', ...$argumentos], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['redirect', 1]], $tuberias);
+    fclose($tuberias[0]);
+    stream_set_blocking($tuberias[1], false);
+
+    return [$proceso, $tuberias[1]];
+}
+
+/**
+ * Lee la salida hasta que aparece $texto o el proceso termina, como máximo $espera
+ * segundos (nunca se queda bloqueada). Devuelve lo leído.
+ */
+function leerHasta($salida, ?string $texto, float $espera = 30): string
+{
+    $leido = '';
+    $limite = microtime(true) + $espera;
+    while (($texto === null || !str_contains($leido, $texto)) && !feof($salida) && microtime(true) < $limite) {
+        $leido .= (string) fread($salida, 8192);
+        renovarBaseDePruebas();
+        usleep(50000);
+    }
+
+    return $leido;
+}
+
+/**
+ * Espera a que el proceso termine (como máximo $espera s); si no, lo mata con
+ * SIGKILL para que nunca siga vivo cuando la base de pruebas caduque.
+ * Devuelve [código de salida, terminó solo].
+ */
+function esperarFin($proceso, $salida, string &$leido, float $espera = 10): array
+{
+    $leido .= leerHasta($salida, null, $espera);
+    $estado = proc_get_status($proceso);
+    if ($estado['running']) {
+        proc_terminate($proceso, 9);
+        proc_close($proceso);
+        return [-1, false];
+    }
+    proc_close($proceso);
+
+    return [$estado['exitcode'], true];
+}
+
+recrearBase(DB_NOMBRE_PRUEBAS, [ARCHIVO_SCHEMA, ARCHIVO_INICIAL]);
+peticion('POST', '/dispositivos', ['nombre' => 'Equipo local', 'ip' => '127.0.0.1', 'tipo' => 'computadora', 'ubicacion' => 'Laboratorio']);
+peticion('POST', '/dispositivos', ['nombre' => 'Equipo apagado', 'ip' => '192.0.2.50', 'tipo' => 'servidor', 'ubicacion' => 'Laboratorio']);
+
+foreach (['--rondas=0', '--rondas=101', '--cada=4', '--cada=3601', '--rondas=abc', '--otra'] as $argumentos) {
+    [$codigo, $salida] = correrHerramienta('herramientas/monitorear-rondas.php', $argumentos);
+    comprobar($codigo === 2 && str_contains($salida, 'Uso:'), "$argumentos → código 2 con la ayuda", $salida);
+}
+
+$inicio = microtime(true);
+[$codigo, $salida] = correrHerramienta('herramientas/monitorear-rondas.php', '--rondas=3 --cada=5');
+$segundos = microtime(true) - $inicio;
+comprobarIgual(0, $codigo, '--rondas=3 --cada=5 hace las 3 rondas (código 0)', $salida);
+comprobar($segundos >= 10 && $segundos < 20, sprintf('  respeta el intervalo: 3 rondas cada 5 s tardan %.1f s (entre 10 y 20)', $segundos));
+comprobarIgual([6, 1], [(int) valorBd('SELECT COUNT(*) FROM monitoreos'), (int) valorBd('SELECT COUNT(*) FROM alertas WHERE atendida = 0')], '  guardó 6 monitoreos (3 rondas × 2) y una sola alerta para el equipo que no responde');
+comprobarSalida($salida, [
+    'Ronda 1 de 3', 'Ronda 3 de 3',
+    'Rondas hechas ............ 3 de 3',
+    'Monitoreos guardados ..... 6',
+    'Alertas nuevas ........... 1',
+    'Respondieron en cada ronda',
+], '  el resumen incluye');
+comprobar(preg_match('/Equipo local\s+✓\s+✓\s+✓\s+3 de 3/u', $salida) === 1 && preg_match('/Equipo apagado\s+✗\s+✗\s+✗\s+0 de 3/u', $salida) === 1, '  y qué dispositivos respondieron en cada ronda (✓ ✓ ✓ / ✗ ✗ ✗)', $salida);
+
+// Un servicio deja de responder a la mitad: lo dice claramente, muestra el resumen y termina.
+[$proceso, $salida] = iniciarRondas(['--rondas=3', '--cada=5']);
+$leido = leerHasta($salida, 'siguiente ronda');
+simularFallo('Dispositivos', 'sin_respuesta', 'GET', puertoCerrado());
+$inicio = microtime(true);
+[$codigo] = esperarFin($proceso, $salida, $leido, 15);
+quitarFalloSimulado();
+comprobar($codigo === 1 && str_contains($leido, '✗ Se detuvieron las rondas: Ningún dispositivo se pudo monitorear en esta ronda: No se pudo comunicar con el Servicio de Dispositivos'),
+    'si Dispositivos deja de responder a la mitad → «Se detuvieron las rondas» con el motivo (código 1)', $leido);
+comprobar(microtime(true) - $inicio < 10, '  no se queda esperando: termina en la ronda siguiente');
+comprobar(str_contains($leido, 'Rondas hechas ............ 2 de 3 (se detuvo antes)') && str_contains($leido, 'Monitoreos guardados ..... 2') && preg_match('/Equipo local\s+✓\s+!\s+1 de 2/u', $leido) === 1,
+    '  y el resumen dice qué se alcanzó a guardar (! = no se pudo monitorear)', $leido);
+
+if (function_exists('pcntl_async_signals')) {
+    [$proceso, $salida] = iniciarRondas(['--rondas=3', '--cada=60']);
+    $leido = leerHasta($salida, 'siguiente ronda');
+    proc_terminate($proceso, SIGINT);
+    [$codigo, $soloTermino] = esperarFin($proceso, $salida, $leido, 5);
+    comprobar($soloTermino && $codigo === 1 && str_contains($leido, 'Detenido con Ctrl+C.') && str_contains($leido, 'Rondas hechas ............ 1 de 3'), 'Ctrl+C durante la espera → resumen de lo hecho, sin esperar los 60 s (código 1)', $leido);
+} else {
+    avisar('Sin pcntl (Windows): no se probó Ctrl+C en monitorear-rondas.php.');
+}
+// La marca de las pruebas viaja entre servicios: un monitoreo de las pruebas con la base de
+// pruebas caducada no llega a la base del usuario ni por Monitoreo ni por Dispositivos.
+$GLOBALS['renovacion_en_pausa'] = true;
+$monitoreosTuyos = (int) (filasBdUsuario('SELECT COUNT(*) AS n FROM monitoreos')[0]['n'] ?? -1);
+file_put_contents(ARCHIVO_BASE_DE_PRUEBAS, json_encode(['expira' => time() - 1]));
+$r = peticion('POST', '/monitoreo/1');
+escribirArchivoBaseDePruebas();
+$GLOBALS['renovacion_en_pausa'] = false;
+comprobar($r['codigo'] >= 500, 'un POST /monitoreo de las pruebas con la base de pruebas caducada se rechaza', "código {$r['codigo']}");
+comprobarIgual($monitoreosTuyos, (int) (filasBdUsuario('SELECT COUNT(*) AS n FROM monitoreos')[0]['n'] ?? -1), '  y no guardó nada en tu base');
+recargarBaseDeDatos();
+
 terminarPruebas();

@@ -46,6 +46,9 @@ activarBaseDePruebas();
  */
 function activarBaseDePruebas(): void
 {
+    // Todo lo que lancen las pruebas queda marcado: si la base de pruebas caducara,
+    // los servicios y las herramientas se niegan a usar la del usuario (comun/db.php).
+    putenv('MONITOREO_PRUEBAS=1');
     $GLOBALS['huella_de_tu_base'] = huellaDeTuBase();
     $GLOBALS['huella_comprobada'] = false;
     $GLOBALS['base_de_pruebas_propia'] = !baseDePruebasActiva();
@@ -363,10 +366,14 @@ function peticionInterna(string $metodo, string $ruta, array|string|null $cuerpo
  * - 'sesion': true (por defecto) envía la cookie de iniciarSesionDePrueba(), false
  *   ninguna, o un texto con el valor completo de la cabecera Cookie.
  * - 'clave': true envía la CLAVE_SERVICIO de config.php, o un texto con otra clave.
+ * - 'pruebas': false omite la marca X-Pruebas-Automaticas (como el navegador del usuario).
  */
 function cabecerasDePrueba(array $opciones): array
 {
     $cabeceras = ['Content-Type: application/json', 'Accept: application/json'];
+    if ($opciones['pruebas'] ?? true) {
+        $cabeceras[] = 'X-Pruebas-Automaticas: 1'; // ver comun/db.php
+    }
     $sesion = $opciones['sesion'] ?? true;
     $clave = $opciones['clave'] ?? false;
 

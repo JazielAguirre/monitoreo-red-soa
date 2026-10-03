@@ -647,6 +647,9 @@ final class Navegador
         $this->enviar('Page.enable');
         $this->enviar('Runtime.enable');
         $this->enviar('Log.enable');
+        // Marca las peticiones de la página como de las pruebas (comun/db.php).
+        $this->enviar('Network.enable');
+        $this->enviar('Network.setExtraHTTPHeaders', ['headers' => ['X-Pruebas-Automaticas' => '1']]);
     }
 
     private function atenderPeticionInterceptada(array $p): void

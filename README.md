@@ -221,6 +221,11 @@ interrumpes con Ctrl+C. Necesitan Apache y MySQL encendidos.
 
 > Mientras corre una suite, la aplicación en el navegador muestra la base de pruebas
 > (los dispositivos de ejemplo). Al terminar vuelve sola a la tuya.
+>
+> Además, todo lo que hacen las pruebas va marcado (cabecera `X-Pruebas-Automaticas`
+> y variable `MONITOREO_PRUEBAS=1` en los procesos que lanzan): si algo de las pruebas
+> sigue corriendo cuando la base de pruebas ya se desactivó, los servicios lo rechazan
+> en lugar de usar tu base.
 
 ```bash
 cd ~/Proyectos/monitoreo-red-soa
@@ -265,6 +270,21 @@ no está en la ruta de siempre, indícalo con la variable `CHROME_BIN`.
 - La **URL para el celular**.
 
 `--router=IP --pc=IP` usa esas IPs en lugar de detectarlas.
+
+**Historial antes de la demo.** La base de uso diario solo tiene lo que tú monitoreas.
+Para que el historial y las gráficas tengan datos, haz varias rondas de «Monitorear
+todos» antes de presentar, con los teléfonos registrados con la pantalla encendida:
+
+```bash
+/opt/lampp/bin/php herramientas/monitorear-rondas.php --rondas=12 --cada=60    # 12 minutos
+/opt/lampp/bin/php herramientas/monitorear-rondas.php --rondas=12 --cada=300   # una hora
+```
+
+En cada ronda monitorea todos tus dispositivos por HTTP, como el botón (los que no
+responden generan alertas). Al terminar, o con Ctrl+C, muestra cuántos monitoreos
+guardó y qué dispositivos respondieron en cada ronda. Si Apache o un servicio deja de
+responder, o la computadora se queda sin red, lo dice y termina; nunca se queda
+esperando.
 
 **Datos de ejemplo (opcional):** `--datos-de-ejemplo` carga en tu base los datos de
 ejemplo de la versión 1.0 (6 dispositivos, historial y alertas, con las fechas movidas a
@@ -371,8 +391,8 @@ curl -s -b cookies.txt -X POST http://localhost/monitoreo-red-soa/servicios/desc
 database/       schema.sql (las tablas), inicial.sql (usuario admin), seed.sql (datos de ejemplo)
 docs/           API.md (contrato de los endpoints), PLAN.md (fases), DEMO.md (guion),
                 WINDOWS.md (verificación en Windows), diseno/ (referencia visual)
-herramientas/   crear-base.php, restaurar-respaldo.php, preparar-demo.php, ver-llamadas.php y sus
-                funciones (solo línea de comandos)
+herramientas/   crear-base.php, restaurar-respaldo.php, preparar-demo.php, monitorear-rondas.php,
+                ver-llamadas.php y sus funciones (solo línea de comandos)
 pruebas/        las 6 suites y sus ayudas (solo línea de comandos)
 servicios/      comun/ (infraestructura) y un servicio por carpeta: auth, dispositivos, monitoreo,
                 alertas y descubrimiento
