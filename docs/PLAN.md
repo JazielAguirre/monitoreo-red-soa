@@ -32,7 +32,7 @@ Después de la Fase 1, el backend y el frontend pueden avanzar en paralelo. La F
 | 7 | Inicio de sesión | Todo el equipo | ✅ Completa |
 | 8 | Integración, pruebas y demo | Todo el equipo | ✅ Completa (quedan el ensayo en vivo y la prueba en Windows) |
 | 9 | Descubrimiento de red | Todo el equipo | ✅ Completa, fusionada a `main` (etiqueta `v1.1`; quedan la prueba en Windows y el ensayo en vivo) |
-| 10 | Datos reales | Todo el equipo | 🔄 En curso (rama `datos-reales`) |
+| 10 | Datos reales | Todo el equipo | ✅ Completa en la rama `datos-reales` (falta la revisión para fusionar) |
 
 ## Pruebas automáticas
 
@@ -279,7 +279,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
   - [ ] Pendiente del equipo: probarlo en Windows (`docs/WINDOWS.md`, paso 7) y ensayar el tramo del escáner en vivo con el segundo teléfono.
 - [x] README y `docs/DEMO.md` explican el uso responsable, y el guion incluye el tramo del escáner.
 
-## Fase 10 · Datos reales 🔄
+## Fase 10 · Datos reales ✅
 
 **Objetivo:** que la aplicación muestre solo los dispositivos que agrega el usuario, nunca los de ejemplo, y que nada (pruebas ni herramientas) pueda borrarlos.
 
@@ -294,15 +294,16 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 
 **Listo cuando:**
 
-- [ ] La base de uso diario se crea vacía (solo `admin`) con `crear-base.php`; si ya existe, no se toca; `--reemplazar` respalda y pide `SI`.
-- [ ] Ninguna suite ni herramienta borra la base del usuario: las suites trabajan en `monitoreo_red_soa_pruebas`, también ante un fallo, Ctrl+C o `kill -9`, y la recarga se niega a operar sobre otra base.
-- [ ] El cambio de base no puede activarse por HTTP y se desactiva solo.
-- [ ] Cada suite termina comprobando que la base del usuario quedó idéntica (filas y `CHECKSUM TABLE` de cada tabla).
-- [ ] `preparar-demo.php` sin opciones no cambia la base; `--datos-de-ejemplo` respalda y pide confirmación.
-- [ ] Las 4 pantallas se ven bien con la base vacía (estados vacíos, Dashboard sin datos para la gráfica).
-- [ ] `monitorear-rondas.php` guarda el historial y muestra el resumen; si la sesión o la red fallan, lo dice y termina.
-- [ ] `docs/DEMO.md` usa solo los equipos del equipo (tabla de equipos y papeles) y su ensayo automático pasa.
-- [ ] Las 6 suites pasan.
+- [x] La base de uso diario se crea vacía (solo `admin`) con `crear-base.php`; si ya existe, no se toca; `--reemplazar` respalda y pide `SI`.
+- [x] Ninguna suite ni herramienta borra la base del usuario: las suites trabajan en `monitoreo_red_soa_pruebas`, también ante un fallo, Ctrl+C o `kill -9`, y la recarga se niega a operar sobre otra base.
+- [x] El cambio de base no puede activarse por HTTP y se desactiva solo.
+- [x] Cada suite termina comprobando que la base del usuario quedó idéntica (filas y `CHECKSUM TABLE` de cada tabla).
+- [x] `preparar-demo.php` sin opciones no cambia la base; `--datos-de-ejemplo` respalda y pide confirmación.
+- [x] Las 4 pantallas se ven bien con la base vacía (estados vacíos, Dashboard sin datos para la gráfica).
+- [x] `monitorear-rondas.php` guarda el historial y muestra el resumen; si la sesión o la red fallan, lo dice y termina.
+- [x] `docs/DEMO.md` usa solo los equipos del equipo (tabla de equipos y papeles) y su ensayo automático pasa.
+- [x] Las 6 suites pasan: dispositivos 248, alertas 155, monitoreo 282, auth 127, descubrimiento 113, interfaz 363 (1288), y cada una comprueba que la base del usuario quedó idéntica. Roturas a propósito detectadas en cada subpaso (solo las que no podían tocar la base del usuario).
+  - [ ] Pendiente del equipo: ensayar en vivo el guion nuevo con los equipos reales en el hotspot.
 
 ## Extras (solo si sobra tiempo)
 

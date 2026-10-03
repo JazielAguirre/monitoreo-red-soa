@@ -239,12 +239,12 @@ cd ~/Proyectos/monitoreo-red-soa
 
 | Suite | Qué prueba | Tiempo aprox. |
 |---|---|---|
-| `dispositivos.php` | Los 6 endpoints de Dispositivos, validaciones, 404/405, acceso con sesión y con clave | 2 s |
+| `dispositivos.php` | Los 6 endpoints de Dispositivos, validaciones, 404/405, acceso con sesión y con clave; la base de pruebas (que nunca toca la tuya), `crear-base.php` y `restaurar-respaldo.php` | 5 s |
 | `alertas.php` | Endpoints de Alertas, una sola alerta pendiente por dispositivo (también con peticiones simultáneas) | 3 s |
-| `monitoreo.php` | Flujo de monitoreo por HTTP entre servicios, 502 cuando otro servicio no responde, regla SOA, registro de llamadas y preparación de la demo | 15 s |
+| `monitoreo.php` | Flujo de monitoreo por HTTP entre servicios, 502 cuando otro servicio no responde, regla SOA, registro de llamadas, `preparar-demo.php` y `monitorear-rondas.php` | 40 s |
 | `auth.php` | Login, cookie, 401/403, mismo tiempo exista o no el usuario, sesión sin bloqueo, redirecciones y «Salir» en el navegador | 1 min |
 | `descubrimiento.php` | Escáner de red: red y lotes, tabla ARP de Linux, Windows (inglés y español) y macOS, DNS inverso, pings en paralelo, 503/502, regla SOA. Usa una red simulada: **nunca envía nada a tu red** | 12 s |
-| `interfaz.php` | Las pantallas en un Chrome sin ventana: estados de carga/vacío/error, celular (390 px), proyector (1024 y 1280 px), teclado, caché y «Buscar dispositivos en la red» | 4 min |
+| `interfaz.php` | Las pantallas en un Chrome sin ventana: estados de carga/vacío/error (también con la base vacía), celular (390 px), proyector (1024 y 1280 px), teclado, caché, «Buscar dispositivos en la red» y el ensayo del guion de la demo con nuestros equipos | 4 min |
 
 Cada suite termina con `Resultado: N de N comprobaciones correctas.` y con código
 de salida distinto de 0 si algo falla. Las pruebas de navegador abren su propio
