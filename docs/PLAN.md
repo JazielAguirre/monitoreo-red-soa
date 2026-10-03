@@ -32,7 +32,7 @@ Después de la Fase 1, el backend y el frontend pueden avanzar en paralelo. La F
 | 7 | Inicio de sesión | Todo el equipo | ✅ Completa |
 | 8 | Integración, pruebas y demo | Todo el equipo | ✅ Completa (quedan el ensayo en vivo y la prueba en Windows) |
 | 9 | Descubrimiento de red | Todo el equipo | ✅ Completa, fusionada a `main` (etiqueta `v1.1`; quedan la prueba en Windows y el ensayo en vivo) |
-| 10 | Datos reales | Todo el equipo | ✅ Completa en la rama `datos-reales` (falta la revisión para fusionar) |
+| 10 | Datos reales | Todo el equipo | ✅ Completa, fusionada a `main` (etiqueta `v1.2`; queda el ensayo en vivo con los equipos reales) |
 
 ## Pruebas automáticas
 
@@ -302,7 +302,7 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] Las 4 pantallas se ven bien con la base vacía (estados vacíos, Dashboard sin datos para la gráfica).
 - [x] `monitorear-rondas.php` guarda el historial y muestra el resumen; si la sesión o la red fallan, lo dice y termina.
 - [x] `docs/DEMO.md` usa solo los equipos del equipo (tabla de equipos y papeles) y su ensayo automático pasa.
-- [x] Las 6 suites pasan: dispositivos 248, alertas 155, monitoreo 282, auth 127, descubrimiento 113, interfaz 363 (1288), y cada una comprueba que la base del usuario quedó idéntica. Roturas a propósito detectadas en cada subpaso (solo las que no podían tocar la base del usuario).
+- [x] Las 6 suites pasan: dispositivos 260, alertas 155, monitoreo 282, auth 127, descubrimiento 113, interfaz 363 (1300), y cada una comprueba que la base del usuario quedó idéntica. Roturas a propósito detectadas en cada subpaso (solo las que no podían tocar la base del usuario).
   - [ ] Pendiente del equipo: ensayar en vivo el guion nuevo con los equipos reales en el hotspot.
 
 ## Extras (solo si sobra tiempo)
