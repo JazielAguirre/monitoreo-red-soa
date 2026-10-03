@@ -390,6 +390,31 @@ if ($respondedor !== null) {
     );
     $peticiones = detenerRespondedorDeNombres($respondedor);
     comprobarIgual(2, count(array_filter($peticiones, fn($p) => $p === '127.0.0.3 GET /desc.xml HTTP/1.0')), '  la descripción se pidió con GET a la IP que contestó (una vez por búsqueda)');
+
+    // Una descripción que nunca termina: la descarga se corta al pasar de 64 KB, no al agotar el tiempo.
+    $respondedor = iniciarRespondedorDeNombres([
+        '127.0.0.3' => ['ssdp' => respuestaSsdpDeEjemplo("http://127.0.0.3:$puertoHttp/desc.xml"), 'http' => ['puerto' => $puertoHttp, 'sin_fin' => true]],
+    ], $puertosFalsos, 20);
+    if ($respondedor !== null) {
+        $nombres = buscarNombresDeEquipos(['127.0.0.3'], [], '127.0.0', $puertosFalsos, 0.8);
+        $intentos = 0;
+        do {
+            usleep(100000);
+            $salida = (string) stream_get_contents($respondedor['salida']);
+            $respondedor['pendiente'] = ($respondedor['pendiente'] ?? '') . $salida;
+        } while (!str_contains($respondedor['pendiente'], 'enviado ') && ++$intentos < 60);
+        detenerRespondedorDeNombres($respondedor);
+        preg_match('/^enviado 127\.0\.0\.3 (\d+) (\d+)$/m', $respondedor['pendiente'], $enviado);
+        $milisegundos = isset($enviado[2]) ? (int) $enviado[2] : null;
+        comprobar(
+            ($nombres['127.0.0.3']['upnp'] ?? null) === null && $milisegundos !== null && $milisegundos < 300,
+            sprintf(
+                'Una descripción sin fin se abandona al pasar de 64 KB, sin esperar al límite de 0.8 s (cerró a los %s ms; el equipo alcanzó a enviar %s KB, lo que cabe en los búferes del sistema)',
+                $milisegundos ?? '¿?',
+                isset($enviado[1]) ? intdiv((int) $enviado[1], 1024) : '¿?'
+            )
+        );
+    }
 } else {
     avisar('No se pudo escuchar en 127.0.0.2/127.0.0.3: no se probó la búsqueda en paralelo.');
 }

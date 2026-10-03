@@ -15,12 +15,14 @@
  *         "netbios": "<base64>", "mdns": "<base64>",   // respuesta; sus 2 primeros bytes se cambian por el id de la consulta
  *         "ssdp": "<base64>",                          // respuesta tal cual
  *         "desde": "127.0.0.20",                       // opcional: contesta desde otra IP (respuesta falsificada)
- *         "http": {"puerto": 48080, "respuesta": "<base64>"} o {"puerto": 48080, "colgar": true}
+ *         "http": {"puerto": 48080, "respuesta": "<base64>"}, {"puerto": 48080, "colgar": true}
+ *                 o {"puerto": 48080, "sin_fin": true} (envía datos hasta que el cliente cierre, 5 s como máximo)
  *       }
  *     }
  *   }
- * Escribe "listo" cuando ya escucha y una línea "http IP LÍNEA-DE-PETICIÓN" por
- * cada petición HTTP recibida (así la prueba sabe qué se descargó).
+ * Escribe "listo" cuando ya escucha, una línea "http IP LÍNEA-DE-PETICIÓN" por
+ * cada petición HTTP recibida (así la prueba sabe qué se descargó) y, con
+ * "sin_fin", "enviado IP BYTES MILISEGUNDOS" cuando el cliente cierra.
  */
 
 declare(strict_types=1);
@@ -151,7 +153,36 @@ function atenderCliente(array &$clientes, int $id): void
     }
 
     stream_set_blocking($cliente['socket'], true);
-    @fwrite($cliente['socket'], base64_decode((string) ($http['respuesta'] ?? '')));
+    if (!empty($http['sin_fin'])) {
+        enviarSinFin($cliente['socket'], $cliente['ip']);
+    } else {
+        @fwrite($cliente['socket'], base64_decode((string) ($http['respuesta'] ?? '')));
+    }
     fclose($cliente['socket']);
     unset($clientes[$id]);
+}
+
+/**
+ * Una "descripción" que nunca termina: envía bloques hasta que el cliente cierra
+ * la conexión (o 5 s) y anota cuántos bytes alcanzó a enviar y en cuánto tiempo.
+ */
+function enviarSinFin(mixed $socket, string $ip): void
+{
+    $bloque = "HTTP/1.0 200 OK\r\n\r\n<root><device><friendlyName>" . str_repeat('x', 65536);
+    $enviados = 0;
+    $inicio = microtime(true);
+    $limite = $inicio + 5;
+    stream_set_timeout($socket, 1);
+
+    while (microtime(true) < $limite) {
+        $escritos = @fwrite($socket, $bloque);
+        if ($escritos === false || $escritos === 0) {
+            break;
+        }
+        $enviados += $escritos;
+        $bloque = str_repeat('x', 65536);
+    }
+
+    fwrite(STDOUT, sprintf("enviado %s %d %d\n", $ip, $enviados, (microtime(true) - $inicio) * 1000));
+    fflush(STDOUT);
 }
