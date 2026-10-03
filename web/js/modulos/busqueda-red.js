@@ -5,7 +5,8 @@
  * "Monitorear todos". La lista se va llenando con cada lote.
  *
  * Cada equipo muestra si respondió al ping o solo apareció en la tabla ARP, su
- * IP, MAC y nombre, y si ya está registrado. "Agregar" lo decide la página
+ * IP, MAC y nombre (con el método que lo dio: UPnP, mDNS, NetBIOS o DNS), y si
+ * ya está registrado. "Agregar" lo decide la página
  * (abre el formulario con la IP y el nombre escritos).
  * Los datos de la API se insertan siempre con textContent (piezas.js).
  */
@@ -18,13 +19,26 @@ import { elemento, icono, crearPunto, urlHistorial } from './piezas.js';
 import { ponerBotonMonitoreando } from './monitorear-todos.js';
 
 const LONGITUD_MAXIMA_NOMBRE = 100; // la del campo nombre de Dispositivos
+export const AYUDA_SIN_NOMBRE = 'Este equipo no anuncia su nombre; ponle uno al agregarlo';
+
+// De dónde salió el nombre (nombre_origen de la API).
+const ORIGENES_NOMBRE = {
+    upnp: { etiqueta: 'UPnP', descripcion: 'El equipo anunció este nombre por UPnP' },
+    mdns: { etiqueta: 'mDNS', descripcion: 'El equipo anunció este nombre por mDNS' },
+    netbios: { etiqueta: 'NetBIOS', descripcion: 'El equipo anunció este nombre por NetBIOS' },
+    dns: { etiqueta: 'DNS', descripcion: 'Nombre que dio el DNS de la red (normalmente el router)' },
+};
 
 /**
- * Nombre que se propone al agregar: la primera parte del nombre DNS
- * ("S25-de-Allan.mshome.net" → "S25-de-Allan"), o "" si no hay.
+ * Nombre que se propone al agregar. Los de DNS y mDNS son nombres de host: solo
+ * la primera parte ("S25-de-Allan.mshome.net" → "S25-de-Allan"). Los de NetBIOS
+ * y UPnP completos ("Sr. TV" no se corta en el punto). "" si no hay.
  */
 export function nombreSugerido(equipo) {
-    return (equipo.nombre ?? '').split('.')[0].slice(0, LONGITUD_MAXIMA_NOMBRE);
+    const nombre = equipo.nombre ?? '';
+    const esNombreDeHost = equipo.nombre_origen === 'dns' || equipo.nombre_origen === 'mdns';
+
+    return (esNombreDeHost ? nombre.split('.')[0] : nombre).slice(0, LONGITUD_MAXIMA_NOMBRE);
 }
 
 /**
@@ -69,11 +83,41 @@ function crearMarcas(equipo) {
 }
 
 /**
- * Nombre DNS; si se recorta en el proyector, el completo queda en el title.
+ * Etiqueta pequeña con el método que dio el nombre ("mDNS"). Para los lectores
+ * de pantalla se lee "por mDNS".
  */
-function crearNombreEquipo(nombre) {
-    const nodo = elemento('span', 'equipo-nombre', nombre);
-    nodo.title = nombre;
+export function crearOrigenNombre(origen) {
+    const datos = ORIGENES_NOMBRE[origen] ?? { etiqueta: origen, descripcion: '' };
+    const nodo = elemento('span', 'origen-nombre');
+    nodo.append(elemento('span', 'visually-hidden', 'por '), datos.etiqueta);
+    nodo.title = datos.descripcion;
+
+    return nodo;
+}
+
+/**
+ * Nombre y su origen; si el nombre se recorta en el proyector, el completo
+ * queda en el title. Sin nombre: "—" con la ayuda.
+ */
+export function crearNombreEquipo(equipo) {
+    if (!equipo.nombre) {
+        return crearSinNombre();
+    }
+
+    const nodo = elemento('span', 'equipo-nombre');
+    const texto = elemento('span', 'equipo-nombre__texto', equipo.nombre);
+    texto.title = equipo.nombre;
+    nodo.append(texto, crearOrigenNombre(equipo.nombre_origen));
+
+    return nodo;
+}
+
+function crearSinNombre() {
+    const nodo = elemento('span', 'texto-tenue sin-nombre');
+    const guion = elemento('span', '', '—');
+    guion.setAttribute('aria-hidden', 'true');
+    nodo.append(guion, elemento('span', 'visually-hidden', AYUDA_SIN_NOMBRE));
+    nodo.title = AYUDA_SIN_NOMBRE;
 
     return nodo;
 }
@@ -142,7 +186,7 @@ function crearFilaEquipo(equipo, opciones) {
     const celdas = [
         [crearInsigniaHallazgo(equipo), ''],
         [ip, ''],
-        [equipo.nombre ? crearNombreEquipo(equipo.nombre) : crearSinDato(), 'col-nombre'],
+        [crearNombreEquipo(equipo), 'col-nombre'],
         [equipo.mac ? elemento('span', 'texto-mono fw-normal', equipo.mac) : crearSinDato(), 'tabla-tenue col-mac'],
         [equipo.responde_ping ? elemento('span', 'texto-mono fw-normal', formatearMs(equipo.tiempo_respuesta_ms)) : crearSinDato(), 'col-respuesta'],
         [crearRegistro(equipo, opciones), 'text-end'],
@@ -168,10 +212,15 @@ export function crearTarjetaEquipo(equipo, opciones = {}) {
     const iconoTarjeta = elemento('span', 'tarjeta-dispositivo-movil__icono');
     iconoTarjeta.append(icono(equipo.es_puerta_enlace ? 'bi-router' : 'bi-pc-display'));
     const textos = elemento('div', 'tarjeta-dispositivo-movil__textos');
-    textos.append(
-        elemento('span', 'tarjeta-dispositivo-movil__nombre', equipo.nombre ?? 'Sin nombre'),
-        elemento('span', 'tarjeta-dispositivo-movil__ip', equipo.ip),
-    );
+    const nombre = elemento('div', 'tarjeta-equipo__nombre');
+    if (equipo.nombre) {
+        nombre.append(elemento('span', 'tarjeta-dispositivo-movil__nombre', equipo.nombre), crearOrigenNombre(equipo.nombre_origen));
+    } else {
+        const guion = elemento('span', 'tarjeta-dispositivo-movil__nombre texto-tenue', '—');
+        guion.setAttribute('aria-label', 'Sin nombre');
+        nombre.append(guion);
+    }
+    textos.append(nombre, elemento('span', 'tarjeta-dispositivo-movil__ip', equipo.ip));
     cabecera.append(iconoTarjeta, textos, crearInsigniaHallazgo(equipo));
 
     const datos = elemento('dl', 'tarjeta-dispositivo-movil__datos tarjeta-equipo__datos');
@@ -194,7 +243,11 @@ export function crearTarjetaEquipo(equipo, opciones = {}) {
     }
     pie.append(crearRegistro(equipo, { ...opciones, completo: true }));
 
-    tarjeta.append(cabecera, datos, pie);
+    tarjeta.append(cabecera, datos);
+    if (!equipo.nombre) {
+        tarjeta.append(elemento('p', 'tarjeta-equipo__ayuda', AYUDA_SIN_NOMBRE));
+    }
+    tarjeta.append(pie);
 
     return tarjeta;
 }

@@ -2528,11 +2528,38 @@ a.encabezado-movil__boton:hover {
 }
 
 .equipo-nombre {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    vertical-align: middle;
+}
+
+.equipo-nombre__texto {
     max-width: 240px;
     overflow: hidden;
     text-overflow: ellipsis;
-    vertical-align: middle;
+    white-space: nowrap;
+}
+
+/* De dónde salió el nombre: UPnP, mDNS, NetBIOS o DNS. */
+.origen-nombre {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    padding: 0 5px;
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--color-texto-2);
+    background-color: var(--color-superficie-hover);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-sm);
+}
+
+.sin-nombre {
+    cursor: help;
 }
 
 /* "Esta computadora" y "Puerta de enlace". */
@@ -2572,7 +2599,7 @@ a.encabezado-movil__boton:hover {
 }
 
 /* Proyector: si la tarjeta no alcanza, se oculta primero la MAC; después el tiempo, la
-   marca baja debajo de la IP, los nombres se recortan y «Registrado ·» queda solo para
+   marca baja debajo de la IP, el origen del nombre baja debajo del nombre, los nombres se recortan y «Registrado ·» queda solo para
    lectores de pantalla. Detección, IP, nombre y «Agregar»/«Registrado» siempre a la vista. */
 @container busqueda (max-width: 959.98px) {
     .tabla-equipos .col-mac {
@@ -2592,6 +2619,12 @@ a.encabezado-movil__boton:hover {
     }
 
     .tabla-equipos .equipo-nombre {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .tabla-equipos .equipo-nombre__texto {
         max-width: 160px;
     }
 
@@ -2622,6 +2655,20 @@ a.encabezado-movil__boton:hover {
 
 .tarjeta-equipo__datos {
     grid-template-columns: 1.6fr 1fr;
+}
+
+.tarjeta-equipo__nombre {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.tarjeta-equipo__ayuda {
+    margin: 0;
+    font-size: var(--texto-secundario-tamano);
+    line-height: var(--texto-secundario-alto);
+    color: var(--color-texto-2);
 }
 
 .tarjeta-equipo__pie {

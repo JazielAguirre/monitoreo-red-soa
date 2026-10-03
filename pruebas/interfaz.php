@@ -15,6 +15,7 @@ require_once __DIR__ . '/ayudas.php';
 require_once __DIR__ . '/navegador.php';
 
 const XSS = '<img src=x onerror=alert(1)>';
+const SIN_NOMBRE = '—Este equipo no anuncia su nombre; ponle uno al agregarlo'; // la celda: «—» y la ayuda (para lectores de pantalla)
 
 echo "Pruebas de la interfaz\n";
 
@@ -1621,12 +1622,17 @@ $r = estadoBusqueda($navegador);
 comprobarIgual(['192.0.2.20', '192.0.2.77', '192.0.2.254'], $r['ips'], '  lista: los equipos de la tabla ARP, ordenados por IP');
 comprobarIgual(
     [
-        ['Solo en ARP', '192.0.2.20', '—', '00:11:22:33:44:55', '—', 'Registrado · Impresora Laboratorio'],
-        ['Solo en ARP', '192.0.2.77', '—', 'aa:bb:cc:dd:ee:01', '—', 'Agregar'],
-        ['Solo en ARP', '192.0.2.254Puerta de enlace', '—', 'aa:bb:cc:dd:ee:fe', '—', 'Agregar'],
+        ['Solo en ARP', '192.0.2.20', SIN_NOMBRE, '00:11:22:33:44:55', '—', 'Registrado · Impresora Laboratorio'],
+        ['Solo en ARP', '192.0.2.77', SIN_NOMBRE, 'aa:bb:cc:dd:ee:01', '—', 'Agregar'],
+        ['Solo en ARP', '192.0.2.254Puerta de enlace', SIN_NOMBRE, 'aa:bb:cc:dd:ee:fe', '—', 'Agregar'],
     ],
     $r['filas'],
     '  cada fila: detección (punto + texto), IP, nombre, MAC, respuesta y registro'
+);
+comprobarIgual(
+    ['Este equipo no anuncia su nombre; ponle uno al agregarlo', 'true'],
+    $navegador->evaluar("(() => { const c = document.querySelector('#busqueda-red tr[data-ip=\"192.0.2.77\"] .sin-nombre'); return [c.title, c.firstElementChild.getAttribute('aria-hidden')]; })()"),
+    '  sin nombre: «—» con la ayuda «Este equipo no anuncia su nombre; ponle uno al agregarlo»'
 );
 comprobarIgual(['192.0.2.0/24 · 3 equipos encontrados · 2 sin registrar', 'Buscar dispositivos en la red', false, false], [$r['subtitulo'], $r['boton'], $r['ocupado'], $r['progreso']], '  resumen en el subtítulo, el botón vuelve a la normalidad y el progreso se oculta');
 $r = $navegador->evaluar("(() => { const a = document.querySelector('#busqueda-red tr[data-ip=\"192.0.2.20\"] a'); return [a.getAttribute('href'), document.querySelector('#busqueda-red .pie-tabla__nota').textContent.trim()]; })()");
@@ -1699,7 +1705,7 @@ comprobarIgual(['rol' => 'alert', 'titulo' => 'No se pudo buscar en la red', 'te
 comprobar(in_array('No se pudo buscar en la red', notificaciones($navegador), true), '  y una notificación de error');
 cerrarNotificaciones($navegador);
 
-interceptarBusqueda($navegador, [['ip' => '192.0.2.5', 'mac' => null, 'nombre' => 'pc.lan', 'responde_ping' => true, 'tiempo_respuesta_ms' => 0, 'en_arp' => false, 'es_esta_computadora' => true, 'es_puerta_enlace' => false, 'dispositivo' => null]]);
+interceptarBusqueda($navegador, [['ip' => '192.0.2.5', 'mac' => null, 'nombre' => 'pc.lan', 'nombre_origen' => 'dns', 'responde_ping' => true, 'tiempo_respuesta_ms' => 0, 'en_arp' => false, 'es_esta_computadora' => true, 'es_puerta_enlace' => false, 'dispositivo' => null]]);
 $navegador->interceptar('descubrimiento/red/lotes/3', ['codigo' => 502, 'cuerpo' => '{"ok":false,"error":"No se pudo comunicar con el Servicio de Dispositivos"}']);
 clic($navegador, '#busqueda-red .vista-error button');
 $navegador->esperarHasta("document.querySelector('#busqueda-red .vista-error__texto')?.textContent.includes('Dispositivos')", 10);
@@ -1707,14 +1713,14 @@ comprobarIgual('No se pudo comunicar con el Servicio de Dispositivos', $navegado
 cerrarNotificaciones($navegador);
 
 interceptarBusqueda($navegador, [
-    ['ip' => '192.0.2.5', 'mac' => null, 'nombre' => 'pc-recepcion.lan', 'responde_ping' => true, 'tiempo_respuesta_ms' => 0, 'en_arp' => false, 'es_esta_computadora' => true, 'es_puerta_enlace' => false, 'dispositivo' => null],
-    ['ip' => '192.0.2.6', 'mac' => 'aa:bb:cc:dd:ee:06', 'nombre' => XSS, 'responde_ping' => true, 'tiempo_respuesta_ms' => 12.5, 'en_arp' => true, 'es_esta_computadora' => false, 'es_puerta_enlace' => false, 'dispositivo' => null],
+    ['ip' => '192.0.2.5', 'mac' => null, 'nombre' => 'pc-recepcion.lan', 'nombre_origen' => 'dns', 'responde_ping' => true, 'tiempo_respuesta_ms' => 0, 'en_arp' => false, 'es_esta_computadora' => true, 'es_puerta_enlace' => false, 'dispositivo' => null],
+    ['ip' => '192.0.2.6', 'mac' => 'aa:bb:cc:dd:ee:06', 'nombre' => XSS, 'nombre_origen' => 'upnp', 'responde_ping' => true, 'tiempo_respuesta_ms' => 12.5, 'en_arp' => true, 'es_esta_computadora' => false, 'es_puerta_enlace' => false, 'dispositivo' => null],
 ]);
 clic($navegador, '#busqueda-red .vista-error button');
 esperarFinBusqueda($navegador, 10);
 $r = estadoBusqueda($navegador);
 comprobarIgual(
-    [['Responde al ping', '192.0.2.5Esta computadora', 'pc-recepcion.lan', '—', '< 1 ms', 'Agregar'], ['Responde al ping', '192.0.2.6', XSS, 'aa:bb:cc:dd:ee:06', '12.5 ms', 'Agregar']],
+    [['Responde al ping', '192.0.2.5Esta computadora', 'pc-recepcion.lanpor DNS', '—', '< 1 ms', 'Agregar'], ['Responde al ping', '192.0.2.6', XSS . 'por UPnP', 'aa:bb:cc:dd:ee:06', '12.5 ms', 'Agregar']],
     $r['filas'],
     '«Reintentar» vuelve a buscar; «Responde al ping» con su tiempo (< 1 ms) y la marca «Esta computadora»'
 );
@@ -1762,8 +1768,8 @@ comprobar(count($recorridos) >= 4 && $sinFoco === [], 'con Tab, los ' . count($r
 
 $navegador->tamano(1024, 768);
 interceptarBusqueda($navegador, [
-    ['ip' => '192.0.2.5', 'mac' => 'aa:bb:cc:dd:ee:05', 'nombre' => 'una-computadora-con-nombre-largo.mshome.net', 'responde_ping' => true, 'tiempo_respuesta_ms' => 34.9, 'en_arp' => true, 'es_esta_computadora' => false, 'es_puerta_enlace' => true, 'dispositivo' => ['id' => 4, 'nombre' => 'Servidor principal']],
-    ['ip' => '192.0.2.250', 'mac' => 'aa:bb:cc:dd:ee:fa', 'nombre' => null, 'responde_ping' => false, 'tiempo_respuesta_ms' => null, 'en_arp' => true, 'es_esta_computadora' => false, 'es_puerta_enlace' => false, 'dispositivo' => null],
+    ['ip' => '192.0.2.5', 'mac' => 'aa:bb:cc:dd:ee:05', 'nombre' => 'una-computadora-con-nombre-largo.mshome.net', 'nombre_origen' => 'dns', 'responde_ping' => true, 'tiempo_respuesta_ms' => 34.9, 'en_arp' => true, 'es_esta_computadora' => false, 'es_puerta_enlace' => true, 'dispositivo' => ['id' => 4, 'nombre' => 'Servidor principal']],
+    ['ip' => '192.0.2.250', 'mac' => 'aa:bb:cc:dd:ee:fa', 'nombre' => null, 'nombre_origen' => null, 'responde_ping' => false, 'tiempo_respuesta_ms' => null, 'en_arp' => true, 'es_esta_computadora' => false, 'es_puerta_enlace' => false, 'dispositivo' => null],
 ]);
 abrirPagina($navegador, 'dispositivos.html');
 $navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8);
@@ -1799,6 +1805,7 @@ $r = $navegador->evaluar(<<<'JS'
         return {
             tabla: getComputedStyle(document.querySelector('.tabla-equipos')).display,
             tarjetas: tarjetas.map((t) => t.querySelector('.tarjeta-dispositivo-movil__nombre').textContent),
+            ayuda: tarjetas.map((t) => t.querySelector('.tarjeta-equipo__ayuda')?.textContent ?? null),
             nombreAccesible: boton.innerText.trim(),
             botonAncho: Math.round(boton.getBoundingClientRect().width),
             altoAgregar: Math.round(agregar.getBoundingClientRect().height),
@@ -1806,8 +1813,8 @@ $r = $navegador->evaluar(<<<'JS'
         };
     })()
 JS);
-comprobarIgual(['tabla' => 'none', 'tarjetas' => ['una-computadora-con-nombre-largo.mshome.net', 'Sin nombre'], 'nombreAccesible' => 'Buscar dispositivos en la red', 'botonAncho' => 44, 'altoAgregar' => 44, 'desborde' => false], $r,
-    'celular 390 px: tarjetas en lugar de tabla, botón de 44 px con solo el ícono (y su nombre para lectores de pantalla) y sin desplazamiento horizontal');
+comprobarIgual(['tabla' => 'none', 'tarjetas' => ['una-computadora-con-nombre-largo.mshome.net', '—'], 'ayuda' => [null, 'Este equipo no anuncia su nombre; ponle uno al agregarlo'], 'nombreAccesible' => 'Buscar dispositivos en la red', 'botonAncho' => 44, 'altoAgregar' => 44, 'desborde' => false], $r,
+    'celular 390 px: tarjetas en lugar de tabla (sin nombre: «—» y la ayuda visible), botón de 44 px con solo el ícono (y su nombre para lectores de pantalla) y sin desplazamiento horizontal');
 capturar($navegador, 'busqueda-390');
 $navegador->quitarIntercepciones();
 $navegador->tamano(1440, 900);
@@ -1815,9 +1822,84 @@ $navegador->tamano(1440, 900);
 abrirPagina($navegador, 'componentes.html');
 $navegador->esperarHasta("document.querySelector('#demo-busqueda-tarjetas article')", 8);
 $r = $navegador->evaluar("({ tablas: document.querySelectorAll('#s33 ~ * .tabla-equipos, .seccion [id^=\"demo-busqueda\"] .tabla-equipos').length, tarjetas: document.querySelectorAll('#demo-busqueda-tarjetas .tarjeta-equipo').length, piezas: document.querySelectorAll('#demo-busqueda-piezas > *').length })");
-comprobarIgual(['tablas' => 2, 'tarjetas' => 3, 'piezas' => 6], $r, 'componentes.html, sección 33: las piezas, las tablas (buscando y resultado) y las tarjetas de celular');
+comprobarIgual(['tablas' => 2, 'tarjetas' => 3, 'piezas' => 11], $r, 'componentes.html, sección 33: las piezas (con los nombres de cada origen y sin nombre), las tablas (buscando y resultado) y las tarjetas de celular');
 comprobarIgual([], array_values(array_filter($navegador->erroresJs, fn($e) => !str_contains($e, 'status of 401'))), '  sin errores de JavaScript');
 quitarRedSimulada();
+recargarBaseDeDatos();
+
+// =====================================================================
+seccion('9.4 · Búsqueda en la red: nombres por UPnP, mDNS y NetBIOS (respondedor falso en 127.0.0.x)');
+
+$puertosFalsos = ['netbios' => puertoLibreLocal(), 'mdns' => puertoLibreLocal(), 'ssdp' => puertoLibreLocal()];
+$http = puertoLibreLocal();
+$descripcion = fn(string $nombre): array => ['puerto' => $http, 'respuesta' => respuestaHttpDeEjemplo(descripcionUpnpDeEjemplo($nombre))];
+$respondedor = iniciarRespondedorDeNombres([
+    '127.0.0.2' => ['netbios' => respuestaNetbiosDeEjemplo([['PC-NETBIOS', 0x00, false]])],
+    '127.0.0.3' => ['ssdp' => respuestaSsdpDeEjemplo("http://127.0.0.3:$http/desc.xml"), 'http' => $descripcion('Sr. TV de la sala')],
+    '127.0.0.4' => ['mdns' => respuestaMdnsDeEjemplo('127.0.0.4', 'MacBook-de-Ana.local'), 'netbios' => respuestaNetbiosDeEjemplo([['MACBOOK-ANA', 0x00, false]])],
+    '127.0.0.5' => ['netbios' => respuestaNetbiosDeEjemplo([['<b>hola</b>', 0x00, false]])],
+    '127.0.0.6' => ['ssdp' => respuestaSsdpDeEjemplo("http://127.0.0.6:$http/desc.xml"), 'http' => $descripcion(XSS)],
+], $puertosFalsos, 60);
+
+if ($respondedor !== null) {
+    $navegador->tamano(1440, 900);
+    $navegador->dialogos = [];
+    abrirPagina($navegador, 'dispositivos.html');
+    $navegador->esperarHasta("document.querySelectorAll('.tabla-dispositivos tbody tr').length === 6", 8);
+    simularRed(['ip_propia' => '127.0.0.1', 'puertos_nombres' => $puertosFalsos]);
+    clic($navegador, '#buscar-red');
+    comprobar(esperarFinBusqueda($navegador, 30), 'la búsqueda en 127.0.0.0/24 termina con los 4 lotes');
+    $r = $navegador->evaluar(<<<'JS'
+        (() => {
+            const fila = (ip) => document.querySelector(`#busqueda-red tr[data-ip="${ip}"]`);
+            const nombre = (ip) => {
+                const celda = fila(ip)?.querySelector('.col-nombre');
+                return [celda?.querySelector('.equipo-nombre__texto')?.textContent ?? null, celda?.querySelector('.origen-nombre')?.textContent ?? null, celda?.querySelector('.origen-nombre')?.title ?? null];
+            };
+            return Object.fromEntries(['127.0.0.2', '127.0.0.3', '127.0.0.4', '127.0.0.5', '127.0.0.6'].map((ip) => [ip, nombre(ip)]));
+        })()
+    JS);
+    comprobarIgual(
+        [
+            '127.0.0.2' => ['PC-NETBIOS', 'por NetBIOS', 'El equipo anunció este nombre por NetBIOS'],
+            '127.0.0.3' => ['Sr. TV de la sala', 'por UPnP', 'El equipo anunció este nombre por UPnP'],
+            '127.0.0.4' => ['MacBook-de-Ana.local', 'por mDNS', 'El equipo anunció este nombre por mDNS'],
+            '127.0.0.5' => ['<b>hola</b>', 'por NetBIOS', 'El equipo anunció este nombre por NetBIOS'],
+            '127.0.0.6' => [XSS, 'por UPnP', 'El equipo anunció este nombre por UPnP'],
+        ],
+        $r,
+        'cada nombre con su origen pequeño al lado (UPnP, mDNS, NetBIOS); con mDNS y NetBIOS gana mDNS'
+    );
+    $r = $navegador->evaluar("({ img: document.querySelectorAll('#busqueda-red img').length, b: document.querySelectorAll('#busqueda-red .col-nombre b').length, tamano: getComputedStyle(document.querySelector('#busqueda-red .origen-nombre')).fontSize })");
+    comprobarIgual(['img' => 0, 'b' => 0, 'tamano' => '11px'], $r, 'los nombres maliciosos de NetBIOS («<b>hola</b>») y UPnP («<img …>») se muestran como texto: ningún elemento creado; el origen va en 11 px');
+    capturar($navegador, 'busqueda-nombres');
+
+    foreach ([['127.0.0.3', 'Sr. TV de la sala', 'UPnP: el nombre completo, aunque tenga punto'], ['127.0.0.4', 'MacBook-de-Ana', 'mDNS: la primera parte del nombre de host'], ['127.0.0.6', XSS, 'el nombre con HTML llega al campo como texto']] as [$ip, $esperado, $caso]) {
+        clic($navegador, "#busqueda-red tr[data-ip=\"$ip\"] [data-accion=\"agregar-equipo\"]");
+        esperarModal($navegador, 'modal-dispositivo', true);
+        comprobarIgual([$esperado, 0], [$navegador->evaluar("document.getElementById('campo-nombre').value"), $navegador->evaluar("document.querySelectorAll('#modal-dispositivo img').length")], "«Agregar» propone el nombre encontrado ($caso)");
+        $navegador->tecla('Escape');
+        esperarModal($navegador, 'modal-dispositivo', false);
+    }
+
+    $navegador->tamano(1024, 768);
+    $navegador->procesarEventos(0.3);
+    $r = $navegador->evaluar(<<<'JS'
+        (() => {
+            const t = document.querySelector('.tabla-equipos');
+            const n = document.querySelector('#busqueda-red tr[data-ip="127.0.0.3"] .equipo-nombre');
+            return { cabe: t.scrollWidth <= t.clientWidth, direccion: getComputedStyle(n).flexDirection, desborde: document.documentElement.scrollWidth > innerWidth };
+        })()
+    JS);
+    comprobarIgual(['cabe' => true, 'direccion' => 'column', 'desborde' => false], $r, 'proyector 1024×768: el origen baja debajo del nombre y la tabla cabe');
+    $navegador->tamano(1440, 900);
+    $navegador->procesarEventos(0.3);
+    comprobarIgual([], $navegador->dialogos, '  no se ejecutó ningún alert()');
+    detenerRespondedorDeNombres($respondedor);
+    quitarRedSimulada();
+} else {
+    avisar('No se pudo escuchar en 127.0.0.x (en macOS solo existe 127.0.0.1): no se probaron los nombres en la interfaz.');
+}
 recargarBaseDeDatos();
 
 // =====================================================================
