@@ -27,6 +27,7 @@ require_once __DIR__ . '/../servicios/comun/http.php'; // ARCHIVO_FALLO_SIMULADO
 require_once __DIR__ . '/../herramientas/base-de-datos.php'; // cargarSchemaYSeed()
 require_once __DIR__ . '/../servicios/descubrimiento/simulacion.php'; // ARCHIVO_RED_SIMULADA
 require_once __DIR__ . '/../servicios/descubrimiento/arp.php'; // formatoArpDelSistema()
+require_once __DIR__ . '/../servicios/descubrimiento/dns.php'; // construirConsultaPtr()
 
 $GLOBALS['pruebas_correctas'] = 0;
 $GLOBALS['pruebas_fallidas'] = [];
@@ -297,6 +298,145 @@ function tablaArpDeEjemplo(array $entradas): string
     }
 
     return implode("\n", $lineas) . "\n";
+}
+
+// ---------------------------------------------------------------- Nombres de equipos (Servicio de Descubrimiento)
+
+/**
+ * Respuesta de estado del nodo de NetBIOS con id 0 (el respondedor pone el de la
+ * consulta). $nombres: [nombre, sufijo, es de grupo]. Como la de Windows: el
+ * nombre del registro es el "*" codificado, no un puntero.
+ */
+function respuestaNetbiosDeEjemplo(array $nombres, int $banderas = 0x8400): string
+{
+    $tabla = chr(count($nombres));
+    foreach ($nombres as [$nombre, $sufijo, $deGrupo]) {
+        $tabla .= str_pad(substr($nombre, 0, 15), 15, ' ') . chr($sufijo) . pack('n', ($deGrupo ? 0x8000 : 0) | 0x0400);
+    }
+    $tabla .= str_repeat("\0", 6); // MAC (sin usar) del final de la respuesta
+    $comodin = "\x20CKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\x00";
+
+    return pack('nnnnnn', 0, $banderas, 0, 1, 0, 0) . $comodin . pack('nnNn', 0x21, 1, 0, strlen($tabla)) . $tabla;
+}
+
+/**
+ * Respuesta de mDNS (formato DNS, banderas de respuesta autoritativa) con un PTR
+ * de $ip hacia $nombre ("equipo.local"), con id 0. Las etiquetas del nombre se
+ * copian tal cual, aunque traigan caracteres raros.
+ */
+function respuestaMdnsDeEjemplo(string $ip, string $nombre): string
+{
+    $pregunta = substr(construirConsultaPtr(0, $ip, 0), 12);
+    $datos = '';
+    foreach (explode('.', $nombre) as $etiqueta) {
+        $datos .= chr(strlen($etiqueta)) . $etiqueta;
+    }
+    $datos .= "\0";
+
+    return pack('nnnnnn', 0, 0x8400, 1, 1, 0, 0) . $pregunta . "\xC0\x0C" . pack('nnNn', 12, 0x8001, 120, strlen($datos)) . $datos;
+}
+
+function respuestaSsdpDeEjemplo(string $location): string
+{
+    return "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=1800\r\nEXT:\r\nLOCATION: $location\r\n"
+        . "SERVER: Linux/3.14 UPnP/1.0 Ejemplo/1.0\r\nST: upnp:rootdevice\r\nUSN: uuid:0000::upnp:rootdevice\r\n\r\n";
+}
+
+/**
+ * Descripción UPnP con el friendlyName dado (escapado como XML: un nombre con
+ * "<" llega al servicio como texto, igual que de un equipo real).
+ */
+function descripcionUpnpDeEjemplo(string $nombre): string
+{
+    $nombre = htmlspecialchars($nombre, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+
+    return "<?xml version=\"1.0\"?>\n<root xmlns=\"urn:schemas-upnp-org:device-1-0\">\n"
+        . "<specVersion><major>1</major><minor>0</minor></specVersion>\n"
+        . "<device><deviceType>urn:schemas-upnp-org:device:MediaRenderer:1</deviceType>"
+        . "<friendlyName>$nombre</friendlyName><manufacturer>Ejemplo</manufacturer></device>\n</root>\n";
+}
+
+function respuestaHttpDeEjemplo(string $cuerpo, string $estado = '200 OK', string $cabecerasExtra = ''): string
+{
+    return "HTTP/1.1 $estado\r\nContent-Type: text/xml; charset=\"utf-8\"\r\n$cabecerasExtra\r\n$cuerpo";
+}
+
+/**
+ * Un puerto libre (UDP y TCP) de 127.0.0.1 para los respondedores falsos.
+ */
+function puertoLibreLocal(): int
+{
+    do {
+        $udp = stream_socket_server('udp://127.0.0.1:0', $codigo, $mensaje, STREAM_SERVER_BIND);
+        $puerto = (int) substr(strrchr(stream_socket_get_name($udp, false), ':'), 1);
+        $tcp = @stream_socket_server("tcp://127.0.0.1:$puerto");
+        fclose($udp);
+    } while ($tcp === false);
+    fclose($tcp);
+
+    return $puerto;
+}
+
+/**
+ * Lanza pruebas/respondedor-nombres.php con $equipos (ver su comentario; las
+ * respuestas en bytes, aquí se codifican en base64) y espera a que escuche.
+ * Termina solo en $segundos (máximo 60) y con detenerRespondedorDeNombres().
+ * Devuelve ['proceso', 'salida', 'puertos'] o null si no pudo escuchar (por
+ * ejemplo, en macOS solo existe 127.0.0.1).
+ */
+function iniciarRespondedorDeNombres(array $equipos, array $puertos, int $segundos = 45): ?array
+{
+    foreach ($equipos as $ip => $equipo) {
+        foreach (['netbios', 'mdns', 'ssdp'] as $metodo) {
+            if (isset($equipo[$metodo])) {
+                $equipos[$ip][$metodo] = base64_encode($equipo[$metodo]);
+            }
+        }
+        if (isset($equipo['http']['respuesta'])) {
+            $equipos[$ip]['http']['respuesta'] = base64_encode($equipo['http']['respuesta']);
+        }
+    }
+
+    $proceso = proc_open(
+        [PHP_BINARY, __DIR__ . '/respondedor-nombres.php'],
+        [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['redirect', 1]],
+        $tuberias
+    );
+    if (!is_resource($proceso)) {
+        return null;
+    }
+    fwrite($tuberias[0], json_encode(['expira' => time() + min($segundos, 60), 'puertos' => $puertos, 'equipos' => $equipos]));
+    fclose($tuberias[0]);
+
+    $lector = [$tuberias[1]];
+    $escritura = $excepcion = null;
+    $linea = stream_select($lector, $escritura, $excepcion, 5) > 0 ? trim((string) fgets($tuberias[1])) : 'sin respuesta en 5 s';
+    $respondedor = ['proceso' => $proceso, 'salida' => $tuberias[1], 'puertos' => $puertos];
+
+    if ($linea !== 'listo') {
+        detenerRespondedorDeNombres($respondedor);
+        avisar("El respondedor falso de nombres no arrancó ($linea).");
+        return null;
+    }
+    stream_set_blocking($tuberias[1], false);
+
+    return $respondedor;
+}
+
+/**
+ * Termina el respondedor. Devuelve las peticiones HTTP que recibió
+ * (["127.0.0.3 GET /desc.xml HTTP/1.0", ...]).
+ */
+function detenerRespondedorDeNombres(array $respondedor): array
+{
+    $salida = (string) stream_get_contents($respondedor['salida']);
+    proc_terminate($respondedor['proceso']);
+    fclose($respondedor['salida']);
+    proc_close($respondedor['proceso']);
+
+    preg_match_all('/^http (.+)$/m', $salida, $peticiones);
+
+    return $peticiones[1];
 }
 
 // ---------------------------------------------------------------- Herramientas de terminal

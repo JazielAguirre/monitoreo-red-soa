@@ -243,7 +243,7 @@ cd ~/Proyectos/monitoreo-red-soa
 | `alertas.php` | Endpoints de Alertas, una sola alerta pendiente por dispositivo (también con peticiones simultáneas) | 3 s |
 | `monitoreo.php` | Flujo de monitoreo por HTTP entre servicios, 502 cuando otro servicio no responde, regla SOA, registro de llamadas, `preparar-demo.php` y `monitorear-rondas.php` | 40 s |
 | `auth.php` | Login, cookie, 401/403, mismo tiempo exista o no el usuario, sesión sin bloqueo, redirecciones y «Salir» en el navegador | 1 min |
-| `descubrimiento.php` | Escáner de red: red y lotes, tabla ARP de Linux, Windows (inglés y español) y macOS, DNS inverso, pings en paralelo, 503/502, regla SOA. Usa una red simulada: **nunca envía nada a tu red** | 12 s |
+| `descubrimiento.php` | Escáner de red: red y lotes, tabla ARP de Linux, Windows (inglés y español) y macOS, nombres por DNS, NetBIOS, mDNS y UPnP (con paquetes fijos y un respondedor falso en 127.0.0.x, incluidos nombres maliciosos y XXE), pings en paralelo, 503/502, regla SOA. Usa una red simulada: **nunca envía nada a tu red** | 12 s |
 | `interfaz.php` | Las pantallas en un Chrome sin ventana: estados de carga/vacío/error (también con la base vacía), celular (390 px), proyector (1024 y 1280 px), teclado, caché, «Buscar dispositivos en la red» y el ensayo del guion de la demo con nuestros equipos | 4 min |
 
 Cada suite termina con `Resultado: N de N comprobaciones correctas.` y con código
@@ -335,12 +335,18 @@ Cómo funciona (Servicio de Descubrimiento, `servicios/descubrimiento/`):
   privadas (`10.x`, `172.16–31.x`, `192.168.x`).
 - **Ping en paralelo, por lotes:** la interfaz pide 4 lotes de 64 direcciones, uno tras
   otro, para mostrar el progreso; cada lote hace sus pings a la vez y tarda 1–2 s.
-  La red completa, unos 5 s.
+  La red completa, unos 5–7 s.
 - **Tabla ARP:** después del ping se lee la tabla ARP del sistema (`ip neigh` en Linux,
   `arp -a` en Windows, `arp -an` en macOS). Así aparecen también los equipos que
   bloquean el ping, como muchas computadoras con Windows o el propio hotspot
   («Solo en ARP»), con su dirección MAC.
-- **Nombre:** por DNS inverso, con 0.8 s como máximo; si no hay, se muestra «—».
+- **Nombre:** el que anuncia el propio equipo, preguntado a la vez por UPnP
+  (televisiones, impresoras, consolas, módems), mDNS (iPhone, Mac, Linux), NetBIOS
+  (Windows) y DNS inverso, con 0.8 s como máximo en total. Si da varios, gana el que
+  mejor se entiende: UPnP → mDNS → NetBIOS → DNS; al lado se ve, pequeño, de dónde
+  salió. Si no hay, se muestra «—» con la ayuda «Este equipo no anuncia su nombre;
+  ponle uno al agregarlo». Las consultas van directas a cada equipo (unicast), así que
+  funcionan con el firewall activo (ufw), y los nombres se muestran siempre como texto.
 - **Registrados:** el servicio le pregunta a Dispositivos (`GET /dispositivos`) por
   HTTP; para registrar, la interfaz usa el `POST /dispositivos` de siempre. Ningún
   otro servicio cambió para agregar el escáner.
@@ -352,6 +358,14 @@ Límites conocidos:
 - La tabla ARP guarda los equipos unos minutos: uno que se desconectó hace poco puede
   seguir apareciendo como «Solo en ARP».
 - En Windows y macOS, la lectura de la tabla ARP solo se probó con salidas de ejemplo.
+- **Los teléfonos suelen aparecer sin nombre («—»).** En la prueba real (red de casa,
+  con ufw activo) tres teléfonos con MAC aleatoria no contestaron por ningún método. Dos
+  de ellos se unen al grupo multicast de mDNS (ufw registró sus avisos IGMP hacia
+  224.0.0.251), pero usan mDNS para buscar servicios, como una televisión a la cual
+  transmitir, no para anunciar su nombre: no contestan la consulta inversa. No es culpa
+  del firewall: ufw no bloqueó ninguna respuesta UDP de los puertos 137, 5353 ni 1900; sus
+  únicos bloqueos fueron IGMP (protocolo 2), que el escáner no usa. Al pulsar «Agregar»
+  el nombre queda vacío para escribirlo.
 
 Probarlo desde la terminal (solo en una red propia: el lote 1 hace ping a 64 direcciones):
 
