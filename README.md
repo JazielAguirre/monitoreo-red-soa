@@ -36,8 +36,9 @@ red](#8-buscar-dispositivos-en-la-red).
 6. [Pruebas automáticas](#6-pruebas-automáticas)
 7. [Preparar la demo](#7-preparar-la-demo)
 8. [Buscar dispositivos en la red](#8-buscar-dispositivos-en-la-red)
-9. [Problemas comunes](#9-problemas-comunes)
-10. [Estructura del proyecto](#10-estructura-del-proyecto)
+9. [Encender todo y entrar por Tailscale](#9-encender-todo-y-entrar-por-tailscale)
+10. [Problemas comunes](#10-problemas-comunes)
+11. [Estructura del proyecto](#11-estructura-del-proyecto)
 
 ---
 
@@ -379,7 +380,46 @@ curl -s -b cookies.txt -X POST http://localhost/monitoreo-red-soa/servicios/desc
 
 ---
 
-## 9. Problemas comunes
+## 9. Encender todo y entrar por Tailscale
+
+Para entrar desde el celular **en otra red** (datos móviles, otra WiFi), la computadora
+y el celular están en la misma red de [Tailscale](https://tailscale.com/), instalado y
+con sesión iniciada en los dos. Solo entran los equipos de esa red: la aplicación no
+queda abierta a internet. Después de reiniciar la computadora, un solo comando enciende
+todo (solo Linux):
+
+```bash
+sudo bash herramientas/iniciar-servicios.sh
+```
+
+1. Enciende Apache y MySQL de XAMPP, solo si no están encendidos. Si otro programa
+   ocupa el puerto 80 o el 3306 (por ejemplo, un MySQL en Docker), dice cuál y cómo
+   detenerlo.
+2. Comprueba que `tailscaled` esté activo y Tailscale conectado. Si no lo está, ejecuta
+   `tailscale up` y, si pide iniciar sesión, muestra el enlace (espera hasta 60 s).
+3. Comprueba si `ufw` permite el tráfico de `tailscale0` (la regla del paso 6 de la
+   instalación solo permite tu red local). Si no, muestra el comando, **pero no lo
+   ejecuta**: `sudo ufw allow in on tailscale0`.
+4. Corre la comprobación previa de `preparar-demo.php` con tu usuario, no como root.
+   **No cambia tu base.**
+5. Termina con un resumen: la IP de Tailscale de la computadora (`100.x.y.z`), la
+   lista de `tailscale status` y las direcciones para entrar.
+
+| Dónde | Dirección |
+|---|---|
+| En la computadora | `http://localhost/monitoreo-red-soa/web/` |
+| En el celular, con Apache | `http://<IP de Tailscale>/monitoreo-red-soa/web/` |
+| En el celular, con Live Server | `http://<IP de Tailscale>:5500/componentes.html` (abriendo la carpeta `web/` en VS Code) |
+
+Con Live Server conviene abrir `componentes.html`, la página de muestra, que no pide
+datos: las demás pantallas necesitan los servicios, y esos solo los sirve Apache.
+
+Nunca se queda esperando: si algo falla, dice qué falló y qué hacer, y lo repite en el
+resumen. Termina con código 0 si todo quedó encendido y 1 si algo falló.
+
+---
+
+## 10. Problemas comunes
 
 | Síntoma | Causa | Solución |
 |---|---|---|
@@ -399,14 +439,14 @@ curl -s -b cookies.txt -X POST http://localhost/monitoreo-red-soa/servicios/desc
 
 ---
 
-## 10. Estructura del proyecto
+## 11. Estructura del proyecto
 
 ```
 database/       schema.sql (las tablas), inicial.sql (usuario admin), seed.sql (datos de ejemplo)
 docs/           API.md (contrato de los endpoints), PLAN.md (fases), DEMO.md (guion),
                 WINDOWS.md (verificación en Windows), diseno/ (referencia visual)
 herramientas/   crear-base.php, restaurar-respaldo.php, preparar-demo.php, monitorear-rondas.php,
-                ver-llamadas.php y sus funciones (solo línea de comandos)
+                ver-llamadas.php y sus funciones, iniciar-servicios.sh (solo línea de comandos)
 pruebas/        las 6 suites y sus ayudas (solo línea de comandos)
 servicios/      comun/ (infraestructura) y un servicio por carpeta: auth, dispositivos, monitoreo,
                 alertas y descubrimiento
