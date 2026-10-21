@@ -831,4 +831,119 @@ $documentacion = hacerPing('192.0.2.20');
 $duracion = microtime(true) - $inicio;
 comprobar(!$documentacion['responde'] && $documentacion['tiempo_respuesta_ms'] === null && $duracion < 2.5, sprintf('Ping real a 192.0.2.20: no responde, en %.2f s (1 s de espera)', $duracion), $documentacion['salida']);
 
+// =====================================================================
+seccion('16. Encendido en un clic en Windows (herramientas/iniciar-servicios.ps1 y .bat)');
+
+/**
+ * Corre un programa (arreglo: sin un shell de por medio) con tope de tiempo y la salida
+ * en un archivo (en Windows un pipe no se puede leer sin bloquear). Devuelve
+ * [código de salida, salida con "\n", terminó solo, segundos].
+ */
+function correrConTope(array $comando, float $segundos): array
+{
+    renovarBaseDePruebas();
+    $archivo = (string) tempnam(sys_get_temp_dir(), 'tope');
+    $inicio = microtime(true);
+    $proceso = proc_open($comando, [0 => ['pipe', 'r'], 1 => ['file', $archivo, 'w'], 2 => ['redirect', 1]], $tuberias);
+    fclose($tuberias[0]);
+    $codigo = null;
+    while ($codigo === null && microtime(true) - $inicio < $segundos) {
+        $estado = proc_get_status($proceso);
+        $codigo = $estado['running'] ? null : $estado['exitcode'];
+        renovarBaseDePruebas();
+        usleep(100000);
+    }
+    if ($codigo === null) {
+        proc_terminate($proceso, 9);
+    }
+    proc_close($proceso);
+    $salida = str_replace("\r\n", "\n", (string) file_get_contents($archivo));
+    @unlink($archivo);
+
+    return [$codigo ?? -1, $salida, $codigo !== null, microtime(true) - $inicio];
+}
+
+if (PHP_OS_FAMILY !== 'Windows') {
+    avisar('iniciar-servicios.ps1 y .bat son solo para Windows: no se probaron aquí (en Linux se usa herramientas/iniciar-servicios.sh).');
+} else {
+    $herramientas = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'herramientas' . DIRECTORY_SEPARATOR;
+    $ps1 = (string) file_get_contents($herramientas . 'iniciar-servicios.ps1');
+    comprobar(str_starts_with($ps1, "\xEF\xBB\xBF"), 'iniciar-servicios.ps1 está en UTF-8 con BOM (Windows PowerShell 5.1 lee un archivo sin BOM como ANSI y rompería ✓, ✗ y los acentos)');
+    comprobar(preg_match("/(?<!\r)\n/", $ps1 . (string) file_get_contents($herramientas . 'iniciar-servicios.bat')) === 0, '  el .ps1 y el .bat con finales de línea CRLF (.gitattributes)');
+    comprobar(!str_contains((string) file_get_contents($herramientas . 'iniciar-servicios.sh'), "\r"), '  y iniciar-servicios.sh con LF (bash no acepta CRLF)');
+
+    // Las funciones, cargadas con -SoloFunciones, con datos de ejemplo.
+    $temporal = (string) tempnam(sys_get_temp_dir(), 'ps');
+    $pruebaPs = "$temporal.ps1";
+    file_put_contents($pruebaPs, str_replace('__SCRIPT__', $herramientas . 'iniciar-servicios.ps1', <<<'PS'
+        [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false
+        . '__SCRIPT__' -SoloFunciones
+        $r = [ordered]@{}
+        $r.soloPrivada = @(PerfilesSinPermiso @(@{ Accion = 'Allow'; Perfil = 'Private' }) @('Private', 'Public'))
+        $r.sinReglas = @(PerfilesSinPermiso @() @('Private', 'Public'))
+        $r.cualquiera = @(PerfilesSinPermiso @(@{ Accion = 'Allow'; Perfil = 'Any' }) @('Private', 'Public'))
+        $r.ambas = @(PerfilesSinPermiso @(@{ Accion = 'Allow'; Perfil = 'Private, Public' }) @('Private', 'Public'))
+        $r.bloqueo = @(PerfilesSinPermiso @(@{ Accion = 'Allow'; Perfil = 'Any' }, @{ Accion = 'Block'; Perfil = 'Public' }) @('Private', 'Public'))
+        $r.apagado = @(PerfilesSinPermiso @(@{ Accion = 'Allow'; Perfil = 'Private' }) @('Private', 'Public') @('Public'))
+        $r.comando = ComandoParaPermitirApache @('Public')
+        $r.comandoAmbas = ComandoParaPermitirApache @('Private', 'Public')
+        $r.conectado = LeerEstadoTailscale '{"BackendState":"Running","Self":{"HostName":"laptop","TailscaleIPs":["fd7a:115c:a1e0::1","100.101.102.103"]}}'
+        $r.sinSesion = @(QueHacerConTailscale (LeerEstadoTailscale '{"BackendState":"NeedsLogin","AuthURL":"https://login.tailscale.com/a/abc"}'))
+        $r.desconectado = @(QueHacerConTailscale (LeerEstadoTailscale '{"BackendState":"Stopped"}'))
+        $r.noJson = LeerEstadoTailscale 'no es JSON'
+        $r.sistema = DescribirProceso @{ Pid = 4; Nombre = 'System'; Ruta = $null; Servicio = $null; NombreServicio = $null }
+        $r.servicio = @(QueHacerConElPuerto @{ Pid = 1234; Nombre = 'mysqld'; Ruta = 'C:\Program Files\MySQL\bin\mysqld.exe'; Servicio = 'MySQL80'; NombreServicio = 'MySQL80' })
+        $r.programa = @(QueHacerConElPuerto @{ Pid = 99; Nombre = 'Skype'; Ruta = 'C:\Skype\Skype.exe'; Servicio = $null; NombreServicio = $null })
+        $r.docker = @(QueHacerConElPuerto @{ Pid = 98; Nombre = 'com.docker.backend'; Ruta = $null; Servicio = $null; NombreServicio = $null })
+        $r.mayusculas = EsDeXampp @{ Ruta = 'c:\XAMPP\apache\bin\HTTPD.exe'; Nombre = 'httpd' } 'C:\xampp\apache\bin\httpd.exe'
+        $r.otroApache = EsDeXampp @{ Ruta = 'C:\Program Files\Apache\bin\httpd.exe'; Nombre = 'httpd' } 'C:\xampp\apache\bin\httpd.exe'
+        $r.apache80 = EsDeXampp (ProcesoEnPuerto 80) $HTTPD
+        $r | ConvertTo-Json -Compress -Depth 4
+        PS));
+    [$codigo, $salida] = correrConTope(['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $pruebaPs], 60);
+    @unlink($pruebaPs);
+    @unlink($temporal);
+    $f = json_decode(trim($salida), true);
+    if (!is_array($f)) {
+        comprobar(false, 'Las funciones de iniciar-servicios.ps1 se cargan con -SoloFunciones', $salida);
+        $f = [];
+    }
+    comprobarIgual([['Public'], ['Private', 'Public'], [], [], ['Public'], []], [$f['soloPrivada'] ?? null, $f['sinReglas'] ?? null, $f['cualquiera'] ?? null, $f['ambas'] ?? null, $f['bloqueo'] ?? null, $f['apagado'] ?? null],
+        'Firewall: con Apache solo en privadas falta Public; sin reglas, las dos; «Any» o «Private, Public» bastan; un Block gana al Allow; un perfil con el firewall apagado no falta');
+    comprobarIgual('New-NetFirewallRule -DisplayName "Apache HTTP Server (XAMPP, redes públicas)" -Direction Inbound -Action Allow -Program "C:\xampp\apache\bin\httpd.exe" -Protocol TCP -LocalPort 80 -Profile Public', $f['comando'] ?? null, '  el comando exacto para permitirlo (que el script muestra y no ejecuta)');
+    comprobar(str_ends_with((string) ($f['comandoAmbas'] ?? ''), '-Profile Private,Public') && str_contains((string) ($f['comandoAmbas'] ?? ''), 'redes privadas y públicas'), '  y para las dos redes a la vez', (string) ($f['comandoAmbas'] ?? ''));
+    comprobarIgual(['Running', '100.101.102.103', 'laptop'], [$f['conectado']['Estado'] ?? null, $f['conectado']['Ip'] ?? null, $f['conectado']['Nombre'] ?? null], 'Tailscale conectado: su IPv4 100.x (no la IPv6) y el nombre del equipo');
+    comprobar(str_contains((string) ($f['sinSesion'][1] ?? ''), 'https://login.tailscale.com/a/abc'), '  sin sesión: el «Qué hacer» lleva el enlace para iniciarla', exportar($f['sinSesion'] ?? null));
+    comprobarIgual('Tailscale está desconectado', $f['desconectado'][0] ?? null, '  desconectado: lo dice y cómo conectarlo');
+    comprobarIgual('', $f['noJson']['Estado'] ?? null, '  una salida que no es JSON no rompe el script (estado vacío)');
+    comprobar(str_contains((string) ($f['sistema'] ?? ''), 'PID 4') && str_contains((string) ($f['sistema'] ?? ''), 'IIS'), 'Puerto ocupado por Windows (PID 4, http.sys): dice que es un servicio web como IIS', (string) ($f['sistema'] ?? ''));
+    comprobar(str_contains((string) ($f['servicio'][0] ?? ''), 'Stop-Service -Name MySQL80') && str_contains((string) ($f['servicio'][1] ?? ''), '-StartupType Manual'), '  por un servicio (otro MySQL): cómo detenerlo y que no vuelva al reiniciar', exportar($f['servicio'] ?? null));
+    comprobar(str_contains((string) ($f['programa'][0] ?? ''), 'cierra Skype') && str_contains((string) ($f['programa'][0] ?? ''), 'PID 99'), '  por un programa: su nombre y PID', exportar($f['programa'] ?? null));
+    comprobar(str_contains((string) ($f['docker'][0] ?? ''), 'docker stop'), '  por Docker: detener el contenedor', exportar($f['docker'] ?? null));
+    comprobarIgual([true, false, true], [$f['mayusculas'] ?? null, $f['otroApache'] ?? null, $f['apache80'] ?? null], 'Reconoce el Apache de XAMPP sin distinguir mayúsculas, no confunde otro Apache, y el del puerto 80 ahora es el de XAMPP');
+
+    // De punta a punta, como con doble clic, con Apache y MySQL encendidos (las pruebas los necesitan).
+    // Sin la política de ejecución que pudiera heredar esta terminal: con doble clic no hay ninguna
+    // y en Windows rige «Restricted», así que el .bat debe funcionar con su propio -ExecutionPolicy Bypass.
+    $politica = getenv('PSExecutionPolicyPreference');
+    putenv('PSExecutionPolicyPreference');
+    [$codigo, $salida, $termino, $segundos] = correrConTope(['cmd.exe', '/c', $herramientas . 'iniciar-servicios.bat'], 150);
+    if ($politica !== false) {
+        putenv("PSExecutionPolicyPreference=$politica");
+    }
+    comprobar($termino, sprintf('iniciar-servicios.bat termina solo, sin quedarse esperando: %.1f s (su «pause» del doble clic no espera sin teclado)', $segundos), $salida);
+    comprobarSalida($salida, [
+        '✓ Apache ya estaba encendido', '✓ MySQL ya estaba encendido',
+        "\nTailscale\n", "\nFirewall de Windows\n",
+        'Comprobación previa (herramientas/preparar-demo.php; no cambia tu base)',
+        'Tu base (' . DB_NOMBRE_PRUEBAS . ') no se modifica.',
+        'Apache ............... encendido', 'MySQL (XAMPP) ........ encendido',
+        'En la computadora ................ http://localhost/monitoreo-red-soa/web/',
+        ':5500/componentes.html',
+    ], '  la salida incluye');
+    comprobar(str_contains($salida, '✓ El Firewall de Windows permite a Apache') || str_contains($salida, '-Program "C:\xampp\apache\bin\httpd.exe" -Protocol TCP -LocalPort 80'), '  el Firewall: permitido, o el comando para permitirlo', $salida);
+    comprobar(($codigo === 0 && str_contains($salida, 'Todo encendido.')) || ($codigo === 1 && str_contains($salida, 'Falló algo (detalle arriba):') && preg_match('/^  ✗ .+\n      Qué hacer: /mu', $salida) === 1),
+        "  código $codigo coherente: 0 con «Todo encendido.», 1 con «Falló algo» y cada ✗ con su «Qué hacer»", $salida);
+}
+
 terminarPruebas();

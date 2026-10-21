@@ -385,8 +385,29 @@ curl -s -b cookies.txt -X POST http://localhost/monitoreo-red-soa/servicios/desc
 Para entrar desde el celular **en otra red** (datos móviles, otra WiFi), la computadora
 y el celular están en la misma red de [Tailscale](https://tailscale.com/), instalado y
 con sesión iniciada en los dos. Solo entran los equipos de esa red: la aplicación no
-queda abierta a internet. Después de reiniciar la computadora, un solo comando enciende
-todo (solo Linux):
+queda abierta a internet. Después de reiniciar la computadora, un solo paso enciende
+todo.
+
+**Windows:** doble clic en `herramientas\iniciar-servicios.bat` (o, en PowerShell, desde
+la carpeta del proyecto, `herramientas\iniciar-servicios.bat`). No necesita administrador.
+
+1. Enciende Apache y MySQL de XAMPP, solo si no están encendidos, y confirma que
+   quedaron encendidos (Apache contesta por HTTP; MySQL, a `mysqladmin ping`). Si otro
+   programa ocupa el puerto 80, 443 o 3306 (IIS, otro MySQL, Docker…), dice cuál, con
+   su PID, y cómo detenerlo.
+2. Comprueba que Tailscale esté instalado y conectado y muestra su IP `100.x.y.z`. No
+   ejecuta `tailscale up`: si falta iniciar sesión o conectar, dice cómo.
+3. Revisa si el Firewall de Windows deja entrar a Apache en las redes privadas **y
+   públicas** (un hotspot nuevo suele quedar como red pública). Si no, muestra el comando
+   exacto para PowerShell como administrador, **pero no lo ejecuta**.
+4. Corre la comprobación previa de `preparar-demo.php`. **No cambia tu base.**
+5. Termina con un resumen y las direcciones (tabla de abajo). Con doble clic, espera una
+   tecla antes de cerrar la ventana para que se pueda leer.
+
+El `.bat` ejecuta `iniciar-servicios.ps1` con `-ExecutionPolicy Bypass`, así que funciona
+aunque Windows bloquee los scripts de PowerShell, sin cambiar esa configuración.
+
+**Linux:**
 
 ```bash
 sudo bash herramientas/iniciar-servicios.sh
@@ -414,8 +435,8 @@ sudo bash herramientas/iniciar-servicios.sh
 Con Live Server conviene abrir `componentes.html`, la página de muestra, que no pide
 datos: las demás pantallas necesitan los servicios, y esos solo los sirve Apache.
 
-Nunca se queda esperando: si algo falla, dice qué falló y qué hacer, y lo repite en el
-resumen. Termina con código 0 si todo quedó encendido y 1 si algo falló.
+Los dos nunca se quedan esperando: si algo falla, dicen qué falló y qué hacer, y lo
+repiten en el resumen. Terminan con código 0 si todo quedó encendido y 1 si algo falló.
 
 ---
 
@@ -446,7 +467,8 @@ database/       schema.sql (las tablas), inicial.sql (usuario admin), seed.sql (
 docs/           API.md (contrato de los endpoints), PLAN.md (fases), DEMO.md (guion),
                 WINDOWS.md (verificación en Windows), diseno/ (referencia visual)
 herramientas/   crear-base.php, restaurar-respaldo.php, preparar-demo.php, monitorear-rondas.php,
-                ver-llamadas.php y sus funciones, iniciar-servicios.sh (solo línea de comandos)
+                ver-llamadas.php y sus funciones, iniciar-servicios.sh (Linux) e
+                iniciar-servicios.bat/.ps1 (Windows) (solo línea de comandos)
 pruebas/        las 6 suites y sus ayudas (solo línea de comandos)
 servicios/      comun/ (infraestructura) y un servicio por carpeta: auth, dispositivos, monitoreo,
                 alertas y descubrimiento
