@@ -388,23 +388,27 @@ if ($respondedor !== null) {
         ($nombres['127.0.0.3']['upnp'] ?? null) === 'Impresora rápida' && $segundos < 0.4,
         sprintf('Si ya llegó el nombre preferido (UPnP), no espera a los demás métodos: %.2f s', $segundos)
     );
+    $inicio = microtime(true);
     $peticiones = detenerRespondedorDeNombres($respondedor);
+    $segundos = microtime(true) - $inicio;
     comprobarIgual(2, count(array_filter($peticiones, fn($p) => $p === '127.0.0.3 GET /desc.xml HTTP/1.0')), '  la descripción se pidió con GET a la IP que contestó (una vez por búsqueda)');
+    comprobar($segundos < 2, sprintf('  detener el respondedor no espera a que termine solo: %.2f s (en Windows, leer su salida por un pipe esperaba sus 20 s de vida)', $segundos));
 
     // Una descripción que nunca termina: la descarga se corta al pasar de 64 KB, no al agotar el tiempo.
     $respondedor = iniciarRespondedorDeNombres([
         '127.0.0.3' => ['ssdp' => respuestaSsdpDeEjemplo("http://127.0.0.3:$puertoHttp/desc.xml"), 'http' => ['puerto' => $puertoHttp, 'sin_fin' => true]],
     ], $puertosFalsos, 20);
     if ($respondedor !== null) {
+        $inicio = microtime(true);
         $nombres = buscarNombresDeEquipos(['127.0.0.3'], [], '127.0.0', $puertosFalsos, 0.8);
         $intentos = 0;
         do {
             usleep(100000);
-            $salida = (string) stream_get_contents($respondedor['salida']);
-            $respondedor['pendiente'] = ($respondedor['pendiente'] ?? '') . $salida;
-        } while (!str_contains($respondedor['pendiente'], 'enviado ') && ++$intentos < 60);
+        } while (!str_contains(salidaDelRespondedor($respondedor), 'enviado ') && ++$intentos < 60);
+        $salidaSinFin = salidaDelRespondedor($respondedor);
         detenerRespondedorDeNombres($respondedor);
-        preg_match('/^enviado 127\.0\.0\.3 (\d+) (\d+)$/m', $respondedor['pendiente'], $enviado);
+        comprobar(microtime(true) - $inicio < 3, sprintf('  la prueba lee lo que anotó el respondedor sin esperar a que termine: %.2f s', microtime(true) - $inicio));
+        preg_match('/^enviado 127\.0\.0\.3 (\d+) (\d+)$/m', $salidaSinFin, $enviado);
         $milisegundos = isset($enviado[2]) ? (int) $enviado[2] : null;
         comprobar(
             ($nombres['127.0.0.3']['upnp'] ?? null) === null && $milisegundos !== null && $milisegundos < 300,
@@ -584,7 +588,7 @@ if (is_readable(ARCHIVO_RESOLV_CONF) && preg_match('/^\s*nameserver\s/m', (strin
     comprobarIgual('localhost', $encontrados[0]['nombre'] ?? null, '  nombre de 127.0.0.1 por DNS inverso: "localhost"');
     comprobarIgual('dns', $encontrados[0]['nombre_origen'] ?? null, '  con nombre_origen "dns"');
 } else {
-    avisar('Sin /etc/resolv.conf: no se comprobó el nombre de 127.0.0.1 por DNS inverso.');
+    avisar('Sin /etc/resolv.conf (Windows): no hay un DNS local que conozca 127.0.0.1, así que no se comprobó su nombre por DNS inverso de punta a punta (la lectura de las respuestas DNS se prueba con paquetes fijos en la sección 3).');
 }
 comprobarIgual(
     [],
@@ -672,14 +676,21 @@ if ($respondedor !== null) {
 seccion('9 · Dispositivos no responde → 502, sin enviar nada a la red');
 
 simularRed(['ip_propia' => '192.0.2.1']);
-simularFallo('Dispositivos', 'sin_respuesta', 'GET', puertoCerrado());
+// Lo que tarda en fallar la conexión al puerto cerrado: en Linux, nada; en Windows,
+// unos 2 s (reintenta la conexión aunque 127.0.0.1 la rechace). No cuenta como pings.
+$puerto = puertoCerrado();
+$inicio = microtime(true);
+@stream_socket_client("tcp://127.0.0.1:$puerto", $codigo, $mensaje, 5);
+$rechazo = microtime(true) - $inicio;
+simularFallo('Dispositivos', 'sin_respuesta', 'GET', $puerto);
 [$r, $segundos] = escanear(1);
 comprobarRespuesta($r, 502, 'Dispositivos no responde', 'No se pudo comunicar con el Servicio de Dispositivos');
-comprobar($segundos < 0.9, sprintf('  responde en %.2f s: no llegó a hacer los pings (tardan 1 s)', $segundos));
+comprobar($segundos - $rechazo < 0.9, sprintf('  responde en %.2f s (%.2f s de la conexión rechazada): no llegó a hacer los pings (tardan 1 s)', $segundos, $rechazo));
 
 simularFallo('Dispositivos', 'respuesta_invalida', 'GET');
-[$r] = escanear(1);
+[$r, $segundos] = escanear(1);
 comprobarRespuesta($r, 502, 'Dispositivos responde algo que no es JSON', 'No se pudo comunicar con el Servicio de Dispositivos');
+comprobar($segundos < 0.9, sprintf('  responde en %.2f s: tampoco hizo los pings', $segundos));
 quitarFalloSimulado();
 
 // =====================================================================

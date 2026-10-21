@@ -277,7 +277,7 @@ $duracion = microtime(true) - $inicio;
 comprobarRespuesta($r, 201, 'POST /monitoreo/5');
 $monitoreo = $r['json']['data']['monitoreo'] ?? [];
 comprobarIgual(['inactivo', null, true], [$monitoreo['estado'] ?? null, array_key_exists('tiempo_respuesta_ms', $monitoreo) ? $monitoreo['tiempo_respuesta_ms'] : 'falta', $r['json']['data']['alerta_creada'] ?? null], '  inactivo, tiempo null y alerta_creada true');
-comprobar($duracion < 3, '  tardó menos de 3 s (ping de 1 s como máximo)', sprintf('%.2f s', $duracion));
+comprobar($duracion < 3, sprintf('  tardó %.2f s, menos de 3 (ping de 1 s como máximo)', $duracion));
 $d = peticion('GET', '/dispositivos/5')['json']['data'] ?? [];
 comprobarIgual(['inactivo', null, $monitoreo['fecha'] ?? 'x'], campos($d, ['estado', 'ultimo_tiempo_ms', 'ultima_comprobacion']), '  la Impresora queda inactiva, sin tiempo y con la fecha del monitoreo');
 $alertas = peticion('GET', '/alertas?dispositivo=5&atendida=0')['json']['data'] ?? [];
@@ -634,54 +634,74 @@ borrarRespaldosDePrueba();
 seccion('14. Historial antes de la demo (herramientas/monitorear-rondas.php)');
 
 /**
- * Inicia monitorear-rondas.php sin esperar a que termine: [proceso, salida (pipe)].
+ * Inicia monitorear-rondas.php sin esperar a que termine. Devuelve ['proceso',
+ * 'archivo' (su salida), 'codigo' (null mientras corre)].
  * Con el comando como arreglo no hay un sh de por medio: las señales (Ctrl+C)
- * llegan al proceso de PHP.
+ * llegan al proceso de PHP. $grupoPropio (solo Windows): en su propio grupo de
+ * procesos, para mandarle un Ctrl+Break solo a él.
+ * La salida va a un archivo, no a un pipe: en Windows, leer un pipe espera a que
+ * lleguen datos aunque esté sin bloqueo, y la prueba podía quedarse esperando.
  */
-function iniciarRondas(array $argumentos): array
+function iniciarRondas(array $argumentos, bool $grupoPropio = false): array
 {
     renovarBaseDePruebas();
-    $proceso = proc_open([PHP_BINARY, dirname(__DIR__) . '/herramientas/monitorear-rondas.php', ...$argumentos], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['redirect', 1]], $tuberias);
+    $archivo = (string) tempnam(sys_get_temp_dir(), 'rondas');
+    $proceso = proc_open([PHP_BINARY, dirname(__DIR__) . '/herramientas/monitorear-rondas.php', ...$argumentos], [0 => ['pipe', 'r'], 1 => ['file', $archivo, 'w'], 2 => ['redirect', 1]], $tuberias, null, null, ['create_process_group' => $grupoPropio]);
     fclose($tuberias[0]);
-    stream_set_blocking($tuberias[1], false);
 
-    return [$proceso, $tuberias[1]];
+    return ['proceso' => $proceso, 'archivo' => $archivo, 'codigo' => null];
 }
 
 /**
- * Lee la salida hasta que aparece $texto o el proceso termina, como máximo $espera
- * segundos (nunca se queda bloqueada). Devuelve lo leído.
+ * true si las rondas ya terminaron. Guarda su código de salida: proc_get_status()
+ * solo lo da la primera vez que ve el proceso terminado.
  */
-function leerHasta($salida, ?string $texto, float $espera = 30): string
+function rondasTerminaron(array &$rondas): bool
 {
-    $leido = '';
+    if ($rondas['codigo'] === null) {
+        $estado = proc_get_status($rondas['proceso']);
+        $rondas['codigo'] = $estado['running'] ? null : $estado['exitcode'];
+    }
+
+    return $rondas['codigo'] !== null;
+}
+
+/**
+ * Espera hasta que la salida contiene $texto o las rondas terminan, como máximo
+ * $espera segundos (nunca se queda bloqueada). Devuelve la salida hasta ahora.
+ */
+function leerHasta(array &$rondas, ?string $texto, float $espera = 30): string
+{
     $limite = microtime(true) + $espera;
-    while (($texto === null || !str_contains($leido, $texto)) && !feof($salida) && microtime(true) < $limite) {
-        $leido .= (string) fread($salida, 8192);
+    while (true) {
         renovarBaseDePruebas();
+        $termino = rondasTerminaron($rondas);
+        clearstatcache(true, $rondas['archivo']);
+        $leido = (string) @file_get_contents($rondas['archivo']);
+        if ($termino || ($texto !== null && str_contains($leido, $texto)) || microtime(true) >= $limite) {
+            return $leido;
+        }
         usleep(50000);
     }
-
-    return $leido;
 }
 
 /**
- * Espera a que el proceso termine (como máximo $espera s); si no, lo mata con
- * SIGKILL para que nunca siga vivo cuando la base de pruebas caduque.
- * Devuelve [código de salida, terminó solo].
+ * Espera a que las rondas terminen (como máximo $espera s); si no, las mata con
+ * SIGKILL para que nunca sigan vivas cuando la base de pruebas caduque.
+ * Devuelve [código de salida, terminó solo, salida completa].
  */
-function esperarFin($proceso, $salida, string &$leido, float $espera = 10): array
+function esperarFin(array &$rondas, float $espera = 10): array
 {
-    $leido .= leerHasta($salida, null, $espera);
-    $estado = proc_get_status($proceso);
-    if ($estado['running']) {
-        proc_terminate($proceso, 9);
-        proc_close($proceso);
-        return [-1, false];
+    leerHasta($rondas, null, $espera);
+    $termino = rondasTerminaron($rondas);
+    if (!$termino) {
+        proc_terminate($rondas['proceso'], 9);
     }
-    proc_close($proceso);
+    proc_close($rondas['proceso']);
+    $leido = (string) @file_get_contents($rondas['archivo']);
+    @unlink($rondas['archivo']);
 
-    return [$estado['exitcode'], true];
+    return $termino ? [$rondas['codigo'], true, $leido] : [-1, false, $leido];
 }
 
 recrearBase(DB_NOMBRE_PRUEBAS, [ARCHIVO_SCHEMA, ARCHIVO_INICIAL]);
@@ -709,11 +729,11 @@ comprobarSalida($salida, [
 comprobar(preg_match('/Equipo local\s+✓\s+✓\s+✓\s+3 de 3/u', $salida) === 1 && preg_match('/Equipo apagado\s+✗\s+✗\s+✗\s+0 de 3/u', $salida) === 1, '  y qué dispositivos respondieron en cada ronda (✓ ✓ ✓ / ✗ ✗ ✗)', $salida);
 
 // Un servicio deja de responder a la mitad: lo dice claramente, muestra el resumen y termina.
-[$proceso, $salida] = iniciarRondas(['--rondas=3', '--cada=5']);
-$leido = leerHasta($salida, 'siguiente ronda');
+$rondas = iniciarRondas(['--rondas=3', '--cada=5']);
+leerHasta($rondas, 'siguiente ronda');
 simularFallo('Dispositivos', 'sin_respuesta', 'GET', puertoCerrado());
 $inicio = microtime(true);
-[$codigo] = esperarFin($proceso, $salida, $leido, 15);
+[$codigo, , $leido] = esperarFin($rondas, 15);
 quitarFalloSimulado();
 comprobar($codigo === 1 && str_contains($leido, '✗ Se detuvieron las rondas: Ningún dispositivo se pudo monitorear en esta ronda: No se pudo comunicar con el Servicio de Dispositivos'),
     'si Dispositivos deja de responder a la mitad → «Se detuvieron las rondas» con el motivo (código 1)', $leido);
@@ -722,13 +742,26 @@ comprobar(str_contains($leido, 'Rondas hechas ............ 2 de 3 (se detuvo ant
     '  y el resumen dice qué se alcanzó a guardar (! = no se pudo monitorear)', $leido);
 
 if (function_exists('pcntl_async_signals')) {
-    [$proceso, $salida] = iniciarRondas(['--rondas=3', '--cada=60']);
-    $leido = leerHasta($salida, 'siguiente ronda');
-    proc_terminate($proceso, SIGINT);
-    [$codigo, $soloTermino] = esperarFin($proceso, $salida, $leido, 5);
+    $rondas = iniciarRondas(['--rondas=3', '--cada=60']);
+    leerHasta($rondas, 'siguiente ronda');
+    proc_terminate($rondas['proceso'], SIGINT);
+    [$codigo, $soloTermino, $leido] = esperarFin($rondas, 5);
     comprobar($soloTermino && $codigo === 1 && str_contains($leido, 'Detenido con Ctrl+C.') && str_contains($leido, 'Rondas hechas ............ 1 de 3'), 'Ctrl+C durante la espera → resumen de lo hecho, sin esperar los 60 s (código 1)', $leido);
+} elseif (function_exists('sapi_windows_generate_ctrl_event')) {
+    // Windows: un Ctrl+C no se puede dirigir a un solo proceso; un Ctrl+Break a su grupo
+    // llega al mismo manejador de la consola (sapi_windows_set_ctrl_handler).
+    $rondas = iniciarRondas(['--rondas=3', '--cada=60'], true);
+    leerHasta($rondas, 'siguiente ronda');
+    if (@sapi_windows_generate_ctrl_event(PHP_WINDOWS_EVENT_CTRL_BREAK, proc_get_status($rondas['proceso'])['pid'])) {
+        $inicio = microtime(true);
+        [$codigo, $soloTermino, $leido] = esperarFin($rondas, 5);
+        comprobar($soloTermino && $codigo === 1 && str_contains($leido, 'Detenido con Ctrl+C.') && str_contains($leido, 'Rondas hechas ............ 1 de 3'), sprintf('Ctrl+C (Ctrl+Break en Windows) durante la espera → resumen de lo hecho en %.1f s, sin esperar los 60 s (código 1)', microtime(true) - $inicio), $leido);
+    } else {
+        esperarFin($rondas, 0);
+        avisar('Sin consola (Windows): no se pudo enviar Ctrl+Break, así que no se probó Ctrl+C en monitorear-rondas.php.');
+    }
 } else {
-    avisar('Sin pcntl (Windows): no se probó Ctrl+C en monitorear-rondas.php.');
+    avisar('Sin pcntl ni consola de Windows: no se probó Ctrl+C en monitorear-rondas.php.');
 }
 // La marca de las pruebas viaja entre servicios: un monitoreo de las pruebas con la base de
 // pruebas caducada no llega a la base del usuario ni por Monitoreo ni por Dispositivos.
@@ -741,5 +774,61 @@ $GLOBALS['renovacion_en_pausa'] = false;
 comprobar($r['codigo'] >= 500, 'un POST /monitoreo de las pruebas con la base de pruebas caducada se rechaza', "código {$r['codigo']}");
 comprobarIgual($monitoreosTuyos, (int) (filasBdUsuario('SELECT COUNT(*) AS n FROM monitoreos')[0]['n'] ?? -1), '  y no guardó nada en tu base');
 recargarBaseDeDatos();
+
+// =====================================================================
+seccion('15. Ping (comun/ping.php): salidas reales de Windows en español, y de Windows en inglés, Linux y macOS');
+
+require_once __DIR__ . '/../servicios/comun/ping.php';
+
+// Salidas reales de un Windows 11 en español (es-MX, octubre de 2026), tal como las
+// entrega exec(): en CP850 (\xA1 = í, \xA0 = á), con las líneas unidas por "\n".
+$windowsLocal = "Haciendo ping a 127.0.0.1 con 32 bytes de datos:\nRespuesta desde 127.0.0.1: bytes=32 tiempo<1m TTL=128\n\nEstad\xA1sticas de ping para 127.0.0.1:\n    Paquetes: enviados = 1, recibidos = 1, perdidos = 0\n    (0% perdidos),\nTiempos aproximados de ida y vuelta en milisegundos:\n    M\xA1nimo = 0ms, M\xA0ximo = 0ms, Media = 0ms";
+$windowsRouter = "Haciendo ping a 192.168.0.1 con 32 bytes de datos:\nRespuesta desde 192.168.0.1: bytes=32 tiempo=3ms TTL=64\n\nEstad\xA1sticas de ping para 192.168.0.1:\n    Paquetes: enviados = 1, recibidos = 1, perdidos = 0\n    (0% perdidos),\nTiempos aproximados de ida y vuelta en milisegundos:\n    M\xA1nimo = 3ms, M\xA0ximo = 3ms, Media = 3ms";
+$windowsSinRespuesta = "Haciendo ping a 192.0.2.20 con 32 bytes de datos:\nTiempo de espera agotado para esta solicitud.\n\nEstad\xA1sticas de ping para 192.0.2.20:\n    Paquetes: enviados = 1, recibidos = 0, perdidos = 1\n    (100% perdidos),";
+// Una IP libre de la red local, con la entrada ARP ya fallida: la propia computadora
+// contesta, "recibidos = 1" y ping termina con código 0.
+$windowsInaccesible = "Haciendo ping a 192.168.0.250 con 32 bytes de datos:\nRespuesta desde 192.168.0.19: Host de destino inaccesible.\n\nEstad\xA1sticas de ping para 192.168.0.250:\n    Paquetes: enviados = 1, recibidos = 1, perdidos = 0\n    (0% perdidos),";
+$windowsIngles = "Pinging 192.168.1.1 with 32 bytes of data:\nReply from 192.168.1.1: bytes=32 time=12ms TTL=64\n\nPing statistics for 192.168.1.1:\n    Packets: Sent = 1, Received = 1, Lost = 0 (0% loss),\nApproximate round trip times in milli-seconds:\n    Minimum = 12ms, Maximum = 12ms, Average = 12ms";
+$windowsInglesMenor = "Pinging 127.0.0.1 with 32 bytes of data:\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128";
+$windowsInglesInaccesible = "Pinging 192.168.1.250 with 32 bytes of data:\nReply from 192.168.1.5: Destination host unreachable.\n\nPing statistics for 192.168.1.250:\n    Packets: Sent = 1, Received = 1, Lost = 0 (0% loss),";
+$linux = "PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.\n64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.032 ms\n\n--- 127.0.0.1 ping statistics ---\n1 packets transmitted, 1 received, 0% packet loss, time 0ms\nrtt min/avg/max/mdev = 0.032/0.032/0.032/0.000 ms";
+$linuxSinRespuesta = "PING 192.0.2.20 (192.0.2.20) 56(84) bytes of data.\n\n--- 192.0.2.20 ping statistics ---\n1 packets transmitted, 0 received, 100% packet loss, time 0ms";
+$mac = "PING 192.168.1.1 (192.168.1.1): 56 data bytes\n64 bytes from 192.168.1.1: icmp_seq=0 ttl=64 time=3.127 ms\n\n--- 192.168.1.1 ping statistics ---\n1 packets transmitted, 1 packets received, 0.0% packet loss\nround-trip min/avg/max/stddev = 3.127/3.127/3.127/0.000 ms";
+
+$utf8 = convertirAUtf8($windowsLocal);
+comprobar(preg_match('//u', $utf8) === 1 && str_contains($utf8, 'Estadísticas de ping') && str_contains($utf8, 'Mínimo = 0ms, Máximo = 0ms'), 'Windows en español: la salida en CP850 se convierte a UTF-8 («Estadísticas», «Mínimo», «Máximo»)', $utf8);
+comprobar(json_encode($windowsLocal) === false, '  (sin convertir, json_encode no podría enviarla)');
+comprobarIgual($utf8, convertirAUtf8($utf8), '  un texto que ya es UTF-8 no cambia');
+comprobarIgual([true, 0.0], [salidaIndicaRespuesta($utf8), extraerTiempoMs($utf8)], '  127.0.0.1: responde y «tiempo<1m» se guarda como 0');
+comprobarIgual([true, 3.0], [salidaIndicaRespuesta($windowsRouter), extraerTiempoMs(convertirAUtf8($windowsRouter))], '  el router: responde con «tiempo=3ms» → 3 (no confunde «Tiempos aproximados» ni «Mínimo = 3ms»)');
+comprobarIgual(false, salidaIndicaRespuesta(convertirAUtf8($windowsSinRespuesta)), '  «Tiempo de espera agotado para esta solicitud» → no responde');
+comprobarIgual(false, salidaIndicaRespuesta(convertirAUtf8($windowsInaccesible)), '  «Host de destino inaccesible» → no responde, aunque ping termine con código 0 y diga «recibidos = 1» (no trae TTL=)');
+comprobarIgual([true, 12.0], [salidaIndicaRespuesta($windowsIngles), extraerTiempoMs($windowsIngles)], 'Windows en inglés: «time=12ms» → 12');
+comprobarIgual(0.0, extraerTiempoMs($windowsInglesMenor), '  «time<1ms» → 0');
+comprobarIgual(false, salidaIndicaRespuesta($windowsInglesInaccesible), '  «Destination host unreachable» → no responde');
+comprobarIgual([true, 0.03], [salidaIndicaRespuesta($linux), extraerTiempoMs($linux)], 'Linux: «ttl=64 time=0.032 ms» → responde, 0.03 (redondeado a 2 decimales)');
+comprobarIgual(false, salidaIndicaRespuesta($linuxSinRespuesta), '  sin respuesta → no responde');
+comprobarIgual([true, 3.13], [salidaIndicaRespuesta($mac), extraerTiempoMs($mac)], 'macOS: «time=3.127 ms» → 3.13');
+
+$comando = construirComandoPing('127.0.0.1');
+comprobarIgual(match (PHP_OS_FAMILY) {
+    'Windows' => 'ping -n 1 -w 1000 "127.0.0.1"',
+    'Darwin' => "ping -c 1 -t 1 '127.0.0.1'",
+    default => "ping -c 1 -W 1 '127.0.0.1'",
+}, $comando, 'El comando de ' . PHP_OS_FAMILY . ': un intento, 1 s de espera y la IP entre comillas (escapeshellarg)');
+try {
+    hacerPing('127.0.0.1 & calc');
+    comprobar(false, 'Una IP con un comando agregado se rechaza sin ejecutar nada');
+} catch (InvalidArgumentException) {
+    comprobar(true, 'Una IP con un comando agregado («127.0.0.1 & calc») se rechaza sin ejecutar nada');
+}
+
+// El ping real de esta computadora (desde la terminal; a través de Apache, en las secciones 4 y 5).
+$local = hacerPing('127.0.0.1');
+comprobar($local['responde'] && is_float($local['tiempo_respuesta_ms']) && $local['tiempo_respuesta_ms'] >= 0 && preg_match('//u', $local['salida']) === 1, sprintf('Ping real a 127.0.0.1: responde en %s ms, salida en UTF-8', exportar($local['tiempo_respuesta_ms'])), $local['salida']);
+$inicio = microtime(true);
+$documentacion = hacerPing('192.0.2.20');
+$duracion = microtime(true) - $inicio;
+comprobar(!$documentacion['responde'] && $documentacion['tiempo_respuesta_ms'] === null && $duracion < 2.5, sprintf('Ping real a 192.0.2.20: no responde, en %.2f s (1 s de espera)', $duracion), $documentacion['salida']);
 
 terminarPruebas();

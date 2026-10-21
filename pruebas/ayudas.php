@@ -400,8 +400,13 @@ function puertoLibreLocal(): int
  * Lanza pruebas/respondedor-nombres.php con $equipos (ver su comentario; las
  * respuestas en bytes, aquí se codifican en base64) y espera a que escuche.
  * Termina solo en $segundos (máximo 60) y con detenerRespondedorDeNombres().
- * Devuelve ['proceso', 'salida', 'puertos'] o null si no pudo escuchar (por
- * ejemplo, en macOS solo existe 127.0.0.1).
+ * Devuelve ['proceso', 'archivo_salida', 'puertos'] o null si no pudo escuchar
+ * (por ejemplo, en macOS solo existe 127.0.0.1).
+ *
+ * Su salida va a un archivo temporal, no a un pipe: en Windows un pipe de
+ * proc_open no se puede leer sin bloquear (stream_select() lo da por listo
+ * aunque esté vacío, y la lectura espera a que lleguen datos o a que el proceso
+ * termine), y cada lectura esperaba a que el respondedor terminara solo.
  */
 function iniciarRespondedorDeNombres(array $equipos, array $puertos, int $segundos = 45): ?array
 {
@@ -416,30 +421,43 @@ function iniciarRespondedorDeNombres(array $equipos, array $puertos, int $segund
         }
     }
 
+    $archivoSalida = (string) tempnam(sys_get_temp_dir(), 'respondedor');
     $proceso = proc_open(
         [PHP_BINARY, __DIR__ . '/respondedor-nombres.php'],
-        [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['redirect', 1]],
+        [0 => ['pipe', 'r'], 1 => ['file', $archivoSalida, 'w'], 2 => ['redirect', 1]],
         $tuberias
     );
     if (!is_resource($proceso)) {
+        @unlink($archivoSalida);
         return null;
     }
     fwrite($tuberias[0], json_encode(['expira' => time() + min($segundos, 60), 'puertos' => $puertos, 'equipos' => $equipos]));
     fclose($tuberias[0]);
+    $respondedor = ['proceso' => $proceso, 'archivo_salida' => $archivoSalida, 'puertos' => $puertos];
 
-    $lector = [$tuberias[1]];
-    $escritura = $excepcion = null;
-    $linea = stream_select($lector, $escritura, $excepcion, 5) > 0 ? trim((string) fgets($tuberias[1])) : 'sin respuesta en 5 s';
-    $respondedor = ['proceso' => $proceso, 'salida' => $tuberias[1], 'puertos' => $puertos];
+    $limite = microtime(true) + 5;
+    while (!str_contains(salidaDelRespondedor($respondedor), "\n") && proc_get_status($proceso)['running'] && microtime(true) < $limite) {
+        usleep(20000);
+    }
+    $linea = trim(explode("\n", salidaDelRespondedor($respondedor))[0]) ?: 'sin respuesta en 5 s';
 
     if ($linea !== 'listo') {
         detenerRespondedorDeNombres($respondedor);
         avisar("El respondedor falso de nombres no arrancó ($linea).");
         return null;
     }
-    stream_set_blocking($tuberias[1], false);
 
     return $respondedor;
+}
+
+/**
+ * Lo que el respondedor escribió hasta ahora (sin esperar).
+ */
+function salidaDelRespondedor(array $respondedor): string
+{
+    clearstatcache(true, $respondedor['archivo_salida']);
+
+    return (string) @file_get_contents($respondedor['archivo_salida']);
 }
 
 /**
@@ -448,10 +466,10 @@ function iniciarRespondedorDeNombres(array $equipos, array $puertos, int $segund
  */
 function detenerRespondedorDeNombres(array $respondedor): array
 {
-    $salida = (string) stream_get_contents($respondedor['salida']);
     proc_terminate($respondedor['proceso']);
-    fclose($respondedor['salida']);
     proc_close($respondedor['proceso']);
+    $salida = salidaDelRespondedor($respondedor);
+    @unlink($respondedor['archivo_salida']);
 
     preg_match_all('/^http (.+)$/m', $salida, $peticiones);
 
@@ -817,9 +835,13 @@ function campos(mixed $objeto, array $claves): array
     );
 }
 
+/**
+ * El valor como JSON legible. Un texto que no es UTF-8 (la salida de un comando de
+ * Windows sin convertir) se muestra con � en lugar de hacer fallar la suite.
+ */
 function exportar(mixed $valor): string
 {
-    return json_encode($valor, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION);
+    return (string) json_encode($valor, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION | JSON_INVALID_UTF8_SUBSTITUTE);
 }
 
 /**

@@ -472,7 +472,7 @@ function mostrarRecordatorios(?string $ipPc): void
     echo "\nRecordatorios (no se pueden comprobar desde aquí)\n";
     if ($ipPc !== null && !str_starts_with($ipPc, '127.')) {
         echo PHP_OS_FAMILY === 'Windows'
-            ? "  • Firewall de Windows: permite Apache (httpd.exe) en redes privadas para que entre el celular.\n"
+            ? "  • Firewall de Windows: permite Apache (httpd.exe) en redes privadas y públicas para que entre el celular (herramientas\\iniciar-servicios.bat lo revisa).\n"
             : '  • Cortafuegos: si el celular no carga la página, sudo ufw allow from ' . preg_replace('/\.\d+$/', '.0', $ipPc) . "/24 to any port 80 proto tcp (README).\n";
         echo "  • El celular debe estar en la misma red WiFi que esta computadora.\n";
     }
