@@ -51,6 +51,11 @@ function activarBaseDePruebas(): void
     // los servicios y las herramientas se niegan a usar la del usuario (comun/db.php).
     putenv('MONITOREO_PRUEBAS=1');
     $GLOBALS['huella_de_tu_base'] = huellaDeTuBase();
+    $problema = problemaConTuBase($GLOBALS['huella_de_tu_base']);
+    if ($problema !== null) {
+        fwrite(STDERR, "\u{2717} $problema\n");
+        exit(2);
+    }
     $GLOBALS['huella_comprobada'] = false;
     $GLOBALS['base_de_pruebas_propia'] = !baseDePruebasActiva();
     escribirArchivoBaseDePruebas();
@@ -111,6 +116,20 @@ function cerrarBaseDePruebas(): void
 function huellaDeTuBase(): array|string
 {
     return huellaDeLaBase(DB_NOMBRE);
+}
+
+/**
+ * Por qué la suite no puede empezar, o null si tu base está lista. Cada suite
+ * compara tu base al empezar y al terminar: sin ella (una computadora nueva, antes
+ * de crear-base.php) no hay con qué comparar, y algunas comprobaciones la leen.
+ */
+function problemaConTuBase(array|string $huella): ?string
+{
+    return match (true) {
+        is_array($huella) => null,
+        $huella === 'MySQL no responde' => 'MySQL no responde. Enciéndelo (Windows: Start de MySQL en el panel de XAMPP; Linux: sudo /opt/lampp/lampp startmysql) y vuelve a correr la suite.',
+        default => 'Tu base (' . DB_NOMBRE . ') no existe todavía. Créala primero (vacía, solo con el usuario admin): ' . comandoPhp() . ' herramientas/crear-base.php',
+    };
 }
 
 /**

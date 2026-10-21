@@ -458,6 +458,20 @@ if (!is_readable($registro)) {
     comprobar(preg_match('/^\[\d{2}:\d{2}:\d{2}\]   Monitoreo → Alertas: POST \/alertas \(201, \d+ ms\)$/m', $nuevo) === 1, '  cada línea lleva la hora y los milisegundos', $nuevo);
 }
 
+// El XAMPP de Windows no trae la carpeta del error_log (C:\xampp\php\logs): sin
+// ella, el registro no se escribía y ver-llamadas.php no mostraba nada.
+$carpetaSinCrear = rtrim(sys_get_temp_dir(), '/\\') . DIRECTORY_SEPARATOR . 'monitoreo-registro-' . bin2hex(random_bytes(4));
+$errorLogAnterior = (string) ini_get('error_log');
+ini_set('error_log', $carpetaSinCrear . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'php_error_log');
+$registroSinCarpeta = archivoRegistroLlamadas();
+registrarLlamada('Dispositivos', 'GET', URL_DISPOSITIVOS . '/6', '200', hrtime(true));
+ini_set('error_log', $errorLogAnterior);
+$contenidoSinCarpeta = is_file($registroSinCarpeta) ? (string) file_get_contents($registroSinCarpeta) : '';
+comprobar(str_contains($contenidoSinCarpeta, '→ Dispositivos: GET /dispositivos/6 (200, '), 'Si la carpeta del error_log no existe (XAMPP de Windows), el registro la crea y anota la llamada', $registroSinCarpeta);
+@unlink($registroSinCarpeta);
+@rmdir(dirname($registroSinCarpeta));
+@rmdir($carpetaSinCrear);
+
 // =====================================================================
 seccion('13. Preparación de la demo (herramientas/preparar-demo.php)');
 

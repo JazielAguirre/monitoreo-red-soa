@@ -464,10 +464,17 @@ function comoElUsuario(callable $accion): mixed
 
 /**
  * Corre código PHP en otro proceso (como una herramienta o una suite anidada): [código de salida, salida].
+ * Un script temporal en lugar de «php -r "…"»: en Windows, escapeshellarg() cambia las
+ * comillas dobles por espacios (como en pruebas/auth.php).
  */
 function correrPhp(string $codigo): array
 {
-    exec(escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg('chdir(' . var_export(dirname(__DIR__), true) . '); ' . $codigo) . ' 2>&1', $salida, $codigoSalida);
+    $temporal = tempnam(sys_get_temp_dir(), 'php');
+    $script = "$temporal.php";
+    file_put_contents($script, '<?php chdir(' . var_export(dirname(__DIR__), true) . '); ' . $codigo);
+    exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($script) . ' 2>&1', $salida, $codigoSalida);
+    unlink($script);
+    unlink($temporal);
 
     return [$codigoSalida, implode("\n", $salida)];
 }
@@ -548,6 +555,12 @@ $despuesDeBorrar = huellaDeLaBase(DB_NOMBRE_PRUEBAS);
 comprobar(is_array($antes) && $antes !== $despuesDeBorrar && ($antes['dispositivos'] ?? '') !== ($despuesDeBorrar['dispositivos'] ?? ''), 'la huella cambia aunque se agregue y se borre una fila (siguiente id)', exportar([$antes['dispositivos'] ?? null, $despuesDeBorrar['dispositivos'] ?? null]));
 peticion('PUT', '/dispositivos/1', ['nombre' => 'Mi PC cambiada', 'ip' => '127.0.0.1', 'tipo' => 'computadora', 'ubicacion' => 'Laboratorio']);
 comprobar(huellaDeLaBase(DB_NOMBRE_PRUEBAS) !== $despuesDeBorrar, '  y si cambia un dato sin cambiar el número de filas (CHECKSUM TABLE)');
+
+// Sin tu base (una computadora nueva, antes de crear-base.php) la suite se detiene al
+// empezar y dice qué hacer, en lugar de un error fatal a la mitad.
+comprobarIgual(null, problemaConTuBase(huellaDeLaBase(DB_NOMBRE_PRUEBAS)), 'con tu base creada, la suite empieza');
+comprobar(str_contains((string) problemaConTuBase(huellaDeLaBase('monitoreo_red_soa_no_existe')), comandoPhp() . ' herramientas/crear-base.php'), '  si tu base no existe todavía, se detiene al empezar y dice cómo crearla', (string) problemaConTuBase(huellaDeLaBase('monitoreo_red_soa_no_existe')));
+comprobar(str_starts_with((string) problemaConTuBase('MySQL no responde'), 'MySQL no responde. Enciéndelo'), '  y si MySQL está apagado, dice que lo enciendas');
 
 [$codigo, $salida] = correrPhp('require "pruebas/ayudas.php"; echo "suite anidada\n";');
 comprobar(str_contains($salida, 'suite anidada') && str_contains($salida, 'Tu base (' . DB_NOMBRE . ') quedó idéntica.'), 'una suite anidada (como la del ensayo del guion) usa la base de pruebas y comprueba tu base al cerrar', $salida);
