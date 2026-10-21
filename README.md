@@ -1,5 +1,10 @@
 # Sistema de Monitoreo de Red SOA
 
+> **¿Primera vez con el proyecto?** Sigue la **[Guía del equipo](docs/GUIA-EQUIPO.md)**:
+> instalación paso a paso en Windows y en Linux, un recorrido de prueba, el celular con
+> Tailscale, las pruebas automáticas y los problemas comunes, con cada comando listo para
+> copiar.
+
 Aplicación web local para registrar dispositivos de red (computadoras, servidores,
 impresoras, routers), comprobar con ping si responden, guardar el historial de
 monitoreos y generar alertas cuando un dispositivo no responde.
@@ -138,9 +143,13 @@ Sigue en [Crear la base de datos](#4-crear-la-base-de-datos).
 git clone https://github.com/JazielAguirre/monitoreo-red-soa.git C:\xampp\htdocs\monitoreo-red-soa
 ```
 
-**3. Enciende Apache y MySQL** desde el panel de XAMPP (botón *Start* de cada uno).
-La primera vez, Windows pregunta si Apache puede usar la red: **permítelo en redes
-privadas** (hace falta para entrar desde el celular).
+**3. Enciende Apache y MySQL** con doble clic en `herramientas\iniciar-servicios.bat`
+(sección 9) o desde el panel de XAMPP (botón *Start* de cada uno). La primera vez,
+Windows pregunta si Apache puede usar la red: **permítelo en redes privadas y públicas**
+(hace falta para entrar desde el celular; un hotspot nuevo suele quedar como red pública).
+
+El paso a paso detallado, con lo que dice cada ventana, está en la
+[Guía del equipo](docs/GUIA-EQUIPO.md#3-instalación-en-windows-desde-cero).
 
 **4. En PowerShell usa `curl.exe`**, no `curl`: `curl` es otro comando de PowerShell.
 
@@ -358,7 +367,9 @@ Límites conocidos:
   busca en la /24 de esta computadora.
 - La tabla ARP guarda los equipos unos minutos: uno que se desconectó hace poco puede
   seguir apareciendo como «Solo en ARP».
-- En Windows y macOS, la lectura de la tabla ARP solo se probó con salidas de ejemplo.
+- En Windows se probó en vivo, a través de Apache, en una red de casa (`arp -a` en
+  español, 7 equipos en unos 7 s, nombres por UPnP y NetBIOS). En macOS, la lectura de
+  la tabla ARP solo se probó con salidas de ejemplo.
 - **Los teléfonos suelen aparecer sin nombre («—»).** En la prueba real (red de casa,
   con ufw activo) tres teléfonos con MAC aleatoria no contestaron por ningún método. Dos
   de ellos se unen al grupo multicast de mDNS (ufw registró sus avisos IGMP hacia

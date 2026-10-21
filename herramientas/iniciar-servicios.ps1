@@ -471,7 +471,8 @@ function MostrarResumen([string]$ipTailscale) {
     if ($ipLocal) { Write-Host "  En el celular, misma WiFi ........ http://$ipLocal$RUTA_WEB" }
     Write-Host "  En el celular, con Tailscale ..... http://$ip$RUTA_WEB"
     Write-Host "  En el celular, con Live Server ... http://${ip}:$PUERTO_LIVE_SERVER/componentes.html"
-    Write-Host "                                     abre la carpeta web\ en VS Code y pulsa «Go Live» ($live)"
+    Write-Host "                                     abre la carpeta web\ en VS Code y pulsa «Go Live» ($live);"
+    Write-Host '                                     para el celular, liveServer.settings.host en 0.0.0.0 (docs/GUIA-EQUIPO.md, 6.3)'
     Write-Host '  Escribe http:// completo: si el navegador lo cambia a https://, no carga.'
 
     Write-Host ''
