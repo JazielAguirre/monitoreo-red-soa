@@ -48,6 +48,10 @@ La instalación paso a paso está en la [Guía del equipo](GUIA-EQUIPO.md#3-inst
 
 ## Qué falta comprobar
 
+- **La guía seguida en una copia recién clonada** dentro de `C:\xampp\htdocs` (habría que
+  renombrar la carpeta de trabajo). Un clon nuevo fuera de `htdocs` sí se revisó: `.sh`
+  con LF, `.ps1` y `.bat` con CRLF, el `.ps1` con BOM, sin errores de sintaxis y con
+  `git status` limpio.
 - **Linux** después de estos cambios: la computadora con Linux estaba fuera de servicio.
   Los cambios no quitan ramas de código de Linux, pero las 6 suites no se han vuelto a
   correr ahí.
@@ -83,7 +87,7 @@ con la instalación de la guía hecha (XAMPP, el repositorio clonado y la base c
 - [ ] **4. Las 6 suites** (unos 7 minutos). Cada una debe terminar en
   `Resultado: N de N comprobaciones correctas.`:
   ```powershell
-  [Console]::OutputEncoding = [Text.Encoding]::UTF8; foreach ($s in 'dispositivos','alertas','monitoreo','auth','descubrimiento','interfaz') { "== $s"; C:\xampp\php\php.exe pruebas\$s.php | Select-String 'Resultado|✗|Aviso' }
+  [Console]::OutputEncoding = [Text.Encoding]::UTF8; foreach ($s in 'dispositivos','alertas','monitoreo','auth','descubrimiento','interfaz') { "== $s"; C:\xampp\php\php.exe pruebas\$s.php | Select-String '^Resultado|^\s*✗|! Aviso' }
   ```
 
 - [ ] **5. Desde el celular**, en la misma WiFi, con la dirección que imprime el paso 1.

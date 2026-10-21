@@ -488,7 +488,7 @@ O las 6 seguidas (unos 7 minutos), mostrando solo el resultado de cada una y lo 
 La primera parte hace que PowerShell lea bien los ✓ y ✗ que escriben las pruebas:
 
 ```powershell
-[Console]::OutputEncoding = [Text.Encoding]::UTF8; foreach ($s in 'dispositivos','alertas','monitoreo','auth','descubrimiento','interfaz') { "== $s"; C:\xampp\php\php.exe pruebas\$s.php | Select-String 'Resultado|✗|Aviso' }
+[Console]::OutputEncoding = [Text.Encoding]::UTF8; foreach ($s in 'dispositivos','alertas','monitoreo','auth','descubrimiento','interfaz') { "== $s"; C:\xampp\php\php.exe pruebas\$s.php | Select-String '^Resultado|^\s*✗|! Aviso' }
 ```
 
 | Suite | Qué prueba | Tiempo en Windows |
@@ -662,6 +662,9 @@ ya instalado:
 
 **No comprobado todavía** (no se afirma que funcione):
 
+- **Esta guía seguida en una copia recién clonada** dentro de `C:\xampp\htdocs`. Sí se
+  revisó un clon nuevo fuera de `htdocs`: finales de línea, el BOM del `.ps1` y la
+  sintaxis de todos los archivos.
 - **Linux** después de estos cambios: la computadora con Linux estaba fuera de servicio.
 - **Live Server**: no estaba instalado. Lo de `liveServer.settings.host` sale del código
   de la extensión.
