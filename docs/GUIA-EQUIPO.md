@@ -162,6 +162,13 @@ Clonar = descargar el proyecto con su historial, para poder actualizarlo con `gi
 **Elige una de las dos formas.** No descargues el ZIP de GitHub: así no puedes actualizar
 ni subir cambios.
 
+> **El repositorio es privado.** Antes de clonar necesitas una cuenta de GitHub y que el
+> dueño te agregue como colaborador (**Settings → Collaborators**, ver
+> [sección 11](#11-trabajar-en-equipo-con-git)); acepta la invitación que te llega por
+> correo. La primera vez que clones, git abre el navegador para que inicies sesión en
+> GitHub: hazlo con esa cuenta. Si git dice *Repository not found*, todavía no tienes
+> acceso o iniciaste sesión con otra cuenta.
+
 **A) Con Git, en PowerShell:**
 
 ```powershell
@@ -268,7 +275,8 @@ El proyecto se desarrolló en Linux con XAMPP en `/opt/lampp`. Los pasos complet
 en el [README, «Instalación en Linux»](../README.md#2-instalación-en-linux). En resumen:
 
 1. Instala XAMPP con PHP 8.2 en `/opt/lampp`.
-2. Clona el repositorio en `~/Proyectos/monitoreo-red-soa` y **enlázalo** desde htdocs:
+2. Clona el repositorio (es privado: necesitas el acceso del paso 3.2) en
+   `~/Proyectos/monitoreo-red-soa` y **enlázalo** desde htdocs:
    `ln -s ~/Proyectos/monitoreo-red-soa /opt/lampp/htdocs/monitoreo-red-soa`.
 3. **Permisos:** Apache corre como el usuario `daemon` y necesita permiso de paso (`x`)
    en cada carpeta del camino. Revísalo con `namei -l /opt/lampp/htdocs/monitoreo-red-soa/web/index.html`

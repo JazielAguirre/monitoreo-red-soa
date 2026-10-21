@@ -137,7 +137,9 @@ Sigue en [Crear la base de datos](#4-crear-la-base-de-datos).
 
 **1. Instala XAMPP** en `C:\xampp` (la ruta por defecto).
 
-**2. Clona el repositorio dentro de `htdocs`** (en PowerShell o Git Bash):
+**2. Clona el repositorio dentro de `htdocs`** (en PowerShell o Git Bash). Es privado:
+antes, el dueño debe agregarte como colaborador en GitHub, y la primera vez git abre el
+navegador para iniciar sesión:
 
 ```powershell
 git clone https://github.com/JazielAguirre/monitoreo-red-soa.git C:\xampp\htdocs\monitoreo-red-soa
