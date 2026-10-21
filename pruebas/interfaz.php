@@ -1143,7 +1143,7 @@ abrirPagina($navegador, 'monitoreos.html?dispositivo=4&desde=2026-09-22&hasta=20
 esperarMonitoreos($navegador);
 comprobarIgual(false, $navegador->evaluar("Chart.getChart(document.querySelector('#panel-grafica canvas')).options.animation"), 'con prefers-reduced-motion, la gráfica no anima');
 $navegador->movimientoReducido(false);
-abrirPagina($navegador, 'monitoreos.html?dispositivo=4');
+abrirPagina($navegador, 'monitoreos.html?dispositivo=4&desde=2026-09-22&hasta=2026-09-29');
 esperarMonitoreos($navegador);
 capturar($navegador, 'monitoreos-1440');
 
@@ -1191,8 +1191,10 @@ esperarMonitoreos($navegador);
 comprobarIgual(['Aún no hay comprobaciones en los últimos 7 días', 'index.html'], [estadoMonitoreos($navegador)['vacio'] ?? null, $navegador->evaluar("document.querySelector('#contenido-historial .estado-vacio a')?.getAttribute('href')")], 'sin comprobaciones y sin filtros: otro vacío, que lleva al Dashboard');
 $navegador->quitarIntercepciones();
 
+// Las fechas del seed son fijas (última ronda: 27/09/2026): donde la prueba necesita la
+// gráfica con datos, el rango va en la URL. «Los últimos 7 días» solo los tuvo hasta el 3/10.
 $navegador->interceptar('servicios/monitoreo?', ['fallar' => true]);
-abrirPagina($navegador, 'monitoreos.html?dispositivo=4');
+abrirPagina($navegador, 'monitoreos.html?dispositivo=4&desde=2026-09-22&hasta=2026-09-29');
 esperarMonitoreos($navegador);
 $r = estadoMonitoreos($navegador);
 comprobarIgual('Tiempos de respuesta · Servidor principal', $navegador->evaluar("document.getElementById('titulo-grafica').textContent"), '  la gráfica con error conserva el nombre del dispositivo');
@@ -1221,7 +1223,7 @@ function filasCompactas(Navegador $navegador): array
 }
 
 $navegador->tamano(390, 844, true);
-abrirPagina($navegador, 'monitoreos.html?dispositivo=4');
+abrirPagina($navegador, 'monitoreos.html?dispositivo=4&desde=2026-09-22&hasta=2026-09-29');
 esperarMonitoreos($navegador);
 $r = $navegador->evaluar(<<<'JS'
     (() => {
@@ -1509,7 +1511,7 @@ $navegador->tamano(1440, 900);
 $paginasTeclado = [
     'index.html' => 'esperarDashboard',
     'dispositivos.html' => null,
-    'monitoreos.html?dispositivo=4' => 'esperarMonitoreos',
+    'monitoreos.html?dispositivo=4&desde=2026-09-22&hasta=2026-09-29' => 'esperarMonitoreos',
     'alertas.html' => 'esperarAlertas',
 ];
 foreach ($paginasTeclado as $pagina => $espera) {
@@ -1993,7 +1995,7 @@ foreach ($titulos as $pagina => $titulo) {
 // La sesión de las secciones anteriores sigue abierta.
 foreach ([[1024, 768], [1280, 720]] as [$ancho, $alto]) {
     $navegador->tamano($ancho, $alto);
-    foreach (['index.html', 'dispositivos.html', 'monitoreos.html?dispositivo=4', 'alertas.html', 'login.html?volver=x'] as $pagina) {
+    foreach (['index.html', 'dispositivos.html', 'monitoreos.html?dispositivo=4&desde=2026-09-22&hasta=2026-09-29', 'alertas.html', 'login.html?volver=x'] as $pagina) {
         abrirPagina($navegador, $pagina);
         $navegador->procesarEventos(1.2);
         comprobarIgual(false, $navegador->evaluar('document.documentElement.scrollWidth > innerWidth'), "{$ancho}×{$alto} " . strtok($pagina, '?') . ': sin desplazamiento horizontal');

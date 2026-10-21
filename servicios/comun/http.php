@@ -193,8 +193,9 @@ function leerFalloSimulado(): ?array
  * que la del navegador sale después de sus propias llamadas.
  *
  * Va en la carpeta de registros de PHP (junto al error_log de php.ini), donde
- * Apache ya puede escribir en Linux y en Windows. Si no se puede escribir, se
- * ignora: el registro nunca debe hacer fallar una petición.
+ * Apache ya puede escribir en Linux y en Windows. Si la carpeta no existe (el
+ * XAMPP de Windows no la trae), se crea. Si no se puede escribir, se ignora: el
+ * registro nunca debe hacer fallar una petición.
  */
 function registrarLlamada(string $servicio, string $metodo, string $url, string $resultado, int $inicio): void
 {
@@ -211,7 +212,11 @@ function registrarLlamada(string $servicio, string $metodo, string $url, string 
         $milisegundos = (int) round((hrtime(true) - $inicio) / 1e6);
         $lineas .= "[$hora]   " . nombreDeEsteServicio() . " → $servicio: $metodo " . rutaDeServicio($url) . " ($resultado, $milisegundos ms)\n";
 
-        @file_put_contents(archivoRegistroLlamadas(), $lineas, FILE_APPEND | LOCK_EX);
+        $archivo = archivoRegistroLlamadas();
+        if (!is_dir(dirname($archivo))) {
+            @mkdir(dirname($archivo), 0775, true); // el XAMPP de Windows no trae C:\xampp\php\logs
+        }
+        @file_put_contents($archivo, $lineas, FILE_APPEND | LOCK_EX);
     } catch (Throwable) {
         // El registro es solo para mirar; si falla, la petición sigue.
     }

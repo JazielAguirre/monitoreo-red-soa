@@ -1,5 +1,10 @@
 # Sistema de Monitoreo de Red SOA
 
+> **¿Primera vez con el proyecto?** Sigue la **[Guía del equipo](docs/GUIA-EQUIPO.md)**:
+> instalación paso a paso en Windows y en Linux, un recorrido de prueba, el celular con
+> Tailscale, las pruebas automáticas y los problemas comunes, con cada comando listo para
+> copiar.
+
 Aplicación web local para registrar dispositivos de red (computadoras, servidores,
 impresoras, routers), comprobar con ping si responden, guardar el historial de
 monitoreos y generar alertas cuando un dispositivo no responde.
@@ -138,9 +143,13 @@ Sigue en [Crear la base de datos](#4-crear-la-base-de-datos).
 git clone https://github.com/JazielAguirre/monitoreo-red-soa.git C:\xampp\htdocs\monitoreo-red-soa
 ```
 
-**3. Enciende Apache y MySQL** desde el panel de XAMPP (botón *Start* de cada uno).
-La primera vez, Windows pregunta si Apache puede usar la red: **permítelo en redes
-privadas** (hace falta para entrar desde el celular).
+**3. Enciende Apache y MySQL** con doble clic en `herramientas\iniciar-servicios.bat`
+(sección 9) o desde el panel de XAMPP (botón *Start* de cada uno). La primera vez,
+Windows pregunta si Apache puede usar la red: **permítelo en redes privadas y públicas**
+(hace falta para entrar desde el celular; un hotspot nuevo suele quedar como red pública).
+
+El paso a paso detallado, con lo que dice cada ventana, está en la
+[Guía del equipo](docs/GUIA-EQUIPO.md#3-instalación-en-windows-desde-cero).
 
 **4. En PowerShell usa `curl.exe`**, no `curl`: `curl` es otro comando de PowerShell.
 
@@ -358,7 +367,9 @@ Límites conocidos:
   busca en la /24 de esta computadora.
 - La tabla ARP guarda los equipos unos minutos: uno que se desconectó hace poco puede
   seguir apareciendo como «Solo en ARP».
-- En Windows y macOS, la lectura de la tabla ARP solo se probó con salidas de ejemplo.
+- En Windows se probó en vivo, a través de Apache, en una red de casa (`arp -a` en
+  español, 7 equipos en unos 7 s, nombres por UPnP y NetBIOS). En macOS, la lectura de
+  la tabla ARP solo se probó con salidas de ejemplo.
 - **Los teléfonos suelen aparecer sin nombre («—»).** En la prueba real (red de casa,
   con ufw activo) tres teléfonos con MAC aleatoria no contestaron por ningún método. Dos
   de ellos se unen al grupo multicast de mDNS (ufw registró sus avisos IGMP hacia
@@ -385,8 +396,29 @@ curl -s -b cookies.txt -X POST http://localhost/monitoreo-red-soa/servicios/desc
 Para entrar desde el celular **en otra red** (datos móviles, otra WiFi), la computadora
 y el celular están en la misma red de [Tailscale](https://tailscale.com/), instalado y
 con sesión iniciada en los dos. Solo entran los equipos de esa red: la aplicación no
-queda abierta a internet. Después de reiniciar la computadora, un solo comando enciende
-todo (solo Linux):
+queda abierta a internet. Después de reiniciar la computadora, un solo paso enciende
+todo.
+
+**Windows:** doble clic en `herramientas\iniciar-servicios.bat` (o, en PowerShell, desde
+la carpeta del proyecto, `herramientas\iniciar-servicios.bat`). No necesita administrador.
+
+1. Enciende Apache y MySQL de XAMPP, solo si no están encendidos, y confirma que
+   quedaron encendidos (Apache contesta por HTTP; MySQL, a `mysqladmin ping`). Si otro
+   programa ocupa el puerto 80, 443 o 3306 (IIS, otro MySQL, Docker…), dice cuál, con
+   su PID, y cómo detenerlo.
+2. Comprueba que Tailscale esté instalado y conectado y muestra su IP `100.x.y.z`. No
+   ejecuta `tailscale up`: si falta iniciar sesión o conectar, dice cómo.
+3. Revisa si el Firewall de Windows deja entrar a Apache en las redes privadas **y
+   públicas** (un hotspot nuevo suele quedar como red pública). Si no, muestra el comando
+   exacto para PowerShell como administrador, **pero no lo ejecuta**.
+4. Corre la comprobación previa de `preparar-demo.php`. **No cambia tu base.**
+5. Termina con un resumen y las direcciones (tabla de abajo). Con doble clic, espera una
+   tecla antes de cerrar la ventana para que se pueda leer.
+
+El `.bat` ejecuta `iniciar-servicios.ps1` con `-ExecutionPolicy Bypass`, así que funciona
+aunque Windows bloquee los scripts de PowerShell, sin cambiar esa configuración.
+
+**Linux:**
 
 ```bash
 sudo bash herramientas/iniciar-servicios.sh
@@ -414,8 +446,8 @@ sudo bash herramientas/iniciar-servicios.sh
 Con Live Server conviene abrir `componentes.html`, la página de muestra, que no pide
 datos: las demás pantallas necesitan los servicios, y esos solo los sirve Apache.
 
-Nunca se queda esperando: si algo falla, dice qué falló y qué hacer, y lo repite en el
-resumen. Termina con código 0 si todo quedó encendido y 1 si algo falló.
+Los dos nunca se quedan esperando: si algo falla, dicen qué falló y qué hacer, y lo
+repiten en el resumen. Terminan con código 0 si todo quedó encendido y 1 si algo falló.
 
 ---
 
@@ -446,7 +478,8 @@ database/       schema.sql (las tablas), inicial.sql (usuario admin), seed.sql (
 docs/           API.md (contrato de los endpoints), PLAN.md (fases), DEMO.md (guion),
                 WINDOWS.md (verificación en Windows), diseno/ (referencia visual)
 herramientas/   crear-base.php, restaurar-respaldo.php, preparar-demo.php, monitorear-rondas.php,
-                ver-llamadas.php y sus funciones, iniciar-servicios.sh (solo línea de comandos)
+                ver-llamadas.php y sus funciones, iniciar-servicios.sh (Linux) e
+                iniciar-servicios.bat/.ps1 (Windows) (solo línea de comandos)
 pruebas/        las 6 suites y sus ayudas (solo línea de comandos)
 servicios/      comun/ (infraestructura) y un servicio por carpeta: auth, dispositivos, monitoreo,
                 alertas y descubrimiento

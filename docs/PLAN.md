@@ -33,6 +33,7 @@ Después de la Fase 1, el backend y el frontend pueden avanzar en paralelo. La F
 | 8 | Integración, pruebas y demo | Todo el equipo | ✅ Completa (quedan el ensayo en vivo y la prueba en Windows) |
 | 9 | Descubrimiento de red | Todo el equipo | ✅ Completa, fusionada a `main` (etiqueta `v1.1`; quedan la prueba en Windows y el ensayo en vivo) |
 | 10 | Datos reales | Todo el equipo | ✅ Completa, fusionada a `main` (etiqueta `v1.2`; queda el ensayo en vivo con los equipos reales) |
+| — | Windows y guía del equipo | Todo el equipo | ✅ Completa, fusionada a `main` (etiqueta `v1.4`; quedan Linux, una red pública y la computadora de otro integrante) |
 
 ## Pruebas automáticas
 
@@ -239,7 +240,8 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 **Listo cuando:**
 
 - [x] Todas las pruebas automáticas pasan en una copia recién clonada del repositorio (Linux, siguiendo el README: 1023 de 1023 comprobaciones).
-  - [ ] Pendiente del equipo: repetirlo en la computadora de otro integrante, en Windows con `docs/WINDOWS.md`.
+  - [x] En Windows 11 (20 de oct de 2026, mejora «Windows y guía del equipo»): las 6 suites pasan.
+  - [ ] Pendiente del equipo: repetirlo en la computadora de otro integrante, con `docs/WINDOWS.md`.
 - [x] El guion de la demo se ejecuta completo sin errores: agregar, monitorear, ver la alerta, atenderla, consultar el historial y eliminar (ensayo automático en `pruebas/interfaz.php`, a 1280×720).
   - [x] El equipo revisó `docs/DEMO.md` (servicios, alertas en vivo, registro de llamadas, celular, preguntas y tiempos por integrante).
   - [ ] Pendiente del equipo: ensayarlo en vivo, cronometrado.
@@ -277,7 +279,8 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] Pantalla Dispositivos: "Buscar dispositivos en la red" muestra el progreso por lote y la lista (IP, MAC, nombre, ping o solo ARP, registrado o no). "Agregar" abre el formulario con la IP y el nombre escritos. Estados de carga, vacío y error; se ve bien a 390 px y en el proyector; colores solo desde `tokens.css`; piezas nuevas en `componentes.html`.
 - [x] `pruebas/descubrimiento.php` pasa sin depender de la red de quien la corre (red simulada), las secciones nuevas de `pruebas/interfaz.php` pasan, y las 5 suites anteriores siguen pasando: 1174 de 1174 (dispositivos 207, alertas 154, monitoreo 223, auth 126, descubrimiento 112, interfaz 352). Se rompió el código a propósito (13 roturas, contando la del ⚠ de `preparar-demo.php`) y cada una la detectó alguna prueba.
 - [x] Probado a través de Apache en una red propia (hotspot del equipo, 192.168.137.0/24): 4 lotes en ~4.4 s, 7 equipos con MAC y nombre; el hotspot y una computadora con Windows bloquean el ping y aparecen «Solo en ARP». Revisado en Chrome a 1440, 1024 y 390 px.
-  - [ ] Pendiente del equipo: probarlo en Windows (`docs/WINDOWS.md`, paso 7) y ensayar el tramo del escáner en vivo con el segundo teléfono.
+  - [x] Probado en Windows 11 a través de Apache, en una red de casa (20 de oct de 2026): 7 equipos en 7.1 s, nombres por UPnP y NetBIOS.
+  - [ ] Pendiente del equipo: ensayar el tramo del escáner en vivo con el segundo teléfono.
 - [x] README y `docs/DEMO.md` explican el uso responsable, y el guion incluye el tramo del escáner.
 
 ## Fase 10 · Datos reales ✅
@@ -323,6 +326,28 @@ Desde la Fase 2, cada servicio entrega un script de pruebas en `pruebas/`, escri
 - [x] Un método que no contesta no retrasa a los demás ni el lote.
 - [x] Las 6 suites pasan: dispositivos 260, alertas 155, monitoreo 282, auth 127, descubrimiento 202, interfaz 372 (1398). Doce roturas a propósito detectadas (origen de las respuestas, URL de UPnP a otra IP o fuera de la red, DOCTYPE, tope de 64 KB, preferencia, espera innecesaria, nombres de grupo y bytes de control en NetBIOS, puerto 137 en la red simulada, `_gateway` e `innerHTML` en la interfaz).
 - [x] Prueba real en la red de casa, con ufw activo, a través de Apache (3 de oct de 2026, 192.168.0.0/24, 7 equipos, red completa en 5.5 s): módem por UPnP («Technicolor CGA2121»), dos equipos por NetBIOS («BRCM-LVG», «DESKTOP-TGM75TV») y la laptop por mDNS; tres teléfonos con MAC aleatoria sin nombre por ningún método. El registro de ufw (`on (low)`) solo tenía bloqueos IGMP (protocolo 2: los avisos de los teléfonos para unirse al grupo de mDNS, 224.0.0.251, y las consultas del módem a 224.0.0.1), ninguno UDP desde los puertos 137, 5353 o 1900: ufw no bloqueó respuestas de nombres. Los teléfonos usan mDNS para buscar servicios, no para anunciar su nombre. Fusionada a `main`, etiqueta `v1.3`.
+
+## Mejora · Windows y guía del equipo ✅ (rama `windows-y-guia`, etiqueta `v1.4`)
+
+**Objetivo:** que el proyecto funcione en el Windows de cualquier integrante siguiendo una guía, sin romper nada de Linux. Hasta aquí todo se había desarrollado y probado en Linux; la computadora con Linux quedó fuera de servicio y el trabajo siguió en Windows 11 con XAMPP 8.2.12.
+
+**Tareas:**
+
+- Diagnóstico de Windows: versiones, extensiones, módulos de Apache, puertos, rutas, finales de línea, ping real, `route print`, `arp -a`, Tailscale y Firewall.
+- Corregir lo que falle en Windows, con una prueba que lo cubra y una rotura a propósito que la prueba detecte, sin quitar ramas de código de Linux.
+- `herramientas/iniciar-servicios.ps1` y `.bat` (equivalente de `iniciar-servicios.sh`) y `.gitattributes`.
+- `docs/GUIA-EQUIPO.md`, enlazada al inicio del README, y `docs/WINDOWS.md` con lo comprobado.
+
+**Listo cuando:**
+
+- [x] Diagnóstico con ✓/✗ y correcciones: el registro de llamadas sin `C:\xampp\php\logs`, las suites sin tu base, `php -r` con comillas, los pipes de `proc_open` que no se pueden leer sin bloquear, Ctrl+C durante un `usleep()`, la conexión rechazada que tarda ~2 s y la prueba de Monitoreos que dependía de la fecha.
+- [x] Las 6 suites pasan en Windows con `C:\xampp\php\php.exe` (dispositivos 263, alertas 155, monitoreo 328, auth 127, descubrimiento 203, interfaz 372), con un solo aviso justificado.
+- [x] Ping real en español (incluido «Host de destino inaccesible» con código 0) y escáner real en una red propia, a través de Apache.
+- [x] `iniciar-servicios.bat` probado con todo encendido, todo apagado, puertos ocupados y Tailscale conectado; sus funciones y su ejecución de punta a punta, en `pruebas/monitoreo.php` §16.
+- [x] El celular, con datos móviles, carga la aplicación por Tailscale.
+- [x] `docs/GUIA-EQUIPO.md` con las 13 secciones aprobadas y `docs/WINDOWS.md` actualizado.
+  - [ ] Pendiente: seguir la guía en una copia recién clonada dentro de `htdocs` (no se renombró la carpeta de trabajo; un clon nuevo fuera de `htdocs` sí se revisó: finales de línea, BOM y sintaxis).
+  - [ ] Pendiente: las 6 suites en Linux después de estos cambios, una red pública con la regla del Firewall, Live Server, iniciar sesión desde el celular por Tailscale y la computadora de otro integrante.
 
 ## Extras (solo si sobra tiempo)
 

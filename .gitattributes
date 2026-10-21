@@ -1,0 +1,6 @@
+# Finales de línea fijos para los scripts, en cualquier computadora y con cualquier
+# core.autocrlf: bash no acepta CRLF en los .sh, y PowerShell y cmd esperan CRLF en
+# los .ps1 y .bat. El resto de los archivos sigue igual que antes.
+*.sh  text eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf

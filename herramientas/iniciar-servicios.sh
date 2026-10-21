@@ -384,7 +384,8 @@ mostrar_resumen() {
     echo "  En la computadora ................ http://localhost$RUTA_WEB"
     echo "  En el celular, con Apache ........ http://$ip$RUTA_WEB"
     echo "  En el celular, con Live Server ... http://$ip:$PUERTO_LIVE_SERVER/componentes.html"
-    echo "                                     abre la carpeta web/ en VS Code y pulsa «Go Live» ($live)"
+    echo "                                     abre la carpeta web/ en VS Code y pulsa «Go Live» ($live);"
+    echo '                                     para el celular, liveServer.settings.host en 0.0.0.0 (docs/GUIA-EQUIPO.md, 6.3)'
 
     echo
     if ((${#PROBLEMAS[@]} > 0)); then

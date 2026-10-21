@@ -277,7 +277,7 @@ $duracion = microtime(true) - $inicio;
 comprobarRespuesta($r, 201, 'POST /monitoreo/5');
 $monitoreo = $r['json']['data']['monitoreo'] ?? [];
 comprobarIgual(['inactivo', null, true], [$monitoreo['estado'] ?? null, array_key_exists('tiempo_respuesta_ms', $monitoreo) ? $monitoreo['tiempo_respuesta_ms'] : 'falta', $r['json']['data']['alerta_creada'] ?? null], '  inactivo, tiempo null y alerta_creada true');
-comprobar($duracion < 3, '  tardó menos de 3 s (ping de 1 s como máximo)', sprintf('%.2f s', $duracion));
+comprobar($duracion < 3, sprintf('  tardó %.2f s, menos de 3 (ping de 1 s como máximo)', $duracion));
 $d = peticion('GET', '/dispositivos/5')['json']['data'] ?? [];
 comprobarIgual(['inactivo', null, $monitoreo['fecha'] ?? 'x'], campos($d, ['estado', 'ultimo_tiempo_ms', 'ultima_comprobacion']), '  la Impresora queda inactiva, sin tiempo y con la fecha del monitoreo');
 $alertas = peticion('GET', '/alertas?dispositivo=5&atendida=0')['json']['data'] ?? [];
@@ -458,6 +458,20 @@ if (!is_readable($registro)) {
     comprobar(preg_match('/^\[\d{2}:\d{2}:\d{2}\]   Monitoreo → Alertas: POST \/alertas \(201, \d+ ms\)$/m', $nuevo) === 1, '  cada línea lleva la hora y los milisegundos', $nuevo);
 }
 
+// El XAMPP de Windows no trae la carpeta del error_log (C:\xampp\php\logs): sin
+// ella, el registro no se escribía y ver-llamadas.php no mostraba nada.
+$carpetaSinCrear = rtrim(sys_get_temp_dir(), '/\\') . DIRECTORY_SEPARATOR . 'monitoreo-registro-' . bin2hex(random_bytes(4));
+$errorLogAnterior = (string) ini_get('error_log');
+ini_set('error_log', $carpetaSinCrear . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'php_error_log');
+$registroSinCarpeta = archivoRegistroLlamadas();
+registrarLlamada('Dispositivos', 'GET', URL_DISPOSITIVOS . '/6', '200', hrtime(true));
+ini_set('error_log', $errorLogAnterior);
+$contenidoSinCarpeta = is_file($registroSinCarpeta) ? (string) file_get_contents($registroSinCarpeta) : '';
+comprobar(str_contains($contenidoSinCarpeta, '→ Dispositivos: GET /dispositivos/6 (200, '), 'Si la carpeta del error_log no existe (XAMPP de Windows), el registro la crea y anota la llamada', $registroSinCarpeta);
+@unlink($registroSinCarpeta);
+@rmdir(dirname($registroSinCarpeta));
+@rmdir($carpetaSinCrear);
+
 // =====================================================================
 seccion('13. Preparación de la demo (herramientas/preparar-demo.php)');
 
@@ -620,54 +634,74 @@ borrarRespaldosDePrueba();
 seccion('14. Historial antes de la demo (herramientas/monitorear-rondas.php)');
 
 /**
- * Inicia monitorear-rondas.php sin esperar a que termine: [proceso, salida (pipe)].
+ * Inicia monitorear-rondas.php sin esperar a que termine. Devuelve ['proceso',
+ * 'archivo' (su salida), 'codigo' (null mientras corre)].
  * Con el comando como arreglo no hay un sh de por medio: las señales (Ctrl+C)
- * llegan al proceso de PHP.
+ * llegan al proceso de PHP. $grupoPropio (solo Windows): en su propio grupo de
+ * procesos, para mandarle un Ctrl+Break solo a él.
+ * La salida va a un archivo, no a un pipe: en Windows, leer un pipe espera a que
+ * lleguen datos aunque esté sin bloqueo, y la prueba podía quedarse esperando.
  */
-function iniciarRondas(array $argumentos): array
+function iniciarRondas(array $argumentos, bool $grupoPropio = false): array
 {
     renovarBaseDePruebas();
-    $proceso = proc_open([PHP_BINARY, dirname(__DIR__) . '/herramientas/monitorear-rondas.php', ...$argumentos], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['redirect', 1]], $tuberias);
+    $archivo = (string) tempnam(sys_get_temp_dir(), 'rondas');
+    $proceso = proc_open([PHP_BINARY, dirname(__DIR__) . '/herramientas/monitorear-rondas.php', ...$argumentos], [0 => ['pipe', 'r'], 1 => ['file', $archivo, 'w'], 2 => ['redirect', 1]], $tuberias, null, null, ['create_process_group' => $grupoPropio]);
     fclose($tuberias[0]);
-    stream_set_blocking($tuberias[1], false);
 
-    return [$proceso, $tuberias[1]];
+    return ['proceso' => $proceso, 'archivo' => $archivo, 'codigo' => null];
 }
 
 /**
- * Lee la salida hasta que aparece $texto o el proceso termina, como máximo $espera
- * segundos (nunca se queda bloqueada). Devuelve lo leído.
+ * true si las rondas ya terminaron. Guarda su código de salida: proc_get_status()
+ * solo lo da la primera vez que ve el proceso terminado.
  */
-function leerHasta($salida, ?string $texto, float $espera = 30): string
+function rondasTerminaron(array &$rondas): bool
 {
-    $leido = '';
+    if ($rondas['codigo'] === null) {
+        $estado = proc_get_status($rondas['proceso']);
+        $rondas['codigo'] = $estado['running'] ? null : $estado['exitcode'];
+    }
+
+    return $rondas['codigo'] !== null;
+}
+
+/**
+ * Espera hasta que la salida contiene $texto o las rondas terminan, como máximo
+ * $espera segundos (nunca se queda bloqueada). Devuelve la salida hasta ahora.
+ */
+function leerHasta(array &$rondas, ?string $texto, float $espera = 30): string
+{
     $limite = microtime(true) + $espera;
-    while (($texto === null || !str_contains($leido, $texto)) && !feof($salida) && microtime(true) < $limite) {
-        $leido .= (string) fread($salida, 8192);
+    while (true) {
         renovarBaseDePruebas();
+        $termino = rondasTerminaron($rondas);
+        clearstatcache(true, $rondas['archivo']);
+        $leido = (string) @file_get_contents($rondas['archivo']);
+        if ($termino || ($texto !== null && str_contains($leido, $texto)) || microtime(true) >= $limite) {
+            return $leido;
+        }
         usleep(50000);
     }
-
-    return $leido;
 }
 
 /**
- * Espera a que el proceso termine (como máximo $espera s); si no, lo mata con
- * SIGKILL para que nunca siga vivo cuando la base de pruebas caduque.
- * Devuelve [código de salida, terminó solo].
+ * Espera a que las rondas terminen (como máximo $espera s); si no, las mata con
+ * SIGKILL para que nunca sigan vivas cuando la base de pruebas caduque.
+ * Devuelve [código de salida, terminó solo, salida completa].
  */
-function esperarFin($proceso, $salida, string &$leido, float $espera = 10): array
+function esperarFin(array &$rondas, float $espera = 10): array
 {
-    $leido .= leerHasta($salida, null, $espera);
-    $estado = proc_get_status($proceso);
-    if ($estado['running']) {
-        proc_terminate($proceso, 9);
-        proc_close($proceso);
-        return [-1, false];
+    leerHasta($rondas, null, $espera);
+    $termino = rondasTerminaron($rondas);
+    if (!$termino) {
+        proc_terminate($rondas['proceso'], 9);
     }
-    proc_close($proceso);
+    proc_close($rondas['proceso']);
+    $leido = (string) @file_get_contents($rondas['archivo']);
+    @unlink($rondas['archivo']);
 
-    return [$estado['exitcode'], true];
+    return $termino ? [$rondas['codigo'], true, $leido] : [-1, false, $leido];
 }
 
 recrearBase(DB_NOMBRE_PRUEBAS, [ARCHIVO_SCHEMA, ARCHIVO_INICIAL]);
@@ -695,11 +729,11 @@ comprobarSalida($salida, [
 comprobar(preg_match('/Equipo local\s+✓\s+✓\s+✓\s+3 de 3/u', $salida) === 1 && preg_match('/Equipo apagado\s+✗\s+✗\s+✗\s+0 de 3/u', $salida) === 1, '  y qué dispositivos respondieron en cada ronda (✓ ✓ ✓ / ✗ ✗ ✗)', $salida);
 
 // Un servicio deja de responder a la mitad: lo dice claramente, muestra el resumen y termina.
-[$proceso, $salida] = iniciarRondas(['--rondas=3', '--cada=5']);
-$leido = leerHasta($salida, 'siguiente ronda');
+$rondas = iniciarRondas(['--rondas=3', '--cada=5']);
+leerHasta($rondas, 'siguiente ronda');
 simularFallo('Dispositivos', 'sin_respuesta', 'GET', puertoCerrado());
 $inicio = microtime(true);
-[$codigo] = esperarFin($proceso, $salida, $leido, 15);
+[$codigo, , $leido] = esperarFin($rondas, 15);
 quitarFalloSimulado();
 comprobar($codigo === 1 && str_contains($leido, '✗ Se detuvieron las rondas: Ningún dispositivo se pudo monitorear en esta ronda: No se pudo comunicar con el Servicio de Dispositivos'),
     'si Dispositivos deja de responder a la mitad → «Se detuvieron las rondas» con el motivo (código 1)', $leido);
@@ -708,13 +742,26 @@ comprobar(str_contains($leido, 'Rondas hechas ............ 2 de 3 (se detuvo ant
     '  y el resumen dice qué se alcanzó a guardar (! = no se pudo monitorear)', $leido);
 
 if (function_exists('pcntl_async_signals')) {
-    [$proceso, $salida] = iniciarRondas(['--rondas=3', '--cada=60']);
-    $leido = leerHasta($salida, 'siguiente ronda');
-    proc_terminate($proceso, SIGINT);
-    [$codigo, $soloTermino] = esperarFin($proceso, $salida, $leido, 5);
+    $rondas = iniciarRondas(['--rondas=3', '--cada=60']);
+    leerHasta($rondas, 'siguiente ronda');
+    proc_terminate($rondas['proceso'], SIGINT);
+    [$codigo, $soloTermino, $leido] = esperarFin($rondas, 5);
     comprobar($soloTermino && $codigo === 1 && str_contains($leido, 'Detenido con Ctrl+C.') && str_contains($leido, 'Rondas hechas ............ 1 de 3'), 'Ctrl+C durante la espera → resumen de lo hecho, sin esperar los 60 s (código 1)', $leido);
+} elseif (function_exists('sapi_windows_generate_ctrl_event')) {
+    // Windows: un Ctrl+C no se puede dirigir a un solo proceso; un Ctrl+Break a su grupo
+    // llega al mismo manejador de la consola (sapi_windows_set_ctrl_handler).
+    $rondas = iniciarRondas(['--rondas=3', '--cada=60'], true);
+    leerHasta($rondas, 'siguiente ronda');
+    if (@sapi_windows_generate_ctrl_event(PHP_WINDOWS_EVENT_CTRL_BREAK, proc_get_status($rondas['proceso'])['pid'])) {
+        $inicio = microtime(true);
+        [$codigo, $soloTermino, $leido] = esperarFin($rondas, 5);
+        comprobar($soloTermino && $codigo === 1 && str_contains($leido, 'Detenido con Ctrl+C.') && str_contains($leido, 'Rondas hechas ............ 1 de 3'), sprintf('Ctrl+C (Ctrl+Break en Windows) durante la espera → resumen de lo hecho en %.1f s, sin esperar los 60 s (código 1)', microtime(true) - $inicio), $leido);
+    } else {
+        esperarFin($rondas, 0);
+        avisar('Sin consola (Windows): no se pudo enviar Ctrl+Break, así que no se probó Ctrl+C en monitorear-rondas.php.');
+    }
 } else {
-    avisar('Sin pcntl (Windows): no se probó Ctrl+C en monitorear-rondas.php.');
+    avisar('Sin pcntl ni consola de Windows: no se probó Ctrl+C en monitorear-rondas.php.');
 }
 // La marca de las pruebas viaja entre servicios: un monitoreo de las pruebas con la base de
 // pruebas caducada no llega a la base del usuario ni por Monitoreo ni por Dispositivos.
@@ -727,5 +774,176 @@ $GLOBALS['renovacion_en_pausa'] = false;
 comprobar($r['codigo'] >= 500, 'un POST /monitoreo de las pruebas con la base de pruebas caducada se rechaza', "código {$r['codigo']}");
 comprobarIgual($monitoreosTuyos, (int) (filasBdUsuario('SELECT COUNT(*) AS n FROM monitoreos')[0]['n'] ?? -1), '  y no guardó nada en tu base');
 recargarBaseDeDatos();
+
+// =====================================================================
+seccion('15. Ping (comun/ping.php): salidas reales de Windows en español, y de Windows en inglés, Linux y macOS');
+
+require_once __DIR__ . '/../servicios/comun/ping.php';
+
+// Salidas reales de un Windows 11 en español (es-MX, octubre de 2026), tal como las
+// entrega exec(): en CP850 (\xA1 = í, \xA0 = á), con las líneas unidas por "\n".
+$windowsLocal = "Haciendo ping a 127.0.0.1 con 32 bytes de datos:\nRespuesta desde 127.0.0.1: bytes=32 tiempo<1m TTL=128\n\nEstad\xA1sticas de ping para 127.0.0.1:\n    Paquetes: enviados = 1, recibidos = 1, perdidos = 0\n    (0% perdidos),\nTiempos aproximados de ida y vuelta en milisegundos:\n    M\xA1nimo = 0ms, M\xA0ximo = 0ms, Media = 0ms";
+$windowsRouter = "Haciendo ping a 192.168.0.1 con 32 bytes de datos:\nRespuesta desde 192.168.0.1: bytes=32 tiempo=3ms TTL=64\n\nEstad\xA1sticas de ping para 192.168.0.1:\n    Paquetes: enviados = 1, recibidos = 1, perdidos = 0\n    (0% perdidos),\nTiempos aproximados de ida y vuelta en milisegundos:\n    M\xA1nimo = 3ms, M\xA0ximo = 3ms, Media = 3ms";
+$windowsSinRespuesta = "Haciendo ping a 192.0.2.20 con 32 bytes de datos:\nTiempo de espera agotado para esta solicitud.\n\nEstad\xA1sticas de ping para 192.0.2.20:\n    Paquetes: enviados = 1, recibidos = 0, perdidos = 1\n    (100% perdidos),";
+// Una IP libre de la red local, con la entrada ARP ya fallida: la propia computadora
+// contesta, "recibidos = 1" y ping termina con código 0.
+$windowsInaccesible = "Haciendo ping a 192.168.0.250 con 32 bytes de datos:\nRespuesta desde 192.168.0.19: Host de destino inaccesible.\n\nEstad\xA1sticas de ping para 192.168.0.250:\n    Paquetes: enviados = 1, recibidos = 1, perdidos = 0\n    (0% perdidos),";
+$windowsIngles = "Pinging 192.168.1.1 with 32 bytes of data:\nReply from 192.168.1.1: bytes=32 time=12ms TTL=64\n\nPing statistics for 192.168.1.1:\n    Packets: Sent = 1, Received = 1, Lost = 0 (0% loss),\nApproximate round trip times in milli-seconds:\n    Minimum = 12ms, Maximum = 12ms, Average = 12ms";
+$windowsInglesMenor = "Pinging 127.0.0.1 with 32 bytes of data:\nReply from 127.0.0.1: bytes=32 time<1ms TTL=128";
+$windowsInglesInaccesible = "Pinging 192.168.1.250 with 32 bytes of data:\nReply from 192.168.1.5: Destination host unreachable.\n\nPing statistics for 192.168.1.250:\n    Packets: Sent = 1, Received = 1, Lost = 0 (0% loss),";
+$linux = "PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.\n64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.032 ms\n\n--- 127.0.0.1 ping statistics ---\n1 packets transmitted, 1 received, 0% packet loss, time 0ms\nrtt min/avg/max/mdev = 0.032/0.032/0.032/0.000 ms";
+$linuxSinRespuesta = "PING 192.0.2.20 (192.0.2.20) 56(84) bytes of data.\n\n--- 192.0.2.20 ping statistics ---\n1 packets transmitted, 0 received, 100% packet loss, time 0ms";
+$mac = "PING 192.168.1.1 (192.168.1.1): 56 data bytes\n64 bytes from 192.168.1.1: icmp_seq=0 ttl=64 time=3.127 ms\n\n--- 192.168.1.1 ping statistics ---\n1 packets transmitted, 1 packets received, 0.0% packet loss\nround-trip min/avg/max/stddev = 3.127/3.127/3.127/0.000 ms";
+
+$utf8 = convertirAUtf8($windowsLocal);
+comprobar(preg_match('//u', $utf8) === 1 && str_contains($utf8, 'Estadísticas de ping') && str_contains($utf8, 'Mínimo = 0ms, Máximo = 0ms'), 'Windows en español: la salida en CP850 se convierte a UTF-8 («Estadísticas», «Mínimo», «Máximo»)', $utf8);
+comprobar(json_encode($windowsLocal) === false, '  (sin convertir, json_encode no podría enviarla)');
+comprobarIgual($utf8, convertirAUtf8($utf8), '  un texto que ya es UTF-8 no cambia');
+comprobarIgual([true, 0.0], [salidaIndicaRespuesta($utf8), extraerTiempoMs($utf8)], '  127.0.0.1: responde y «tiempo<1m» se guarda como 0');
+comprobarIgual([true, 3.0], [salidaIndicaRespuesta($windowsRouter), extraerTiempoMs(convertirAUtf8($windowsRouter))], '  el router: responde con «tiempo=3ms» → 3 (no confunde «Tiempos aproximados» ni «Mínimo = 3ms»)');
+comprobarIgual(false, salidaIndicaRespuesta(convertirAUtf8($windowsSinRespuesta)), '  «Tiempo de espera agotado para esta solicitud» → no responde');
+comprobarIgual(false, salidaIndicaRespuesta(convertirAUtf8($windowsInaccesible)), '  «Host de destino inaccesible» → no responde, aunque ping termine con código 0 y diga «recibidos = 1» (no trae TTL=)');
+comprobarIgual([true, 12.0], [salidaIndicaRespuesta($windowsIngles), extraerTiempoMs($windowsIngles)], 'Windows en inglés: «time=12ms» → 12');
+comprobarIgual(0.0, extraerTiempoMs($windowsInglesMenor), '  «time<1ms» → 0');
+comprobarIgual(false, salidaIndicaRespuesta($windowsInglesInaccesible), '  «Destination host unreachable» → no responde');
+comprobarIgual([true, 0.03], [salidaIndicaRespuesta($linux), extraerTiempoMs($linux)], 'Linux: «ttl=64 time=0.032 ms» → responde, 0.03 (redondeado a 2 decimales)');
+comprobarIgual(false, salidaIndicaRespuesta($linuxSinRespuesta), '  sin respuesta → no responde');
+comprobarIgual([true, 3.13], [salidaIndicaRespuesta($mac), extraerTiempoMs($mac)], 'macOS: «time=3.127 ms» → 3.13');
+
+$comando = construirComandoPing('127.0.0.1');
+comprobarIgual(match (PHP_OS_FAMILY) {
+    'Windows' => 'ping -n 1 -w 1000 "127.0.0.1"',
+    'Darwin' => "ping -c 1 -t 1 '127.0.0.1'",
+    default => "ping -c 1 -W 1 '127.0.0.1'",
+}, $comando, 'El comando de ' . PHP_OS_FAMILY . ': un intento, 1 s de espera y la IP entre comillas (escapeshellarg)');
+try {
+    hacerPing('127.0.0.1 & calc');
+    comprobar(false, 'Una IP con un comando agregado se rechaza sin ejecutar nada');
+} catch (InvalidArgumentException) {
+    comprobar(true, 'Una IP con un comando agregado («127.0.0.1 & calc») se rechaza sin ejecutar nada');
+}
+
+// El ping real de esta computadora (desde la terminal; a través de Apache, en las secciones 4 y 5).
+$local = hacerPing('127.0.0.1');
+comprobar($local['responde'] && is_float($local['tiempo_respuesta_ms']) && $local['tiempo_respuesta_ms'] >= 0 && preg_match('//u', $local['salida']) === 1, sprintf('Ping real a 127.0.0.1: responde en %s ms, salida en UTF-8', exportar($local['tiempo_respuesta_ms'])), $local['salida']);
+$inicio = microtime(true);
+$documentacion = hacerPing('192.0.2.20');
+$duracion = microtime(true) - $inicio;
+comprobar(!$documentacion['responde'] && $documentacion['tiempo_respuesta_ms'] === null && $duracion < 2.5, sprintf('Ping real a 192.0.2.20: no responde, en %.2f s (1 s de espera)', $duracion), $documentacion['salida']);
+
+// =====================================================================
+seccion('16. Encendido en un clic en Windows (herramientas/iniciar-servicios.ps1 y .bat)');
+
+/**
+ * Corre un programa (arreglo: sin un shell de por medio) con tope de tiempo y la salida
+ * en un archivo (en Windows un pipe no se puede leer sin bloquear). Devuelve
+ * [código de salida, salida con "\n", terminó solo, segundos].
+ */
+function correrConTope(array $comando, float $segundos): array
+{
+    renovarBaseDePruebas();
+    $archivo = (string) tempnam(sys_get_temp_dir(), 'tope');
+    $inicio = microtime(true);
+    $proceso = proc_open($comando, [0 => ['pipe', 'r'], 1 => ['file', $archivo, 'w'], 2 => ['redirect', 1]], $tuberias);
+    fclose($tuberias[0]);
+    $codigo = null;
+    while ($codigo === null && microtime(true) - $inicio < $segundos) {
+        $estado = proc_get_status($proceso);
+        $codigo = $estado['running'] ? null : $estado['exitcode'];
+        renovarBaseDePruebas();
+        usleep(100000);
+    }
+    if ($codigo === null) {
+        proc_terminate($proceso, 9);
+    }
+    proc_close($proceso);
+    $salida = str_replace("\r\n", "\n", (string) file_get_contents($archivo));
+    @unlink($archivo);
+
+    return [$codigo ?? -1, $salida, $codigo !== null, microtime(true) - $inicio];
+}
+
+if (PHP_OS_FAMILY !== 'Windows') {
+    avisar('iniciar-servicios.ps1 y .bat son solo para Windows: no se probaron aquí (en Linux se usa herramientas/iniciar-servicios.sh).');
+} else {
+    $herramientas = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'herramientas' . DIRECTORY_SEPARATOR;
+    $ps1 = (string) file_get_contents($herramientas . 'iniciar-servicios.ps1');
+    comprobar(str_starts_with($ps1, "\xEF\xBB\xBF"), 'iniciar-servicios.ps1 está en UTF-8 con BOM (Windows PowerShell 5.1 lee un archivo sin BOM como ANSI y rompería ✓, ✗ y los acentos)');
+    comprobar(preg_match("/(?<!\r)\n/", $ps1 . (string) file_get_contents($herramientas . 'iniciar-servicios.bat')) === 0, '  el .ps1 y el .bat con finales de línea CRLF (.gitattributes)');
+    comprobar(!str_contains((string) file_get_contents($herramientas . 'iniciar-servicios.sh'), "\r"), '  y iniciar-servicios.sh con LF (bash no acepta CRLF)');
+
+    // Las funciones, cargadas con -SoloFunciones, con datos de ejemplo.
+    $temporal = (string) tempnam(sys_get_temp_dir(), 'ps');
+    $pruebaPs = "$temporal.ps1";
+    file_put_contents($pruebaPs, str_replace('__SCRIPT__', $herramientas . 'iniciar-servicios.ps1', <<<'PS'
+        [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false
+        . '__SCRIPT__' -SoloFunciones
+        $r = [ordered]@{}
+        $r.soloPrivada = @(PerfilesSinPermiso @(@{ Accion = 'Allow'; Perfil = 'Private' }) @('Private', 'Public'))
+        $r.sinReglas = @(PerfilesSinPermiso @() @('Private', 'Public'))
+        $r.cualquiera = @(PerfilesSinPermiso @(@{ Accion = 'Allow'; Perfil = 'Any' }) @('Private', 'Public'))
+        $r.ambas = @(PerfilesSinPermiso @(@{ Accion = 'Allow'; Perfil = 'Private, Public' }) @('Private', 'Public'))
+        $r.bloqueo = @(PerfilesSinPermiso @(@{ Accion = 'Allow'; Perfil = 'Any' }, @{ Accion = 'Block'; Perfil = 'Public' }) @('Private', 'Public'))
+        $r.apagado = @(PerfilesSinPermiso @(@{ Accion = 'Allow'; Perfil = 'Private' }) @('Private', 'Public') @('Public'))
+        $r.comando = ComandoParaPermitirApache @('Public')
+        $r.comandoAmbas = ComandoParaPermitirApache @('Private', 'Public')
+        $r.conectado = LeerEstadoTailscale '{"BackendState":"Running","Self":{"HostName":"laptop","TailscaleIPs":["fd7a:115c:a1e0::1","100.101.102.103"]}}'
+        $r.sinSesion = @(QueHacerConTailscale (LeerEstadoTailscale '{"BackendState":"NeedsLogin","AuthURL":"https://login.tailscale.com/a/abc"}'))
+        $r.desconectado = @(QueHacerConTailscale (LeerEstadoTailscale '{"BackendState":"Stopped"}'))
+        $r.noJson = LeerEstadoTailscale 'no es JSON'
+        $r.sistema = DescribirProceso @{ Pid = 4; Nombre = 'System'; Ruta = $null; Servicio = $null; NombreServicio = $null }
+        $r.servicio = @(QueHacerConElPuerto @{ Pid = 1234; Nombre = 'mysqld'; Ruta = 'C:\Program Files\MySQL\bin\mysqld.exe'; Servicio = 'MySQL80'; NombreServicio = 'MySQL80' })
+        $r.programa = @(QueHacerConElPuerto @{ Pid = 99; Nombre = 'Skype'; Ruta = 'C:\Skype\Skype.exe'; Servicio = $null; NombreServicio = $null })
+        $r.docker = @(QueHacerConElPuerto @{ Pid = 98; Nombre = 'com.docker.backend'; Ruta = $null; Servicio = $null; NombreServicio = $null })
+        $r.mayusculas = EsDeXampp @{ Ruta = 'c:\XAMPP\apache\bin\HTTPD.exe'; Nombre = 'httpd' } 'C:\xampp\apache\bin\httpd.exe'
+        $r.otroApache = EsDeXampp @{ Ruta = 'C:\Program Files\Apache\bin\httpd.exe'; Nombre = 'httpd' } 'C:\xampp\apache\bin\httpd.exe'
+        $r.apache80 = EsDeXampp (ProcesoEnPuerto 80) $HTTPD
+        $r | ConvertTo-Json -Compress -Depth 4
+        PS));
+    [$codigo, $salida] = correrConTope(['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $pruebaPs], 60);
+    @unlink($pruebaPs);
+    @unlink($temporal);
+    $f = json_decode(trim($salida), true);
+    if (!is_array($f)) {
+        comprobar(false, 'Las funciones de iniciar-servicios.ps1 se cargan con -SoloFunciones', $salida);
+        $f = [];
+    }
+    comprobarIgual([['Public'], ['Private', 'Public'], [], [], ['Public'], []], [$f['soloPrivada'] ?? null, $f['sinReglas'] ?? null, $f['cualquiera'] ?? null, $f['ambas'] ?? null, $f['bloqueo'] ?? null, $f['apagado'] ?? null],
+        'Firewall: con Apache solo en privadas falta Public; sin reglas, las dos; «Any» o «Private, Public» bastan; un Block gana al Allow; un perfil con el firewall apagado no falta');
+    comprobarIgual('New-NetFirewallRule -DisplayName "Apache HTTP Server (XAMPP, redes públicas)" -Direction Inbound -Action Allow -Program "C:\xampp\apache\bin\httpd.exe" -Protocol TCP -LocalPort 80 -Profile Public', $f['comando'] ?? null, '  el comando exacto para permitirlo (que el script muestra y no ejecuta)');
+    comprobar(str_ends_with((string) ($f['comandoAmbas'] ?? ''), '-Profile Private,Public') && str_contains((string) ($f['comandoAmbas'] ?? ''), 'redes privadas y públicas'), '  y para las dos redes a la vez', (string) ($f['comandoAmbas'] ?? ''));
+    comprobarIgual(['Running', '100.101.102.103', 'laptop'], [$f['conectado']['Estado'] ?? null, $f['conectado']['Ip'] ?? null, $f['conectado']['Nombre'] ?? null], 'Tailscale conectado: su IPv4 100.x (no la IPv6) y el nombre del equipo');
+    comprobar(str_contains((string) ($f['sinSesion'][1] ?? ''), 'https://login.tailscale.com/a/abc'), '  sin sesión: el «Qué hacer» lleva el enlace para iniciarla', exportar($f['sinSesion'] ?? null));
+    comprobarIgual('Tailscale está desconectado', $f['desconectado'][0] ?? null, '  desconectado: lo dice y cómo conectarlo');
+    comprobarIgual('', $f['noJson']['Estado'] ?? null, '  una salida que no es JSON no rompe el script (estado vacío)');
+    comprobar(str_contains((string) ($f['sistema'] ?? ''), 'PID 4') && str_contains((string) ($f['sistema'] ?? ''), 'IIS'), 'Puerto ocupado por Windows (PID 4, http.sys): dice que es un servicio web como IIS', (string) ($f['sistema'] ?? ''));
+    comprobar(str_contains((string) ($f['servicio'][0] ?? ''), 'Stop-Service -Name MySQL80') && str_contains((string) ($f['servicio'][1] ?? ''), '-StartupType Manual'), '  por un servicio (otro MySQL): cómo detenerlo y que no vuelva al reiniciar', exportar($f['servicio'] ?? null));
+    comprobar(str_contains((string) ($f['programa'][0] ?? ''), 'cierra Skype') && str_contains((string) ($f['programa'][0] ?? ''), 'PID 99'), '  por un programa: su nombre y PID', exportar($f['programa'] ?? null));
+    comprobar(str_contains((string) ($f['docker'][0] ?? ''), 'docker stop'), '  por Docker: detener el contenedor', exportar($f['docker'] ?? null));
+    comprobarIgual([true, false, true], [$f['mayusculas'] ?? null, $f['otroApache'] ?? null, $f['apache80'] ?? null], 'Reconoce el Apache de XAMPP sin distinguir mayúsculas, no confunde otro Apache, y el del puerto 80 ahora es el de XAMPP');
+
+    // De punta a punta, como con doble clic, con Apache y MySQL encendidos (las pruebas los necesitan).
+    // Sin la política de ejecución que pudiera heredar esta terminal: con doble clic no hay ninguna
+    // y en Windows rige «Restricted», así que el .bat debe funcionar con su propio -ExecutionPolicy Bypass.
+    $politica = getenv('PSExecutionPolicyPreference');
+    putenv('PSExecutionPolicyPreference');
+    [$codigo, $salida, $termino, $segundos] = correrConTope(['cmd.exe', '/c', $herramientas . 'iniciar-servicios.bat'], 150);
+    if ($politica !== false) {
+        putenv("PSExecutionPolicyPreference=$politica");
+    }
+    comprobar($termino, sprintf('iniciar-servicios.bat termina solo, sin quedarse esperando: %.1f s (su «pause» del doble clic no espera sin teclado)', $segundos), $salida);
+    comprobarSalida($salida, [
+        '✓ Apache ya estaba encendido', '✓ MySQL ya estaba encendido',
+        "\nTailscale\n", "\nFirewall de Windows\n",
+        'Comprobación previa (herramientas/preparar-demo.php; no cambia tu base)',
+        'Tu base (' . DB_NOMBRE_PRUEBAS . ') no se modifica.',
+        'Apache ............... encendido', 'MySQL (XAMPP) ........ encendido',
+        'En la computadora ................ http://localhost/monitoreo-red-soa/web/',
+        ':5500/componentes.html',
+    ], '  la salida incluye');
+    comprobar(str_contains($salida, '✓ El Firewall de Windows permite a Apache') || str_contains($salida, '-Program "C:\xampp\apache\bin\httpd.exe" -Protocol TCP -LocalPort 80'), '  el Firewall: permitido, o el comando para permitirlo', $salida);
+    comprobar(($codigo === 0 && str_contains($salida, 'Todo encendido.')) || ($codigo === 1 && str_contains($salida, 'Falló algo (detalle arriba):') && preg_match('/^  ✗ .+\n      Qué hacer: /mu', $salida) === 1),
+        "  código $codigo coherente: 0 con «Todo encendido.», 1 con «Falló algo» y cada ✗ con su «Qué hacer»", $salida);
+}
 
 terminarPruebas();

@@ -181,7 +181,9 @@ function pedir(string $metodo, string $url): array
 }
 
 /**
- * Espera entre rondas. Con Ctrl+C, la señal interrumpe la espera y se muestra el resumen.
+ * Espera entre rondas. Con Ctrl+C se interrumpe la espera y se muestra el resumen.
+ * En pasos cortos: en Linux la señal corta el usleep(), pero en Windows el manejador
+ * de Ctrl+C solo corre cuando termina el usleep() en curso (con uno solo, hasta 60 s).
  */
 function esperar(float $segundos): void
 {
@@ -189,7 +191,10 @@ function esperar(float $segundos): void
         return;
     }
     printf("  (siguiente ronda en %s)\n\n", duracion((int) round($segundos)));
-    usleep((int) ($segundos * 1e6));
+    $fin = microtime(true) + $segundos;
+    while (($restante = $fin - microtime(true)) > 0) {
+        usleep((int) (min($restante, 0.2) * 1e6));
+    }
 }
 
 /**
@@ -232,8 +237,8 @@ function mostrarResumen(): void
 }
 
 /**
- * Con Ctrl+C (o SIGTERM) muestra el resumen antes de salir. En Windows sin pcntl,
- * Ctrl+C termina sin resumen (el historial ya guardado queda en la base).
+ * Con Ctrl+C (o SIGTERM) muestra el resumen antes de salir. En Windows, sin pcntl,
+ * con el manejador de la consola (Ctrl+C y Ctrl+Break).
  */
 function terminarConResumenAlInterrumpir(): void
 {
