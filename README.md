@@ -486,6 +486,8 @@ pruebas/        las 6 suites y sus ayudas (solo línea de comandos)
 servicios/      comun/ (infraestructura) y un servicio por carpeta: auth, dispositivos, monitoreo,
                 alertas y descubrimiento
 web/            interfaz: HTML, css/ (tokens.css es el único archivo con colores), js/, vendor/
+vista-login/    copia estática (solo HTML y CSS) del inicio de sesión para revisarla en GitHub
+                Pages; la publica .github/workflows/pages-login.yml. No inicia sesión
 ```
 
 Por HTTP solo se sirven `web/` y los puntos de entrada de los servicios; el resto
