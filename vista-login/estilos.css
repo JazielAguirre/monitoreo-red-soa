@@ -1,0 +1,281 @@
+/*
+ * Vista de muestra del inicio de sesión para GitHub Pages: solo HTML y CSS, sin
+ * Bootstrap ni JavaScript. Copia el aspecto de web/login.html con los mismos valores
+ * de web/css/tokens.css (si cambian allí, actualizarlos aquí). Las fuentes están en
+ * fuentes/ (Inter y Bootstrap Icons, sin internet).
+ */
+
+/* ------------------------------------------------------------ Valores del diseño (tokens.css) */
+
+:root {
+    --color-base: #0B1D2E;
+    --color-base-2: #16324F;
+    --color-base-icono: #8CBCEB;
+    --color-texto: #1E293B;
+    --color-texto-2: #5B6B80;
+    --color-marcador: #66778C;
+    --color-superficie: #FFFFFF;
+    --color-borde-control: #CBD5E1;
+    --color-acento: #2F6FB0;
+    --color-activo: #22C55E;
+    --color-foco-campo: rgba(47, 111, 176, 0.18);
+    --color-foco-anillo: rgba(47, 111, 176, 0.25);
+    --color-reticula-login: rgba(182, 196, 211, 0.09);
+    --color-nota: #8FA3B8;
+    --sombra-login: 0 20px 40px -8px rgba(0, 0, 0, 0.4);
+    --fuente-interfaz: 'Inter', system-ui, sans-serif;
+    --radio-sm: 6px;
+    --radio: 8px;
+    --radio-lg: 12px;
+    --alto-control-tactil: 44px;
+}
+
+/* ------------------------------------------------------------ Fuentes */
+
+@font-face {
+    font-family: 'Inter';
+    font-weight: 400;
+    font-display: swap;
+    src: url('fuentes/Inter-Regular.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-weight: 500;
+    font-display: swap;
+    src: url('fuentes/Inter-Medium.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-weight: 600;
+    font-display: swap;
+    src: url('fuentes/Inter-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'bootstrap-icons';
+    font-display: block;
+    src: url('fuentes/bootstrap-icons.woff2') format('woff2');
+}
+
+/* Solo los 4 íconos de la pantalla (los códigos de Bootstrap Icons 1.13). */
+.icono::before {
+    display: inline-block;
+    font-family: 'bootstrap-icons';
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    vertical-align: -0.125em;
+    -webkit-font-smoothing: antialiased;
+}
+
+.icono--red::before { content: '\f2ed'; }      /* bi-diagram-3-fill */
+.icono--persona::before { content: '\f4e1'; }  /* bi-person */
+.icono--candado::before { content: '\f47b'; }  /* bi-lock */
+.icono--ojo::before { content: '\f341'; }      /* bi-eye */
+
+/* ------------------------------------------------------------ Página */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    font-family: var(--fuente-interfaz);
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--color-texto);
+    background-color: var(--color-base);
+    background-image: radial-gradient(var(--color-reticula-login) 1px, transparent 1px);
+    background-size: 24px 24px;
+}
+
+.login {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    min-height: 100vh;
+    padding: 24px 16px;
+}
+
+/* ------------------------------------------------------------ Tarjeta */
+
+.login__tarjeta {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 400px;
+    padding: 36px 32px 32px;
+    background-color: var(--color-superficie);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-login);
+}
+
+.login__marca {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+}
+
+/* El logo con su punto verde de estado. */
+.login__logo {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    font-size: 24px;
+    color: var(--color-base-icono);
+    background-color: var(--color-base);
+    border-radius: 14px;
+}
+
+.login__logo::after {
+    content: '';
+    position: absolute;
+    top: 9px;
+    right: 9px;
+    width: 9px;
+    height: 9px;
+    background-color: var(--color-activo);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--color-base);
+}
+
+.login__textos {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.login__titulo {
+    margin: 0;
+    font-size: 28px;
+    line-height: 36px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.login__subtitulo {
+    margin: 0;
+    color: var(--color-texto-2);
+}
+
+/* ------------------------------------------------------------ Campos */
+
+.login__etiqueta {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.campo {
+    position: relative;
+}
+
+.campo__icono {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    font-size: 16px;
+    color: var(--color-texto-2);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.campo__control {
+    width: 100%;
+    height: var(--alto-control-tactil);
+    padding: 0 12px 0 38px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--color-texto);
+    background-color: var(--color-superficie);
+    border: 1px solid var(--color-borde-control);
+    border-radius: var(--radio);
+    outline: 0;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.campo__control::placeholder {
+    color: var(--color-marcador);
+    opacity: 1;
+}
+
+.campo__control:focus {
+    border-color: var(--color-acento);
+    box-shadow: 0 0 0 3px var(--color-foco-campo);
+}
+
+.campo--con-boton > .campo__control {
+    padding-right: 44px;
+}
+
+.campo__boton {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    font-size: 16px;
+    color: var(--color-texto-2);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radio-sm);
+    cursor: pointer;
+}
+
+.campo__boton:hover {
+    color: var(--color-texto);
+}
+
+.campo__boton:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--color-foco-anillo);
+}
+
+/* ------------------------------------------------------------ Botón */
+
+.login__boton {
+    height: var(--alto-control-tactil);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-superficie);
+    background-color: var(--color-base-2);
+    border: 1px solid var(--color-base-2);
+    border-radius: var(--radio);
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.login__boton:hover,
+.login__boton:active {
+    background-color: var(--color-base);
+    border-color: var(--color-base);
+}
+
+.login__boton:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 2px var(--color-superficie), 0 0 0 4px var(--color-acento);
+}
+
+/* ------------------------------------------------------------ Nota de la vista */
+
+.login__nota {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-nota);
+}

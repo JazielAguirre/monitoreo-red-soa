@@ -1,0 +1,36 @@
+# Publica en GitHub Pages solo la vista estática del inicio de sesión (vista-login/:
+# HTML, CSS y fuentes). El resto del repositorio (PHP, base de datos, documentos) no
+# se publica. Para que funcione: Settings → Pages → Source: «GitHub Actions».
+name: Vista del login en GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'vista-login/**'
+      - '.github/workflows/pages-login.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: vista-login
+      - id: despliegue
+        uses: actions/deploy-pages@v4

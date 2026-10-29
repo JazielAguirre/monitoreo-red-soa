@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Iniciar sesión · Monitoreo de Red SOA</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<!--
+    Vista de muestra de la pantalla de inicio de sesión, solo HTML y CSS, para
+    revisarla en GitHub Pages. No inicia sesión: la aplicación real está en
+    web/login.html y necesita Apache, PHP y MySQL (docs/GUIA-EQUIPO.md).
+-->
+<body>
+<main class="login">
+    <form class="login__tarjeta">
+        <div class="login__marca">
+            <span class="login__logo" aria-hidden="true"><i class="icono icono--red"></i></span>
+            <div class="login__textos">
+                <h1 class="login__titulo">Monitoreo de Red SOA</h1>
+                <p class="login__subtitulo">Inicia sesión para administrar la red</p>
+            </div>
+        </div>
+
+        <div class="login__campo">
+            <label class="login__etiqueta" for="usuario">Usuario</label>
+            <div class="campo">
+                <i class="icono icono--persona campo__icono" aria-hidden="true"></i>
+                <input class="campo__control" id="usuario" type="text" placeholder="Tu usuario" autocomplete="off" spellcheck="false">
+            </div>
+        </div>
+
+        <div class="login__campo">
+            <label class="login__etiqueta" for="contrasena">Contraseña</label>
+            <div class="campo campo--con-boton">
+                <i class="icono icono--candado campo__icono" aria-hidden="true"></i>
+                <input class="campo__control" id="contrasena" type="password" placeholder="Tu contraseña" autocomplete="off">
+                <button class="campo__boton" type="button" aria-label="Mostrar contraseña" title="Mostrar contraseña">
+                    <i class="icono icono--ojo" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <button class="login__boton" type="button">Iniciar sesión</button>
+    </form>
+
+    <p class="login__nota">Vista de muestra (solo HTML y CSS): no inicia sesión.</p>
+</main>
+</body>
+</html>
